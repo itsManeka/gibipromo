@@ -1,0 +1,72 @@
+import { Telegraf } from 'telegraf';
+import dotenv from 'dotenv';
+import { Product } from '../../../domain/entities/Product';
+
+dotenv.config();
+
+export class TelegramNotifier {
+  private bot: Telegraf;
+
+  constructor() {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (!token) {
+      throw new Error('TELEGRAM_BOT_TOKEN não configurado');
+    }
+
+    this.bot = new Telegraf(token);
+  }
+
+  /**
+   * Envia notificação de alteração de preço para um usuário
+   */
+  async notifyPriceChange(
+    userId: string,
+    product: Product,
+    oldPrice: number,
+    newPrice: number
+  ): Promise<void> {
+    const difference = ((oldPrice - newPrice) / oldPrice * 100).toFixed(2);
+    const formattedOldPrice = this.escapeMarkdown(oldPrice.toFixed(2));
+    const formattedNewPrice = this.escapeMarkdown(newPrice.toFixed(2));
+    const formattedDifference = this.escapeMarkdown(difference);
+    const message = `
+� *Boa notícia\\! O preço baixou\\!*
+
+📚 *Produto:* [${this.escapeMarkdown(product.id)}](${product.link})
+
+💰 Preço anterior: R$ ${formattedOldPrice}
+✨ *Novo preço: R$ ${formattedNewPrice}*
+📉 Redução: ${formattedDifference}%
+
+${product.estoque ? '✅ Produto em estoque' : '❌ Produto fora de estoque'}
+${product.pre_venda ? '\n⏳ *Produto em pré\\-venda*' : ''}
+
+_Clique no botão abaixo para ver na Amazon_
+`;
+
+    try {
+      await this.bot.telegram.sendMessage(userId, message, {
+        parse_mode: 'MarkdownV2',
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: '🛒 Ver na Amazon',
+                url: product.link
+              }
+            ]
+          ]
+        }
+      });
+    } catch (error) {
+      console.error(`Erro ao enviar notificação para usuário ${userId}:`, error);
+    }
+  }
+
+  /**
+   * Escapa caracteres especiais do Markdown V2
+   */
+  private escapeMarkdown(text: string): string {
+    return text.replace(/[_*[\]()~`>#+=|{}.!-]/g, '\\$&');
+  }
+}

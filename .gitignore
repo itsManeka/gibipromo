@@ -1,0 +1,24 @@
+# Dependency directories
+node_modules/
+dist/
+
+# Environment variables
+.env
+.env.local
+
+# Coverage directory
+coverage/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

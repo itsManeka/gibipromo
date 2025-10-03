@@ -30,9 +30,9 @@ export class TelegramNotifier {
     const formattedNewPrice = this.escapeMarkdown(newPrice.toFixed(2));
     const formattedDifference = this.escapeMarkdown(difference);
     const message = `
-� *Boa notícia\\! O preço baixou\\!*
+*Boa notícia\\! O preço baixou\\!*
 
-📚 *Produto:* [${this.escapeMarkdown(product.id)}](${product.link})
+📚 *${this.escapeMarkdown(product.title)}*
 
 💰 Preço anterior: R$ ${formattedOldPrice}
 ✨ *Novo preço: R$ ${formattedNewPrice}*
@@ -41,7 +41,7 @@ export class TelegramNotifier {
 ${product.estoque ? '✅ Produto em estoque' : '❌ Produto fora de estoque'}
 ${product.pre_venda ? '\n⏳ *Produto em pré\\-venda*' : ''}
 
-_Clique no botão abaixo para ver na Amazon_
+_Clique no botão abaixo para ver produto_
 `;
 
     try {
@@ -51,7 +51,7 @@ _Clique no botão abaixo para ver na Amazon_
           inline_keyboard: [
             [
               {
-                text: '🛒 Ver na Amazon',
+                text: '🛒 Ver produto',
                 url: product.link
               }
             ]

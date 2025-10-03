@@ -64,9 +64,63 @@ export class CheckProductActionProcessor implements ActionProcessor<CheckProduct
     }
   }
 
+  private lastCheckedProductId: string | null = null;
+
   async processNext(limit: number): Promise<number> {
-    const actions = await this.actionRepository.findPendingByType(this.actionType, limit);
-    await Promise.all(actions.map(action => this.process(action as CheckProductAction)));
-    return actions.length;
+    // Busca o próximo lote de produtos para verificar
+    const products = await this.productRepository.getNextProductsToCheck(limit);
+    if (products.length === 0) {
+      console.log('Nenhum produto para verificar');
+      return 0;
+    }
+
+    console.log(`Verificando lote de ${products.length} produtos`);
+    
+    // Busca todos os produtos na Amazon de uma vez
+    const asins = products.map(p => p.id);
+    const amazonProducts = await this.amazonApi.getProducts(asins);
+
+    let processedCount = 0;
+    let updatedCount = 0;
+
+    // Processa cada produto
+    for (const product of products) {
+      try {
+        const amazonProduct = amazonProducts.get(product.id);
+        if (!amazonProduct) {
+          console.warn(`Produto não encontrado na Amazon: ${product.id}`);
+          continue;
+        }
+
+        const oldPrice = product.preco;
+        const shouldNotify = updateProductPrice(product, amazonProduct.currentPrice);
+
+        // Atualiza outras informações do produto
+        product.offerid = amazonProduct.offerId;
+        product.preco_cheio = amazonProduct.fullPrice;
+        product.estoque = amazonProduct.inStock;
+        product.imagem = amazonProduct.imageUrl;
+        product.pre_venda = amazonProduct.isPreOrder;
+
+        await this.productRepository.update(product);
+        processedCount++;
+
+        // Se o preço baixou, cria ação de notificação
+        if (shouldNotify) {
+          const notifyAction = createNotifyPriceAction(
+            product.id,
+            oldPrice,
+            amazonProduct.currentPrice
+          );
+          await this.actionRepository.create(notifyAction);
+          updatedCount++;
+        }
+      } catch (error) {
+        console.error(`Erro ao atualizar produto ${product.id}:`, error);
+      }
+    }
+
+    console.log(`${processedCount} produtos verificados, ${updatedCount} atualizações de preço`);
+    return processedCount;
   }
 }

@@ -8,20 +8,26 @@ interface MockProductTemplate {
 /**
  * Mock do cliente da API de produtos da Amazon para desenvolvimento
  */
-export class MockAmazonPAAPIClient implements AmazonProductAPI {
-  private products: Map<string, AmazonProduct>;
+export class ExtendedMockAmazonPAAPIClient implements AmazonProductAPI {
+  private mockProducts: Map<string, AmazonProduct> = new Map();
   private mockTemplates: MockProductTemplate[];
   private randomSeed: number;
 
   constructor() {
-    this.products = new Map();
     this.mockTemplates = this.createTemplates();
     this.randomSeed = Date.now();
     this.initializeMockData();
   }
 
+  setProducts(products: AmazonProduct[]): void {
+    this.mockProducts.clear();
+    for (const product of products) {
+      this.mockProducts.set(product.offerId.replace('offer-', ''), product);
+    }
+  }
+
   async getProduct(asin: string): Promise<AmazonProduct | null> {
-    return this.products.get(asin) || this.generateConsistentProduct(asin);
+    return this.mockProducts.get(asin) || this.generateConsistentProduct(asin);
   }
 
   async getProducts(asins: string[]): Promise<Map<string, AmazonProduct>> {
@@ -31,7 +37,7 @@ export class MockAmazonPAAPIClient implements AmazonProductAPI {
     await new Promise(resolve => setTimeout(resolve, 100));
 
     for (const asin of asins) {
-      const product = this.products.get(asin) || this.generateConsistentProduct(asin);
+      const product = this.mockProducts.get(asin) || this.generateConsistentProduct(asin);
       if (product) {
         result.set(asin, product);
       }
@@ -42,7 +48,7 @@ export class MockAmazonPAAPIClient implements AmazonProductAPI {
 
   private initializeMockData(): void {
     // Produtos de exemplo fixos para testes
-    this.products.set('B08PP8QHFQ', {
+    this.mockProducts.set('B08PP8QHFQ', {
       offerId: 'mock-offer-1',
       title: 'Kindle 11ª Geração',
       fullPrice: 149.99,
@@ -52,7 +58,7 @@ export class MockAmazonPAAPIClient implements AmazonProductAPI {
       isPreOrder: false
     });
 
-    this.products.set('B07JQKWWXT', {
+    this.mockProducts.set('B07JQKWWXT', {
       offerId: 'mock-offer-2',
       title: 'Naruto Vol. 1 (Pré-venda)',
       fullPrice: 27.99,
@@ -63,7 +69,7 @@ export class MockAmazonPAAPIClient implements AmazonProductAPI {
     });
 
     // Adiciona alguns em promoção
-    this.products.set('B09QWERTY1', {
+    this.mockProducts.set('B09QWERTY1', {
       offerId: 'mock-offer-3',
       title: 'Dragon Ball Vol. 1 (Edição Luxo)',
       fullPrice: 49.99,
@@ -101,46 +107,23 @@ export class MockAmazonPAAPIClient implements AmazonProductAPI {
     };
   }
 
-  private createTemplates(): MockProductTemplate[] {
-    return [
-      { title: 'Kindle 11ª Geração', basePrice: 299.99},
-      { title: 'Fire TV Stick Lite', basePrice: 249.99},
-      { title: 'Echo Dot', basePrice: 299.99},
-      { title: 'Fire Tablet', basePrice: 399.99},
-      { title: 'Kindle Paperwhite', basePrice: 499.99},
-      { title: 'Echo Show', basePrice: 599.99},
-      { title: 'Fire TV Cube', basePrice: 699.99},
-      { title: 'Kindle Oasis', basePrice: 999.99},
-      { title: 'Echo Studio', basePrice: 799.99},
-      { title: 'Fire TV', basePrice: 399.99}
-    ];
-  }
-
   private hashCode(str: string): number {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
       hash = hash & hash;
     }
     return Math.abs(hash);
   }
 
-  /**
-   * Método auxiliar para simular alterações de preço (apenas para testes)
-   */
-  public simulatePriceChange(asin: string, newPrice: number): void {
-    const product = this.products.get(asin);
-    if (product) {
-      const oldPrice = product.currentPrice;
-      product.currentPrice = Math.round(newPrice * 100) / 100;
-      
-      // Se o novo preço for menor, atualiza o preço cheio também
-      if (newPrice < oldPrice) {
-        product.fullPrice = Math.round(oldPrice * 100) / 100;
-      }
-      
-      this.products.set(asin, product);
-    }
+  private createTemplates(): MockProductTemplate[] {
+    return [
+      { title: 'Naruto Vol.', basePrice: 24.99 },
+      { title: 'Dragon Ball Vol.', basePrice: 27.99 },
+      { title: 'One Piece Vol.', basePrice: 29.99 },
+      { title: 'Demon Slayer Vol.', basePrice: 25.99 },
+      { title: 'My Hero Academia Vol.', basePrice: 26.99 },
+      { title: 'Jujutsu Kaisen Vol.', basePrice: 28.99 }
+    ];
   }
 }

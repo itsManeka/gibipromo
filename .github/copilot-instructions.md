@@ -22,22 +22,22 @@ Criar um bot de Telegram em **TypeScript** para monitoramento de preços da Amaz
   - `Actions`
   - `ActionConfigs` (configuração de agendamentos)
 - Flags booleanas devem ser sempre `true`/`false`, nunca strings
-- Sempre filtre ações por `is_processed = false` antes de executá-las
-- Após processar, atualizar `is_processed = true`
+- Sempre filtre ações por `is_processed = 0 (false)` antes de executá-las
+- Após processar com sucesso, atualizar `is_processed = 1 (true)`
 
 ---
 
 ## Fluxos Principais
 ### Telegram
-- `/start` → Ativa monitoramento (`Users.ativo = true`)
-- `/stop` → Desativa monitoramento (`Users.ativo = false`)
+- `/start` → Ativa monitoramento (`Users.enabled = true`)
+- `/stop` → Desativa monitoramento (`Users.enabled = false`)
 - `/help` → Lista comandos disponíveis
 - `/addlink` → Registra ação para monitorar um produto da Amazon
 
 ### Ações (Actions)
 - Todas as operações são registradas como **ações** no DynamoDB
-- Scheduler deve buscar apenas ações **pendentes** (`is_processed = false`)
-- Após execução, marcar como `is_processed = true`
+- Scheduler deve buscar apenas ações **pendentes** (`is_processed = 0 (false)`)
+- Após execução, marcar como `is_processed = 1 (true)`
 
 ### Agendamento
 - Use **toad-scheduler** ou **croner**
@@ -92,7 +92,7 @@ Criar um bot de Telegram em **TypeScript** para monitoramento de preços da Amaz
 ## Exemplo: Fluxo `/addlink`
 1. Usuário envia `/addlink <url>`
 2. Bot responde no Telegram confirmando o recebimento
-3. Cria ação no DynamoDB (`type = ADD_PRODUCT`, `is_processed = false`)
+3. Cria ação no DynamoDB (`type = ADD_PRODUCT`, `is_processed = 0 (false)`)
 4. Scheduler executa ações `ADD_PRODUCT` pendentes
 5. Consulta produto na Amazon (mock em dev)
 6. Atualiza ou cria produto no `Products`

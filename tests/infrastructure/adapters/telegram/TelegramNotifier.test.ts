@@ -15,6 +15,7 @@ describe('TelegramNotifier', () => {
   let notifier: TelegramNotifier;
   const mockProduct: Product = {
     id: 'B08PP8QHFQ',
+    title: 'Produto de Teste',
     offerid: 'offer-123',
     preco_cheio: 99.99,
     preco: 89.99,

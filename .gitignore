@@ -1,9 +1,11 @@
 # Dependency directories
 node_modules/
 dist/
+docker/
 
 # Environment variables
 .env
+.env.test
 .env.local
 
 # Coverage directory

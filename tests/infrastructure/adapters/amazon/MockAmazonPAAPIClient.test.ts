@@ -12,6 +12,7 @@ describe('MockAmazonPAAPIClient', () => {
     
     expect(product).toBeDefined();
     expect(product?.offerId).toBe('mock-offer-1');
+    expect(product?.title).toBe('Kindle 11ª Geração');
     expect(product?.fullPrice).toBe(149.99);
     expect(product?.currentPrice).toBe(129.99);
   });

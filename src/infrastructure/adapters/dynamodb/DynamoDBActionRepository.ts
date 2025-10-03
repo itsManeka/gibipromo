@@ -32,21 +32,22 @@ export class DynamoDBActionRepository extends DynamoDBRepository<Action> impleme
   }
 
   async findPendingByType(type: ActionType, limit: number): Promise<Action[]> {
-    console.log(`[DynamoDB] Buscando ações pendentes do tipo ${type}`);
+    console.log(`[DynamoDB] Buscando ${limit} ações pendentes do tipo ${type}`);
+    
     const params: DocumentClient.QueryInput = {
       TableName: this.tableName,
-      IndexName: 'TypeCreatedIndex',
-      KeyConditionExpression: '#type = :type',
-      FilterExpression: 'is_processed = :is_processed',
+      IndexName: 'TypeProcessedIndex',
+      KeyConditionExpression: '#type = :type AND #is_processed = :is_processed',
       ExpressionAttributeNames: {
-        '#type': 'type'
+        '#type': 'type',
+        '#is_processed': 'is_processed'
       },
       ExpressionAttributeValues: {
         ':type': type,
-        ':is_processed': false
+        ':is_processed': 0 // No DynamoDB, false = 0, true = 1 para números
       },
       Limit: limit,
-      ScanIndexForward: true
+      ScanIndexForward: true // ordena por is_processed ascendente
     };
 
     try {
@@ -66,7 +67,7 @@ export class DynamoDBActionRepository extends DynamoDBRepository<Action> impleme
       Key: { id },
       UpdateExpression: 'set is_processed = :is_processed',
       ExpressionAttributeValues: {
-        ':is_processed': true
+        ':is_processed': 1 // No DynamoDB, true = 1 para números
       }
     };
 

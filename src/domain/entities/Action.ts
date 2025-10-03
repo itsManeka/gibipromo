@@ -15,7 +15,7 @@ export enum ActionType {
 export interface Action extends Entity {
   type: ActionType;
   created_at: string;
-  is_processed: boolean;
+  is_processed: number; // 0 = false, 1 = true
 }
 
 /**
@@ -60,7 +60,7 @@ export function createAddProductAction(userId: string, productLink: string): Add
     user_id: userId,
     product_link: productLink,
     created_at: new Date().toISOString(),
-    is_processed: false
+    is_processed: 0
   };
 }
 
@@ -73,7 +73,7 @@ export function createCheckProductAction(productId: string): CheckProductAction 
     type: ActionType.CHECK_PRODUCT,
     product_id: productId,
     created_at: new Date().toISOString(),
-    is_processed: false
+    is_processed: 0
   };
 }
 
@@ -92,6 +92,6 @@ export function createNotifyPriceAction(
     old_price: oldPrice,
     new_price: newPrice,
     created_at: new Date().toISOString(),
-    is_processed: false
+    is_processed: 0
   };
 }

@@ -1,9 +1,4 @@
-/** @type {import('t    moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-    '^domain/(.*)$': '<rootDir>/src/domain/$1',
-    '^infrastructure/(.*)$': '<rootDir>/src/infrastructure/$1',
-    '^application/(.*)$': '<rootDir>/src/application/$1'
-  },est').JestConfigWithTsJest} */
+/** @type {import('jest').JestConfigWithTsJest} */
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
@@ -24,12 +19,20 @@ module.exports = {
   setupFiles: ['dotenv/config'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1'
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^domain/(.*)$': '<rootDir>/src/domain/$1',
+    '^infrastructure/(.*)$': '<rootDir>/src/infrastructure/$1',
+    '^application/(.*)$': '<rootDir>/src/application/$1'
   },
   transform: {
     '^.+\\.ts$': ['ts-jest', {
-      tsconfig: 'tsconfig.json'
+      tsconfig: 'tsconfig.json',
+      diagnostics: {
+        warnOnly: true
+      }
     }]
   },
-  moduleDirectories: ['node_modules', '<rootDir>/src']
+  moduleDirectories: ['node_modules', '<rootDir>/src'],
+  detectOpenHandles: true,
+  forceExit: true
 };

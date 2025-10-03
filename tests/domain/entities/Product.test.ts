@@ -7,6 +7,7 @@ describe('Product Entity', () => {
     product = createProduct({
       id: 'B08PP8QHFQ',
       offerid: 'offer-123',
+      title: 'Kindle 11ª Geração',
       preco_cheio: 99.99,
       preco: 89.99,
       estoque: true,

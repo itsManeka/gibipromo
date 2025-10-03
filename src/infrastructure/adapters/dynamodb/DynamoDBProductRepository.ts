@@ -12,6 +12,44 @@ export class DynamoDBProductRepository extends DynamoDBRepository<Product> imple
     super('Products');
   }
 
+  async findByUserId(userId: string, page: number, pageSize: number): Promise<{ products: Product[]; total: number }> {
+    console.log(`[DynamoDB] Buscando produtos do usuário ${userId} (página ${page}, ${pageSize} itens por página)`);
+    
+    const params: DocumentClient.ScanInput = {
+      TableName: this.tableName,
+      FilterExpression: 'contains(usuarios, :userId)',
+      ExpressionAttributeValues: {
+        ':userId': userId
+      }
+    };
+
+    try {
+      // Primeiro faz um scan para pegar todos os produtos do usuário
+      const result = await documentClient.scan(params).promise();
+      const allProducts = (result.Items || []) as Product[];
+      
+      // Ordena por ID (que contém timestamp) em ordem decrescente
+      const sortedProducts = allProducts.sort((a, b) => b.id.localeCompare(a.id));
+      
+      // Calcula o offset e limite para a paginação
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize;
+      
+      // Retorna apenas os produtos da página solicitada
+      const paginatedProducts = sortedProducts.slice(start, end);
+      
+      console.log(`[DynamoDB] Encontrados ${allProducts.length} produtos, retornando ${paginatedProducts.length}`);
+      
+      return {
+        products: paginatedProducts,
+        total: allProducts.length
+      };
+    } catch (error) {
+      console.error('[DynamoDB] Erro ao buscar produtos do usuário:', error);
+      throw error;
+    }
+  }
+
   async findByLink(link: string): Promise<Product | null> {
     const params: DocumentClient.QueryInput = {
       TableName: this.tableName,
@@ -70,13 +108,45 @@ export class DynamoDBProductRepository extends DynamoDBRepository<Product> imple
     await documentClient.update(params).promise();
   }
 
-  async getNextProductsToCheck(limit: number): Promise<Product[]> {
-    const params: DocumentClient.ScanInput = {
-      TableName: this.tableName,
-      Limit: limit
-    };
+  private lastEvaluatedKey: DocumentClient.Key | undefined;
 
-    const result = await documentClient.scan(params).promise();
-    return (result.Items || []) as Product[];
+  async getNextProductsToCheck(limit: number): Promise<Product[]> {
+    try {
+      console.log(`[DynamoDB] Buscando próximos ${limit} produtos para verificar`);
+
+      const params: DocumentClient.ScanInput = {
+        TableName: this.tableName,
+        Limit: limit,
+        // Busca apenas produtos que têm usuários monitorando
+        FilterExpression: 'attribute_exists(usuarios) AND size(usuarios) > :zero',
+        ExpressionAttributeValues: {
+          ':zero': 0
+        }
+      };
+
+      // Se tiver uma chave salva, usa para continuar de onde parou
+      if (this.lastEvaluatedKey) {
+        params.ExclusiveStartKey = this.lastEvaluatedKey;
+      }
+
+      const result = await documentClient.scan(params).promise();
+      
+      // Guarda a última chave avaliada para a próxima consulta
+      this.lastEvaluatedKey = result.LastEvaluatedKey;
+
+      // Se não tem mais itens, reinicia a paginação
+      if (!this.lastEvaluatedKey) {
+        console.log('[DynamoDB] Fim da lista de produtos, reiniciando paginação');
+      }
+
+      const products = (result.Items || []) as Product[];
+      console.log(`[DynamoDB] Encontrados ${products.length} produtos para verificar`);
+
+      return products;
+    } catch (error) {
+      console.error('[DynamoDB] Erro ao buscar produtos para verificar:', error);
+      this.lastEvaluatedKey = undefined; // Reseta em caso de erro
+      throw error;
+    }
   }
 }

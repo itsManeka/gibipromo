@@ -3,6 +3,7 @@
  */
 export interface AmazonProduct {
   offerId: string;
+  title: string;
   fullPrice: number;
   currentPrice: number;
   inStock: boolean;

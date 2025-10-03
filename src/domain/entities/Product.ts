@@ -5,6 +5,7 @@ import { Entity } from './Entity';
  */
 export interface Product extends Entity {
   offerid: string;
+  title: string;
   preco_cheio: number;
   preco: number;
   menor_preco: number;

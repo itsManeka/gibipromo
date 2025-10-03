@@ -13,11 +13,7 @@ async function main(): Promise<void> {
 
     // Configura e inicia o scheduler
     const scheduler = createActionScheduler(
-      amazonClient,
-      {
-        productCheckInterval: Number(process.env.PRODUCT_CHECK_INTERVAL) || 300,
-        actionCheckInterval: Number(process.env.ACTION_CHECK_INTERVAL) || 60
-      }
+      amazonClient
     );
 
     // Inicializa o bot

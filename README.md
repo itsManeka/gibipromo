@@ -44,6 +44,12 @@ Monitor de preços da Amazon em TypeScript usando arquitetura limpa e AWS. Bot d
    node scripts/init-dynamo.js
    ```
 
+3. **Configuração do Ambiente**:
+   - `NODE_ENV`: Define o ambiente (`development`/`production`)
+   - `USE_MOCK_PAAPI`: Controla uso do mock da PA-API
+     - `true`: Usa mock (recomendado para dev)
+     - `false`: Usa PA-API real (necessário em prod)
+
 3. **Desenvolvimento**:
    ```bash
    # Iniciar em modo desenvolvimento
@@ -61,9 +67,10 @@ Monitor de preços da Amazon em TypeScript usando arquitetura limpa e AWS. Bot d
 
 ## Comandos do Bot 🤖
 
-- `/start`: Ativa o monitoramento
-- `/stop`: Desativa o monitoramento
+- `/enable`: Ativa a monitoria de preços
+- `/disable`: Desativa a monitoria
 - `/addlink`: Adiciona produto(s) para monitorar
+- `/list`: Lista produtos monitorados
 - `/help`: Lista os comandos disponíveis
 
 ## Estrutura do Projeto 📁
@@ -76,16 +83,32 @@ src/
 └── types/          # Definições de tipos
 ```
 
+## Estratégias de Consulta 📊
+
+1. **Processamento em Lote**:
+   - System busca até 10 ações `ADD_PRODUCT` pendentes
+   - Extrai os ASINs únicos de todas as ações
+   - Consulta a PA-API uma única vez para todos os produtos
+   - Cria/atualiza produtos em massa
+   - Reduz chamadas à API e melhora performance
+
+2. **Round-Robin de Verificação**:
+   - Usa paginação do DynamoDB com `LastEvaluatedKey`
+   - A cada execução, busca próximo lote de produtos
+   - Quando chega ao fim da lista, reinicia do início
+   - Garante que todos os produtos são verificados
+   - Evita sobrecarga em produtos específicos
+
 ## Fluxo de Funcionamento 🔄
 
 1. **Adição de Produto**:
    - Usuário envia `/addlink`
    - Bot pede os links
    - Usuário envia link(s) da Amazon
-   - Sistema registra para monitoramento
+   - Sistema processa em lote para eficiência
 
 2. **Monitoramento**:
-   - Sistema verifica preços periodicamente
+   - Sistema verifica preços em lotes
    - Quando há redução, cria ação de notificação
    - Bot envia mensagem com o novo preço
    - Botão direto para a Amazon

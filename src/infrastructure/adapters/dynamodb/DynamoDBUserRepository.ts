@@ -26,13 +26,13 @@ export class DynamoDBUserRepository extends DynamoDBRepository<User> implements 
     return result.Items && result.Items.length > 0 ? (result.Items[0] as User) : null;
   }
 
-  async setActive(id: string, active: boolean): Promise<User> {
+  async setEnabled(id: string, enabled: boolean): Promise<User> {
     const params: DocumentClient.UpdateItemInput = {
       TableName: this.tableName,
       Key: { id },
-      UpdateExpression: 'set ativo = :active',
+      UpdateExpression: 'set enabled = :enabled',
       ExpressionAttributeValues: {
-        ':active': active
+        ':enabled': enabled
       },
       ReturnValues: 'ALL_NEW'
     };

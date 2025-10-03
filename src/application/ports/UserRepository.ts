@@ -6,5 +6,5 @@ import { User } from '../../domain/entities/User';
  */
 export interface UserRepository extends Repository<User> {
   findByUsername(username: string): Promise<User | null>;
-  setActive(id: string, active: boolean): Promise<User>;
+  setEnabled(id: string, enabled: boolean): Promise<User>;
 }

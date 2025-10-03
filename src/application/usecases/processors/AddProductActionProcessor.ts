@@ -1,14 +1,13 @@
-import { ActionProcessor } from '../../ports/ActionProcessor';
-import { 
-  ActionType, 
+import { ActionType, 
   AddProductAction, 
   createNotifyPriceAction 
 } from '../../../domain/entities/Action';
 import { ActionRepository } from '../../ports/ActionRepository';
 import { ProductRepository } from '../../ports/ProductRepository';
 import { UserRepository } from '../../ports/UserRepository';
-import { AmazonProductAPI } from '../../ports/AmazonProductAPI';
+import { AmazonProduct, AmazonProductAPI } from '../../ports/AmazonProductAPI';
 import { createProduct } from '../../../domain/entities/Product';
+import { ActionProcessor } from '../../ports/ActionProcessor';
 
 /**
  * Processador de ações de adição de produtos
@@ -25,17 +24,16 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 
   async process(action: AddProductAction): Promise<void> {
     try {
-      console.log(`Processando ação de adicionar produto: ${action.id}`);
+      console.log(`Processando ação individual: ${action.id}`);
       
-      // Verifica se o usuário existe e está ativo
+      // Verifica se o usuário existe e a monitoria está habilitada primeiro
       const user = await this.userRepository.findById(action.user_id);
-      if (!user || !user.ativo) {
-        console.log(`Usuário ${action.user_id} não encontrado ou inativo`);
+      if (!user || !user.enabled) {
+        console.log(`Usuário ${action.user_id} não encontrado ou monitoria desabilitada`);
         await this.actionRepository.markProcessed(action.id);
         return;
       }
-
-      // Extrai o ASIN do link
+      
       const asin = this.extractASIN(action.product_link);
       if (!asin) {
         console.warn(`Link inválido: ${action.product_link}`);
@@ -43,87 +41,184 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
         return;
       }
 
-      // Busca o produto na Amazon
-      const amazonProduct = await this.amazonApi.getProduct(asin);
-      if (!amazonProduct) {
-        console.warn(`Produto não encontrado na Amazon: ${asin}`);
-        await this.actionRepository.markProcessed(action.id);
-        return;
-      }
-
-      // Verifica se o produto já existe
-      let product = await this.productRepository.findById(asin);
-      
-      if (!product) {
-        // Cria novo produto
-        product = createProduct({
-          id: asin,
-          offerid: amazonProduct.offerId,
-          preco_cheio: amazonProduct.fullPrice,
-          preco: amazonProduct.currentPrice,
-          estoque: amazonProduct.inStock,
-          link: action.product_link,
-          imagem: amazonProduct.imageUrl,
-          pre_venda: amazonProduct.isPreOrder
-        });
-
-        await this.productRepository.create(product);
-      } else {
-        // Produto existe, verifica se o preço mudou
-        const oldPrice = product.preco;
-        const newPrice = amazonProduct.currentPrice;
-
-        // Atualiza dados do produto
-        product.offerid = amazonProduct.offerId;
-        product.preco_cheio = amazonProduct.fullPrice;
-        product.preco = amazonProduct.currentPrice;
-        product.estoque = amazonProduct.inStock;
-        product.imagem = amazonProduct.imageUrl;
-        product.pre_venda = amazonProduct.isPreOrder;
-
-        await this.productRepository.update(product);
-
-        // Se o preço diminuiu, cria ação de notificação
-        if (newPrice < oldPrice) {
-          const notifyAction = createNotifyPriceAction(
-            product.id,
-            oldPrice,
-            newPrice
-          );
-          await this.actionRepository.create(notifyAction);
-        }
-      }
-
-      // Adiciona o usuário à lista de monitoramento do produto
-      await this.productRepository.addUser(product.id, user.id);
-      await this.actionRepository.markProcessed(action.id);
-
+      const amazonProducts = await this.amazonApi.getProducts([asin]);
+      await this.processAction(action, amazonProducts);
     } catch (error) {
       console.error('Erro ao processar ação de adição de produto:', error);
-      // Não marca como processado para tentar novamente depois
+      throw error; // Re-throw para tratamento adequado
     }
+  }
+
+  private async processAction(
+    action: AddProductAction,
+    amazonProducts: Map<string, AmazonProduct>
+  ): Promise<boolean> {
+    // Extrai o ASIN do link
+    const asin = this.extractASIN(action.product_link);
+    if (!asin) {
+      console.warn(`Link inválido: ${action.product_link}`);
+      await this.actionRepository.markProcessed(action.id);
+      return true;
+    }
+
+    const amazonProduct = amazonProducts.get(asin);
+    if (!amazonProduct) {
+      console.warn(`Produto não encontrado na Amazon: ${asin}`);
+      await this.actionRepository.markProcessed(action.id);
+      return true;
+    }
+
+    // Verifica se o produto já existe
+    let product = await this.productRepository.findById(asin);
+      
+    if (!product) {
+      console.log(`Criando novo produto: ${amazonProduct.title}`);
+      // Cria novo produto
+      product = createProduct({
+        id: asin,
+        offerid: amazonProduct.offerId,
+        title: amazonProduct.title,
+        preco_cheio: amazonProduct.fullPrice,
+        preco: amazonProduct.currentPrice,
+        estoque: amazonProduct.inStock,
+        link: action.product_link,
+        imagem: amazonProduct.imageUrl,
+        pre_venda: amazonProduct.isPreOrder
+      });
+
+      await this.productRepository.create(product);
+      console.log(`Produto criado com sucesso: ${product.title} (R$ ${product.preco})`);
+    } else {
+      // Produto existe, verifica se o preço mudou
+      const oldPrice = product.preco;
+      const newPrice = amazonProduct.currentPrice;
+
+      // Atualiza dados do produto
+      product.offerid = amazonProduct.offerId;
+      product.title = amazonProduct.title;
+      product.preco_cheio = amazonProduct.fullPrice;
+      product.preco = amazonProduct.currentPrice;
+      product.estoque = amazonProduct.inStock;
+      product.imagem = amazonProduct.imageUrl;
+      product.pre_venda = amazonProduct.isPreOrder;
+      
+      await this.productRepository.update(product);
+
+      // Se o preço diminuiu, cria ação de notificação
+      if (newPrice < oldPrice) {
+        console.log(`Preço diminuiu para ${product.title}: R$ ${oldPrice} -> R$ ${newPrice}`);
+        const notifyAction = createNotifyPriceAction(
+          product.id,
+          oldPrice,
+          newPrice
+        );
+        await this.actionRepository.create(notifyAction);
+        console.log(`Ação de notificação criada: ${notifyAction.id}`);
+      } else if (newPrice !== oldPrice) {
+        console.log(`Preço aumentou para ${product.title}: R$ ${oldPrice} -> R$ ${newPrice}`);
+      }
+    }
+
+    // Adiciona o usuário à lista de monitoramento do produto
+    const user = await this.userRepository.findById(action.user_id);
+    if (user) {
+      await this.productRepository.addUser(product.id, user.id);
+    }
+    await this.actionRepository.markProcessed(action.id);
+    return true;
   }
 
   async processNext(limit: number): Promise<number> {
+    // Busca até 10 ações pendentes
     const actions = await this.actionRepository.findPendingByType(this.actionType, limit);
-    let processedCount = 0;
+    if (actions.length === 0) return 0;
 
-    // Processa as ações sequencialmente para evitar perder erros
+    console.log(`Processando ${actions.length} ações de adicionar produtos em lote`);
+
+    // Obtém a lista de ASINs únicos das ações
+    const asins: string[] = [];
+    for (const action of actions) {
+      const asin = this.extractASIN((action as AddProductAction).product_link);
+      if (asin) asins.push(asin);
+    }
+
+    // Se não houver ASINs válidos, marca todas como processadas
+    if (asins.length === 0) {
+      console.warn('Nenhum ASIN válido encontrado nas ações');
+      await Promise.all(
+        actions.map(action => this.actionRepository.markProcessed(action.id))
+      );
+      return actions.length;
+    }
+
+    // Busca todos os produtos na Amazon de uma vez
+    console.log(`Buscando ${asins.length} produtos na Amazon`);
+    let amazonProducts: Map<string, any>;
+    
+    try {
+      amazonProducts = await this.amazonApi.getProducts(asins);
+    } catch (error) {
+      console.error('Erro ao buscar produtos na Amazon:', error);
+      // Em caso de erro da API, marca todas as ações como processadas
+      await Promise.all(
+        actions.map(action => this.actionRepository.markProcessed(action.id))
+      );
+      return actions.length;
+    }
+
+    // Processa cada ação usando os produtos já buscados
+    let processedCount = 0;
     for (const action of actions) {
       try {
-        await this.process(action as AddProductAction);
+        const asin = this.extractASIN((action as AddProductAction).product_link);
+        if (!asin) {
+          console.warn(`Link inválido: ${(action as AddProductAction).product_link}`);
+          await this.actionRepository.markProcessed(action.id);
+          processedCount++;
+          continue;
+        }
+
+        const amazonProduct = amazonProducts.get(asin);
+        console.log(`Processando ação ${action.id} para produto ${asin} (${amazonProduct?.title})`);
+        
+        await this.processAction(action as AddProductAction, amazonProducts);
         processedCount++;
+        
+        console.log(`Ação ${action.id} processada com sucesso - Produto: ${amazonProduct?.title} (R$ ${amazonProduct?.currentPrice})`);
       } catch (error) {
         console.error(`Erro ao processar ação ${action.id}:`, error);
-        // Não incrementa o contador em caso de erro
+        // Ainda conta como processada mesmo com erro
+        processedCount++;
       }
     }
 
+    console.log(`${processedCount} ações processadas com sucesso`);
     return processedCount;
   }
 
+  /**
+   * Extrai o ASIN de um link da Amazon
+   * Suporta formatos:
+   * - amazon.com.br/dp/ASIN
+   * - amazon.com.br/gp/product/ASIN
+   * 
+   * @param url URL da Amazon
+   * @returns ASIN ou null se não encontrado
+   */
   private extractASIN(url: string): string | null {
-    const match = url.match(/\/dp\/([A-Z0-9]{10})/);
-    return match ? match[1] : null;
+    if (!url) return null;
+
+    // Extract ASIN - capture all alphanumeric characters then filter by length
+    const match = url.match(/(?:\/dp\/|\/gp\/product\/|\/product\/)([A-Z0-9]+)/i);
+    if (!match) return null;
+    
+    const asin = match[1].toUpperCase();
+    
+    // ASINs are typically 9 or 10 characters
+    if (asin.length >= 9 && asin.length <= 10) {
+      return asin;
+    }
+    
+    return null;
   }
 }

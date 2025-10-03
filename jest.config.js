@@ -16,6 +16,7 @@ module.exports = {
       statements: 80
     }
   },
+  maxWorkers: '50%',
   setupFiles: ['dotenv/config'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   moduleNameMapper: {

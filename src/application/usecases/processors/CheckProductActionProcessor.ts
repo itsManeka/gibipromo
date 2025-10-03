@@ -20,9 +20,9 @@ export class CheckProductActionProcessor implements ActionProcessor<CheckProduct
   async process(action: CheckProductAction): Promise<void> {
     try {
       // Busca o produto no banco
-      const product = await this.productRepository.findById(action.product_id);
+      const product = await this.productRepository.findById(action.value);
       if (!product) {
-        console.warn(`Produto não encontrado: ${action.product_id}`);
+        console.warn(`Produto não encontrado: ${action.value}`);
         await this.actionRepository.markProcessed(action.id);
         return;
       }
@@ -50,11 +50,7 @@ export class CheckProductActionProcessor implements ActionProcessor<CheckProduct
 
       // Se o preço baixou, cria ação de notificação
       if (shouldNotify) {
-        const notifyAction = createNotifyPriceAction(
-          product.id,
-          oldPrice,
-          amazonProduct.currentPrice
-        );
+        const notifyAction = createNotifyPriceAction(product.id);
         await this.actionRepository.create(notifyAction);
       }
 
@@ -107,11 +103,7 @@ export class CheckProductActionProcessor implements ActionProcessor<CheckProduct
 
         // Se o preço baixou, cria ação de notificação
         if (shouldNotify) {
-          const notifyAction = createNotifyPriceAction(
-            product.id,
-            oldPrice,
-            amazonProduct.currentPrice
-          );
+          const notifyAction = createNotifyPriceAction(product.id);
           await this.actionRepository.create(notifyAction);
           updatedCount++;
         }

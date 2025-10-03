@@ -290,7 +290,7 @@ describe('AddProductActionProcessor Integration Tests', () => {
     ])('deve extrair ASIN corretamente de %s', async (url) => {
       // Arrange
       const action = createTestAction('B012345678', {
-        product_link: url
+        value: url
       });
 
       const amazonProduct = createAmazonProduct('B012345678');
@@ -323,7 +323,7 @@ describe('AddProductActionProcessor Integration Tests', () => {
     ])('deve rejeitar URL inválida %s', async (url) => {
       // Arrange
       const action = createTestAction('B0123456789', {
-        product_link: url
+        value: url
       });
       
       // Adiciona a ação no repositório primeiro
@@ -405,9 +405,8 @@ describe('AddProductActionProcessor Integration Tests', () => {
       expect(notifyActions).toHaveLength(1);
 
       const notifyAction = notifyActions[0] as NotifyPriceAction;
-      expect(notifyAction.product_id).toBe('B012345678');
-      expect(notifyAction.old_price).toBe(100);
-      expect(notifyAction.new_price).toBe(80);
+      expect(notifyAction.value).toBe('B012345678');
+      expect(notifyAction.type).toBe(ActionType.NOTIFY_PRICE);
     });
   });
 });

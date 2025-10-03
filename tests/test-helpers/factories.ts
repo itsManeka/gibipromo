@@ -17,7 +17,7 @@ export const createTestAction = (asin: string, overrides?: Partial<AddProductAct
   user_id: 'user-1',
   type: ActionType.ADD_PRODUCT,
   created_at: new Date().toISOString(),
-  product_link: `https://www.amazon.com.br/dp/${asin}/`,
+  value: `https://www.amazon.com.br/dp/${asin}/`,
   is_processed: 0,
   ...overrides
 });

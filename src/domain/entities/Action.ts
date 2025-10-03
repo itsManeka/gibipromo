@@ -14,7 +14,7 @@ export enum ActionType {
  */
 export interface Action extends Entity {
   user_id?: string; // Optional, only for ADD_PRODUCT actions
-  product_link?: string; // Optional, only for ADD_PRODUCT actions
+  value: string; // Generic value: URL for ADD_PRODUCT, Product ID for others
   type: ActionType;
   created_at: string;
   is_processed: number; // 0 = false, 1 = true
@@ -26,7 +26,7 @@ export interface Action extends Entity {
 export interface AddProductAction extends Action {
   type: ActionType.ADD_PRODUCT;
   user_id: string;
-  product_link: string;
+  value: string; // Product URL
 }
 
 /**
@@ -34,7 +34,7 @@ export interface AddProductAction extends Action {
  */
 export interface CheckProductAction extends Action {
   type: ActionType.CHECK_PRODUCT;
-  product_id: string;
+  value: string; // Product ID
 }
 
 /**
@@ -42,9 +42,7 @@ export interface CheckProductAction extends Action {
  */
 export interface NotifyPriceAction extends Action {
   type: ActionType.NOTIFY_PRICE;
-  product_id: string;
-  old_price: number;
-  new_price: number;
+  value: string; // Product ID - prices will be fetched from Products table
 }
 
 /**
@@ -60,7 +58,7 @@ export function createAddProductAction(userId: string, productLink: string): Add
     id: `add-${Date.now()}`,
     type: ActionType.ADD_PRODUCT,
     user_id: userId,
-    product_link: productLink,
+    value: productLink,
     created_at: new Date().toISOString(),
     is_processed: 0
   };
@@ -73,7 +71,7 @@ export function createCheckProductAction(productId: string): CheckProductAction 
   return {
     id: `check-${Date.now()}`,
     type: ActionType.CHECK_PRODUCT,
-    product_id: productId,
+    value: productId,
     created_at: new Date().toISOString(),
     is_processed: 0
   };
@@ -82,17 +80,11 @@ export function createCheckProductAction(productId: string): CheckProductAction 
 /**
  * Factory function to create a NotifyPriceAction
  */
-export function createNotifyPriceAction(
-  productId: string,
-  oldPrice: number,
-  newPrice: number
-): NotifyPriceAction {
+export function createNotifyPriceAction(productId: string): NotifyPriceAction {
   return {
     id: `notify-${Date.now()}`,
     type: ActionType.NOTIFY_PRICE,
-    product_id: productId,
-    old_price: oldPrice,
-    new_price: newPrice,
+    value: productId,
     created_at: new Date().toISOString(),
     is_processed: 0
   };

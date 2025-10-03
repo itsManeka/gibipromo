@@ -35,9 +35,9 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 				return;
 			}
 
-			const asin = this.extractASIN(action.product_link);
+			const asin = this.extractASIN(action.value);
 			if (!asin) {
-				console.warn(`Link inválido: ${action.product_link}`);
+				console.warn(`Link inválido: ${action.value}`);
 				await this.actionRepository.markProcessed(action.id);
 				return;
 			}
@@ -55,9 +55,9 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 		amazonProducts: Map<string, AmazonProduct>
 	): Promise<boolean> {
 		// Extrai o ASIN do link
-		const asin = this.extractASIN(action.product_link);
+		const asin = this.extractASIN(action.value);
 		if (!asin) {
-			console.warn(`Link inválido: ${action.product_link}`);
+			console.warn(`Link inválido: ${action.value}`);
 			await this.actionRepository.markProcessed(action.id);
 			return true;
 		}
@@ -119,11 +119,7 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 			// Se o preço diminuiu, cria ação de notificação
 			if (newPrice < oldPrice) {
 				console.log(`Preço diminuiu para ${product.title}: R$ ${oldPrice} -> R$ ${newPrice}`);
-				const notifyAction = createNotifyPriceAction(
-					product.id,
-					oldPrice,
-					newPrice
-				);
+				const notifyAction = createNotifyPriceAction(product.id);
 				await this.actionRepository.create(notifyAction);
 				console.log(`Ação de notificação criada: ${notifyAction.id}`);
 			} else if (newPrice !== oldPrice) {
@@ -150,7 +146,7 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 		// Obtém a lista de ASINs únicos das ações
 		const asins: string[] = [];
 		for (const action of actions) {
-			const asin = this.extractASIN((action as AddProductAction).product_link);
+			const asin = this.extractASIN((action as AddProductAction).value);
 			if (asin) asins.push(asin);
 		}
 
@@ -182,9 +178,9 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 		let processedCount = 0;
 		for (const action of actions) {
 			try {
-				const asin = this.extractASIN((action as AddProductAction).product_link);
+				const asin = this.extractASIN((action as AddProductAction).value);
 				if (!asin) {
-					console.warn(`Link inválido: ${(action as AddProductAction).product_link}`);
+					console.warn(`Link inválido: ${(action as AddProductAction).value}`);
 					await this.actionRepository.markProcessed(action.id);
 					processedCount++;
 					continue;

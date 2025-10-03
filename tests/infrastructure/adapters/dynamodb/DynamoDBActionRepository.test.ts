@@ -21,14 +21,14 @@ describe('DynamoDBActionRepository', () => {
     user_id: 'user-1',
     type: ActionType.ADD_PRODUCT,
     created_at: '2024-01-01T00:00:00.000Z',
-    product_link: 'https://amazon.com.br/dp/B01234567',
+    value: 'https://amazon.com.br/dp/B01234567',
     is_processed: 0
   };
 
   const mockCheckProductAction: CheckProductAction = {
     id: 'action-456',
     type: ActionType.CHECK_PRODUCT,
-    product_id: 'B01234567',
+    value: 'B01234567',
     created_at: '2024-01-01T00:00:00.000Z',
     is_processed: 0
   };

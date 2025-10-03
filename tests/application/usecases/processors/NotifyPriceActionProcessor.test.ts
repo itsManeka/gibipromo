@@ -19,14 +19,14 @@ describe('NotifyPriceActionProcessor', () => {
   const mockNotifyAction: NotifyPriceAction = {
     id: 'notify-123',
     type: ActionType.NOTIFY_PRICE,
-    product_id: 'B01234567',
-    old_price: 100,
-    new_price: 80,
+    value: 'B01234567',
     created_at: '2024-01-01T00:00:00.000Z',
     is_processed: 0
   };
 
   const mockProduct: Product = createProduct('B01234567', {
+    price: 80,
+    old_price: 100,
     users: ['user1', 'user2']
   });
 

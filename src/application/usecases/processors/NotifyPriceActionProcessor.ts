@@ -19,9 +19,9 @@ export class NotifyPriceActionProcessor implements ActionProcessor<NotifyPriceAc
   async process(action: NotifyPriceAction): Promise<void> {
     try {
       // Busca o produto
-      const product = await this.productRepository.findById(action.product_id);
+      const product = await this.productRepository.findById(action.value);
       if (!product) {
-        console.warn(`Produto não encontrado: ${action.product_id}`);
+        console.warn(`Produto não encontrado: ${action.value}`);
         await this.actionRepository.markProcessed(action.id);
         return;
       }
@@ -33,14 +33,18 @@ export class NotifyPriceActionProcessor implements ActionProcessor<NotifyPriceAc
         return;
       }
 
+      // Busca preços da tabela Products (current = price, old = old_price)
+      const currentPrice = product.price;
+      const oldPrice = product.old_price ?? product.price; // Fallback para o preço atual se old_price não existir
+
       // Notifica todos os usuários que monitoram o produto
       await Promise.all(
         product.users.map((userId: string) =>
           this.notifier.notifyPriceChange(
             userId,
             product,
-            action.old_price,
-            action.new_price
+            oldPrice,
+            currentPrice
           )
         )
       );

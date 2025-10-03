@@ -89,6 +89,7 @@ describe('TelegramBot', () => {
 
   afterEach(() => {
     process.env = originalEnv;
+    jest.clearAllMocks();
   });
 
   describe('constructor', () => {
@@ -190,9 +191,9 @@ describe('TelegramBot', () => {
         name: 'Test',
         username: 'testuser',
         language: 'pt',
-        enabled: true
+        enabled: false
       }));
-      expect(mockCtx.reply).toHaveBeenCalledWith('Cadastro realizado e monitoria ativada com sucesso! ✅');
+      expect(mockCtx.reply).toHaveBeenCalledWith('Bem-vindo ao GibiPromo! 🎉\nUse /help para ver os comandos disponíveis.');
     });
 
     it('deve testar comando /disable', async () => {
@@ -218,6 +219,12 @@ describe('TelegramBot', () => {
     it('deve testar comando /start', async () => {
       // Arrange
       const mockCtx = {
+        from: {
+          id: 123456789,
+          first_name: 'Test',
+          username: 'testuser',
+          language_code: 'pt'
+        },
         reply: jest.fn()
       } as unknown as Context;
 
@@ -234,7 +241,7 @@ describe('TelegramBot', () => {
     it('deve testar comando /help', async () => {
       // Arrange
       const mockCtx = {
-        reply: jest.fn()
+        replyWithMarkdownV2: jest.fn()
       } as unknown as Context;
 
       // Get the handler function
@@ -244,16 +251,13 @@ describe('TelegramBot', () => {
       await helpHandler(mockCtx);
 
       // Assert
-      expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Comandos disponíveis'));
+      expect(mockCtx.replyWithMarkdownV2).toHaveBeenCalledWith(expect.stringContaining('Comandos disponíveis'));
     });
 
-    it('deve testar comando /addlink com link válido', async () => {
+    it('deve testar comando /addlink com usuário habilitado', async () => {
       // Arrange
       const mockCtx = {
         from: { id: 123456789 },
-        message: {
-          text: '/addlink https://amazon.com.br/dp/B012345678'
-        },
         reply: jest.fn()
       } as unknown as Context;
 
@@ -266,14 +270,6 @@ describe('TelegramBot', () => {
       };
 
       mockUserRepo.findById.mockResolvedValue(existingUser);
-      mockActionRepo.create.mockResolvedValue({
-        id: 'action-123',
-        type: ActionType.ADD_PRODUCT,
-        user_id: '123456789',
-        product_link: 'https://amazon.com.br/dp/B012345678',
-        is_processed: 0,
-        created_at: new Date().toISOString()
-      });
 
       // Get the handler function
       const addlinkHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'addlink')[1];
@@ -283,24 +279,17 @@ describe('TelegramBot', () => {
 
       // Assert
       expect(mockUserRepo.findById).toHaveBeenCalledWith('123456789');
-      expect(mockActionRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        type: 'ADD_PRODUCT',
-        user_id: '123456789',
-        product_link: 'https://amazon.com.br/dp/B012345678',
-        is_processed: 0
-      }));
-      expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Link adicionado com sucesso'));
+      expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Envie o link ou lista de links da Amazon'));
     });
 
-    it('deve testar comando /addlink sem texto', async () => {
+    it('deve testar comando /addlink sem usuário cadastrado', async () => {
       // Arrange
       const mockCtx = {
         from: { id: 123456789 },
-        message: {
-          text: '/addlink'
-        },
         reply: jest.fn()
       } as unknown as Context;
+
+      mockUserRepo.findById.mockResolvedValue(null);
 
       // Get the handler function
       const addlinkHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'addlink')[1];
@@ -309,7 +298,7 @@ describe('TelegramBot', () => {
       await addlinkHandler(mockCtx);
 
       // Assert
-      expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Por favor, forneça um link'));
+      expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Por favor, use /enable primeiro'));
     });
 
     it('deve testar comando /addlink com usuário desabilitado', async () => {
@@ -348,6 +337,16 @@ describe('TelegramBot', () => {
         from: { id: 123456789 },
         reply: jest.fn()
       } as unknown as Context;
+
+      const mockUser: User = {
+        id: '123456789',
+        name: 'Test',
+        username: 'testuser',
+        language: 'pt',
+        enabled: true
+      };
+
+      mockUserRepo.findById.mockResolvedValue(mockUser);
 
       const mockProducts: Product[] = [
         {
@@ -393,8 +392,12 @@ describe('TelegramBot', () => {
       await listHandler(mockCtx);
 
       // Assert
-      expect(mockProductRepo.findByUserId).toHaveBeenCalledWith('123456789');
-      expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Seus produtos monitorados'));
+      expect(mockProductRepo.findByUserId).toHaveBeenCalledWith('123456789', 1, 5);
+      // A mensagem agora inclui um keyboard, então vamos verificar apenas o primeiro argumento
+      expect(mockCtx.reply).toHaveBeenCalledWith(
+        expect.stringContaining('📋 Seus produtos monitorados'),
+        expect.any(Object)
+      );
     });
 
     it('deve testar comando /list sem produtos', async () => {
@@ -403,6 +406,16 @@ describe('TelegramBot', () => {
         from: { id: 123456789 },
         reply: jest.fn()
       } as unknown as Context;
+
+      const mockUser: User = {
+        id: '123456789',
+        name: 'Test',
+        username: 'testuser',
+        language: 'pt',
+        enabled: true
+      };
+
+      mockUserRepo.findById.mockResolvedValue(mockUser);
 
       mockProductRepo.findByUserId.mockResolvedValue({ products: [], total: 0 });
 
@@ -413,8 +426,8 @@ describe('TelegramBot', () => {
       await listHandler(mockCtx);
 
       // Assert
-      expect(mockProductRepo.findByUserId).toHaveBeenCalledWith('123456789');
-      expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Você ainda não tem produtos'));
+      expect(mockProductRepo.findByUserId).toHaveBeenCalledWith('123456789', 1, 5);
+      expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Você não está monitorando nenhum produto ainda'));
     });
 
     it('deve lidar com erros nos handlers', async () => {
@@ -434,8 +447,8 @@ describe('TelegramBot', () => {
       await enableHandler(mockCtx);
 
       // Assert
-      expect(consoleSpy).toHaveBeenCalledWith('Erro no comando enable:', expect.any(Error));
-      expect(mockCtx.reply).toHaveBeenCalledWith('Ocorreu um erro. Tente novamente mais tarde.');
+      expect(consoleSpy).toHaveBeenCalledWith('Erro ao processar comando /enable:', expect.any(Error));
+      expect(mockCtx.reply).toHaveBeenCalledWith('Desculpe, ocorreu um erro ao processar seu comando. 😕');
 
       consoleSpy.mockRestore();
     });

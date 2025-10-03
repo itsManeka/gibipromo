@@ -141,9 +141,7 @@ describe('AddProductActionProcessor', () => {
         }));
         expect(mockActionRepo.create).toHaveBeenCalledWith(expect.objectContaining({
           type: ActionType.NOTIFY_PRICE,
-          product_id: TEST_ASIN,
-          old_price: 95, // existingProduct.price
-          new_price: 90  // amazonProduct.currentPrice
+          value: TEST_ASIN
         }));
       });
 
@@ -182,7 +180,7 @@ describe('AddProductActionProcessor', () => {
       it('should mark action as processed when link is invalid', async () => {
         // Setup
         const invalidAction = createTestAction(TEST_ASIN, {
-          product_link: 'https://amazon.com.br/invalid/link'
+          value: 'https://amazon.com.br/invalid/link'
         });
 
         // Execute
@@ -270,8 +268,8 @@ describe('AddProductActionProcessor', () => {
     it('should mark all actions as processed when no valid ASINs found', async () => {
       // Setup
       const invalidActions = [
-        createTestAction(TEST_ASIN, { product_link: 'https://amazon.com.br/invalid/1' }),
-        createTestAction(TEST_ASIN, { product_link: 'https://amazon.com.br/invalid/2' })
+        createTestAction(TEST_ASIN, { value: 'https://amazon.com.br/invalid/1' }),
+        createTestAction(TEST_ASIN, { value: 'https://amazon.com.br/invalid/2' })
       ];
       mockActionRepo.findPendingByType.mockResolvedValue(invalidActions);
 

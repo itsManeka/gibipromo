@@ -67,10 +67,12 @@ Monitor de preços da Amazon em TypeScript usando arquitetura limpa e AWS. Bot d
 
 ## Comandos do Bot 🤖
 
+- `/start`: Inicia o bot e cria sua conta
 - `/enable`: Ativa a monitoria de preços
 - `/disable`: Desativa a monitoria
 - `/addlink`: Adiciona produto(s) para monitorar
 - `/list`: Lista produtos monitorados
+- `/delete`: Exclui sua conta permanentemente
 - `/help`: Lista os comandos disponíveis
 
 ## Estrutura do Projeto 📁
@@ -101,17 +103,27 @@ src/
 
 ## Fluxo de Funcionamento 🔄
 
-1. **Adição de Produto**:
+1. **Criação de Conta**:
+   - Usuário envia `/start`
+   - Bot cria conta do usuário
+   - Usuário pode usar `/enable` para ativar monitoramento
+
+2. **Adição de Produto**:
    - Usuário envia `/addlink`
    - Bot pede os links
    - Usuário envia link(s) da Amazon
    - Sistema processa em lote para eficiência
 
-2. **Monitoramento**:
+3. **Monitoramento**:
    - Sistema verifica preços em lotes
    - Quando há redução, cria ação de notificação
    - Bot envia mensagem com o novo preço
    - Botão direto para a Amazon
+
+4. **Gerenciamento de Conta**:
+   - `/enable` / `/disable` para controlar monitoramento
+   - `/list` para ver produtos monitorados
+   - `/delete` para excluir conta permanentemente
 
 ## Contribuindo 🤝
 

@@ -55,7 +55,8 @@ export class ExtendedMockAmazonPAAPIClient implements AmazonProductAPI {
       currentPrice: 129.99,
       inStock: true,
       imageUrl: 'https://example.com/kindle_11gen.jpg',
-      isPreOrder: false
+      isPreOrder: false,
+      url: 'https://amazon.com.br/dp/B08PP8QHFQ'
     });
 
     this.mockProducts.set('B07JQKWWXT', {
@@ -65,7 +66,8 @@ export class ExtendedMockAmazonPAAPIClient implements AmazonProductAPI {
       currentPrice: 27.99,
       inStock: false,
       imageUrl: 'https://example.com/manga/naruto_1.jpg',
-      isPreOrder: true
+      isPreOrder: true,
+      url: 'https://amazon.com.br/dp/B07JQKWWXT'
     });
 
     // Adiciona alguns em promoção
@@ -76,7 +78,8 @@ export class ExtendedMockAmazonPAAPIClient implements AmazonProductAPI {
       currentPrice: 39.99,
       inStock: true,
       imageUrl: 'https://example.com/manga/dragonball_1.jpg',
-      isPreOrder: false
+      isPreOrder: false,
+      url: 'https://amazon.com.br/dp/B09QWERTY1'
     });
   }
 
@@ -103,7 +106,8 @@ export class ExtendedMockAmazonPAAPIClient implements AmazonProductAPI {
       currentPrice,
       inStock: (hash % 100) < 90, // 90% em estoque
       imageUrl: `https://example.com/${asin}.jpg`,
-      isPreOrder: (hash % 100) < 10 // 10% pré-venda
+      isPreOrder: (hash % 100) < 10, // 10% pré-venda
+      url: `https://amazon.com.br/dp/${asin}`
     };
   }
 

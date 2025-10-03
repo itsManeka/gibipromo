@@ -29,16 +29,18 @@ export class TelegramBot {
    * Configura os comandos do bot
    */
   private setupCommands(): void {
+    this.bot.command('start', this.handleStart.bind(this));
     this.bot.command('enable', this.handleEnable.bind(this));
     this.bot.command('disable', this.handleDisable.bind(this));
     this.bot.command('help', this.handleHelp.bind(this));
     this.bot.command('addlink', this.handleAddLink.bind(this));
     this.bot.command('list', this.handleList.bind(this));
-    this.bot.command('start', this.handleEnable.bind(this));
+    this.bot.command('delete', this.handleDelete.bind(this));
 
     // Handler para ações nos botões inline
     this.bot.action(/^product:(.+)$/, this.handleProductDetails.bind(this));
     this.bot.action(/^page:(\d+)$/, this.handlePageChange.bind(this));
+    this.bot.action(/^delete:(yes|no)$/, this.handleDeleteConfirmation.bind(this));
 
     // Handler para mensagens normais (links)
     this.bot.on('text', this.handleText.bind(this));
@@ -56,17 +58,16 @@ export class TelegramBot {
   }
 
   /**
-   * Manipula o comando /enable
+   * Manipula o comando /start
    */
-  private async handleEnable(ctx: Context): Promise<void> {
+  private async handleStart(ctx: Context): Promise<void> {
     try {
       const { id, first_name, username, language_code } = ctx.from!;
 
       // Verifica se o usuário já existe
       const existingUser = await this.userRepository.findById(id.toString());
       if (existingUser) {
-        await this.userRepository.setEnabled(id.toString(), true);
-        await ctx.reply('Monitoria ativada com sucesso! ✅');
+        await ctx.reply('Bem-vindo de volta ao GibiPromo! 🎉\nUse /help para ver os comandos disponíveis.');
         return;
       }
 
@@ -79,7 +80,30 @@ export class TelegramBot {
       });
 
       await this.userRepository.create(user);
-      await ctx.reply('Bem-vindo ao GibiPromo! 🎉\nUse /help para ver os comandos disponíveis.');
+      await ctx.reply('Bem-vindo ao GibiPromo! 🎉\nAgora use /enable para ativar o monitoramento de preços e depois /help para ver os comandos disponíveis.');
+    } catch (error) {
+      console.error('Erro ao processar comando /start:', error);
+      await ctx.reply('Desculpe, ocorreu um erro ao processar seu comando. 😕');
+    }
+  }
+
+  /**
+   * Manipula o comando /enable
+   */
+  private async handleEnable(ctx: Context): Promise<void> {
+    try {
+      const userId = ctx.from!.id.toString();
+
+      // Verifica se o usuário existe
+      const existingUser = await this.userRepository.findById(userId);
+      if (!existingUser) {
+        await ctx.reply('Por favor, use /start primeiro para começar a usar o bot.');
+        return;
+      }
+
+      // Ativa a monitoria para o usuário existente
+      await this.userRepository.setEnabled(userId, true);
+      await ctx.reply('Monitoria ativada com sucesso! ✅\nAgora você pode usar /addlink para adicionar produtos.');
     } catch (error) {
       console.error('Erro ao processar comando /enable:', error);
       await ctx.reply('Desculpe, ocorreu um erro ao processar seu comando. 😕');
@@ -92,6 +116,14 @@ export class TelegramBot {
   private async handleDisable(ctx: Context): Promise<void> {
     try {
       const userId = ctx.from!.id.toString();
+      
+      // Verifica se o usuário existe
+      const existingUser = await this.userRepository.findById(userId);
+      if (!existingUser) {
+        await ctx.reply('Por favor, use /start primeiro para começar a usar o bot.');
+        return;
+      }
+
       await this.userRepository.setEnabled(userId, false);
       await ctx.reply('Monitoria desativada. ❌\nUse /enable para reativar.');
     } catch (error) {
@@ -107,19 +139,22 @@ export class TelegramBot {
     const helpMessage = `
 🤖 *Comandos disponíveis:*
 
+/start - Inicia o bot e cria sua conta
 /enable - Ativa a monitoria de preços
 /disable - Desativa a monitoria
 /addlink - Adiciona um produto para monitorar
 /list - Lista seus produtos monitorados
+/delete - Exclui sua conta permanentemente
 /help - Mostra esta mensagem
 
 *Como usar:*
-1. Use /enable para ativar a monitoria
-2. Envie links da Amazon com /addlink
-3. Use /list para ver seus produtos
-4. Aguarde notificações de preços! 📉
+1. Use /start para criar sua conta
+2. Use /enable para ativar a monitoria
+3. Envie links da Amazon com /addlink
+4. Use /list para ver seus produtos
+5. Aguarde notificações de preços! 📉
 `;
-    await ctx.replyWithMarkdownV2(helpMessage);
+    await ctx.replyWithMarkdownV2(this.escapeMarkdown(helpMessage));
   }
 
   /**
@@ -276,7 +311,7 @@ ${product.preorder ? '\n⏳ Em pré\\-venda' : ''}`;
       const user = await this.userRepository.findById(userId);
 
       if (!user) {
-        await ctx.reply('Por favor, use /enable primeiro para começar a usar o bot.');
+        await ctx.reply('Por favor, use /start primeiro para começar a usar o bot.');
         return;
       }
 
@@ -343,6 +378,64 @@ ${product.preorder ? '\n⏳ Em pré\\-venda' : ''}`;
     } catch (error) {
       console.error('Erro ao processar links:', error);
       await ctx.reply('Desculpe, ocorreu um erro ao processar os links. 😕');
+    }
+  }
+
+  /**
+   * Manipula o comando /delete
+   */
+  private async handleDelete(ctx: Context): Promise<void> {
+    try {
+      const userId = ctx.from!.id.toString();
+      const user = await this.userRepository.findById(userId);
+
+      if (!user) {
+        await ctx.reply('Por favor, use /start primeiro para começar a usar o bot.');
+        return;
+      }
+
+      await ctx.reply(
+        '⚠️ Tem certeza que deseja excluir sua conta e parar o monitoramento?\n\n' +
+        'Esta ação não pode ser desfeita e você perderá todos os seus produtos monitorados.',
+        {
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '✅ Sim', callback_data: 'delete:yes' },
+              { text: '❌ Não', callback_data: 'delete:no' }
+            ]]
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Erro ao processar comando /delete:', error);
+      await ctx.reply('Desculpe, ocorreu um erro ao processar seu comando. 😕');
+    }
+  }
+
+  /**
+   * Manipula a confirmação do comando delete
+   */
+  private async handleDeleteConfirmation(ctx: Context): Promise<void> {
+    try {
+      if (!('match' in ctx) || !ctx.match || !Array.isArray(ctx.match)) return;
+
+      const action = ctx.match[1] as string;
+      const userId = ctx.from!.id.toString();
+
+      if (action === 'yes') {
+        // Remove o usuário da base de dados
+        await this.userRepository.delete(userId);
+        
+        // Remove do estado local se existir
+        this.userStates.delete(userId);
+
+        await ctx.reply('✅ Sua conta foi excluída com sucesso.\nObrigado por usar o GibiPromo!');
+      } else {
+        await ctx.reply('❌ Operação cancelada.\nSua conta permanece ativa.');
+      }
+    } catch (error) {
+      console.error('Erro ao processar confirmação de exclusão:', error);
+      await ctx.reply('Desculpe, ocorreu um erro ao processar a exclusão. 😕');
     }
   }
 }

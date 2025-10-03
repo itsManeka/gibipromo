@@ -154,10 +154,67 @@ describe('TelegramBot', () => {
       // Assert
       expect(mockUserRepo.findById).toHaveBeenCalledWith('123456789');
       expect(mockUserRepo.setEnabled).toHaveBeenCalledWith('123456789', true);
-      expect(mockCtx.reply).toHaveBeenCalledWith('Monitoria ativada com sucesso! ✅');
+      expect(mockCtx.reply).toHaveBeenCalledWith('Monitoria ativada com sucesso! ✅\nAgora você pode usar /addlink para adicionar produtos.');
     });
 
     it('deve testar comando /enable com usuário novo', async () => {
+      // Arrange
+      const mockCtx = {
+        from: {
+          id: 123456789,
+          first_name: 'Test',
+          username: 'testuser',
+          language_code: 'pt'
+        },
+        reply: jest.fn()
+      } as unknown as Context;
+
+      mockUserRepo.findById.mockResolvedValue(null);
+
+      // Get the handler function
+      const enableHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'enable')[1];
+
+      // Act
+      await enableHandler(mockCtx);
+
+      // Assert
+      expect(mockUserRepo.findById).toHaveBeenCalledWith('123456789');
+      expect(mockUserRepo.create).not.toHaveBeenCalled();
+      expect(mockCtx.reply).toHaveBeenCalledWith('Por favor, use /start primeiro para começar a usar o bot.');
+    });
+
+    it('deve testar comando /disable', async () => {
+      // Arrange
+      const mockCtx = {
+        from: {
+          id: 123456789
+        },
+        reply: jest.fn()
+      } as unknown as Context;
+
+      const existingUser: User = {
+        id: '123456789',
+        name: 'Test',
+        username: 'testuser',
+        language: 'pt',
+        enabled: true
+      };
+
+      mockUserRepo.findById.mockResolvedValue(existingUser);
+
+      // Get the handler function
+      const disableHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'disable')[1];
+
+      // Act
+      await disableHandler(mockCtx);
+
+      // Assert
+      expect(mockUserRepo.findById).toHaveBeenCalledWith('123456789');
+      expect(mockUserRepo.setEnabled).toHaveBeenCalledWith('123456789', false);
+      expect(mockCtx.reply).toHaveBeenCalledWith('Monitoria desativada. ❌\nUse /enable para reativar.');
+    });
+
+    it('deve testar comando /start com usuário novo', async () => {
       // Arrange
       const mockCtx = {
         from: {
@@ -175,14 +232,14 @@ describe('TelegramBot', () => {
         name: 'Test',
         username: 'testuser',
         language: 'pt',
-        enabled: true
+        enabled: false
       });
 
       // Get the handler function
-      const enableHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'enable')[1];
+      const startHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'start')[1];
 
       // Act
-      await enableHandler(mockCtx);
+      await startHandler(mockCtx);
 
       // Assert
       expect(mockUserRepo.findById).toHaveBeenCalledWith('123456789');
@@ -193,30 +250,10 @@ describe('TelegramBot', () => {
         language: 'pt',
         enabled: false
       }));
-      expect(mockCtx.reply).toHaveBeenCalledWith('Bem-vindo ao GibiPromo! 🎉\nUse /help para ver os comandos disponíveis.');
+      expect(mockCtx.reply).toHaveBeenCalledWith('Bem-vindo ao GibiPromo! 🎉\nAgora use /enable para ativar o monitoramento de preços e depois /help para ver os comandos disponíveis.');
     });
 
-    it('deve testar comando /disable', async () => {
-      // Arrange
-      const mockCtx = {
-        from: {
-          id: 123456789
-        },
-        reply: jest.fn()
-      } as unknown as Context;
-
-      // Get the handler function
-      const disableHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'disable')[1];
-
-      // Act
-      await disableHandler(mockCtx);
-
-      // Assert
-      expect(mockUserRepo.setEnabled).toHaveBeenCalledWith('123456789', false);
-      expect(mockCtx.reply).toHaveBeenCalledWith('Monitoria desativada. ❌\nUse /enable para reativar.');
-    });
-
-    it('deve testar comando /start', async () => {
+    it('deve testar comando /start com usuário existente', async () => {
       // Arrange
       const mockCtx = {
         from: {
@@ -228,6 +265,16 @@ describe('TelegramBot', () => {
         reply: jest.fn()
       } as unknown as Context;
 
+      const existingUser: User = {
+        id: '123456789',
+        name: 'Test',
+        username: 'testuser',
+        language: 'pt',
+        enabled: false
+      };
+
+      mockUserRepo.findById.mockResolvedValue(existingUser);
+
       // Get the handler function
       const startHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'start')[1];
 
@@ -235,7 +282,9 @@ describe('TelegramBot', () => {
       await startHandler(mockCtx);
 
       // Assert
-      expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Bem-vindo ao GibiPromo'));
+      expect(mockUserRepo.findById).toHaveBeenCalledWith('123456789');
+      expect(mockUserRepo.create).not.toHaveBeenCalled();
+      expect(mockCtx.reply).toHaveBeenCalledWith('Bem-vindo de volta ao GibiPromo! 🎉\nUse /help para ver os comandos disponíveis.');
     });
 
     it('deve testar comando /help', async () => {
@@ -298,7 +347,7 @@ describe('TelegramBot', () => {
       await addlinkHandler(mockCtx);
 
       // Assert
-      expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Por favor, use /enable primeiro'));
+      expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Por favor, use /start primeiro'));
     });
 
     it('deve testar comando /addlink com usuário desabilitado', async () => {
@@ -428,6 +477,108 @@ describe('TelegramBot', () => {
       // Assert
       expect(mockProductRepo.findByUserId).toHaveBeenCalledWith('123456789', 1, 5);
       expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Você não está monitorando nenhum produto ainda'));
+    });
+
+    it('deve testar comando /delete com usuário existente', async () => {
+      // Arrange
+      const mockCtx = {
+        from: { id: 123456789 },
+        reply: jest.fn()
+      } as unknown as Context;
+
+      const existingUser: User = {
+        id: '123456789',
+        name: 'Test',
+        username: 'testuser',
+        language: 'pt',
+        enabled: true
+      };
+
+      mockUserRepo.findById.mockResolvedValue(existingUser);
+
+      // Get the handler function
+      const deleteHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'delete')[1];
+
+      // Act
+      await deleteHandler(mockCtx);
+
+      // Assert
+      expect(mockUserRepo.findById).toHaveBeenCalledWith('123456789');
+      expect(mockCtx.reply).toHaveBeenCalledWith(
+        expect.stringContaining('Tem certeza que deseja excluir sua conta'),
+        expect.objectContaining({
+          reply_markup: expect.objectContaining({
+            inline_keyboard: expect.arrayContaining([
+              expect.arrayContaining([
+                expect.objectContaining({ text: '✅ Sim', callback_data: 'delete:yes' }),
+                expect.objectContaining({ text: '❌ Não', callback_data: 'delete:no' })
+              ])
+            ])
+          })
+        })
+      );
+    });
+
+    it('deve testar comando /delete sem usuário cadastrado', async () => {
+      // Arrange
+      const mockCtx = {
+        from: { id: 123456789 },
+        reply: jest.fn()
+      } as unknown as Context;
+
+      mockUserRepo.findById.mockResolvedValue(null);
+
+      // Get the handler function
+      const deleteHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'delete')[1];
+
+      // Act
+      await deleteHandler(mockCtx);
+
+      // Assert
+      expect(mockUserRepo.findById).toHaveBeenCalledWith('123456789');
+      expect(mockCtx.reply).toHaveBeenCalledWith('Por favor, use /start primeiro para começar a usar o bot.');
+    });
+
+    it('deve testar confirmação de delete - Sim', async () => {
+      // Arrange
+      const mockCtx = {
+        from: { id: 123456789 },
+        reply: jest.fn(),
+        match: ['delete:yes', 'yes']
+      } as unknown as Context;
+
+      // Get the handler function
+      const deleteConfirmationHandler = mockBot.action.mock.calls.find((call: any) => 
+        call[0].toString() === '/^delete:(yes|no)$/'
+      )[1];
+
+      // Act
+      await deleteConfirmationHandler(mockCtx);
+
+      // Assert
+      expect(mockUserRepo.delete).toHaveBeenCalledWith('123456789');
+      expect(mockCtx.reply).toHaveBeenCalledWith('✅ Sua conta foi excluída com sucesso.\nObrigado por usar o GibiPromo!');
+    });
+
+    it('deve testar confirmação de delete - Não', async () => {
+      // Arrange
+      const mockCtx = {
+        from: { id: 123456789 },
+        reply: jest.fn(),
+        match: ['delete:no', 'no']
+      } as unknown as Context;
+
+      // Get the handler function
+      const deleteConfirmationHandler = mockBot.action.mock.calls.find((call: any) => 
+        call[0].toString() === '/^delete:(yes|no)$/'
+      )[1];
+
+      // Act
+      await deleteConfirmationHandler(mockCtx);
+
+      // Assert
+      expect(mockUserRepo.delete).not.toHaveBeenCalled();
+      expect(mockCtx.reply).toHaveBeenCalledWith('❌ Operação cancelada.\nSua conta permanece ativa.');
     });
 
     it('deve lidar com erros nos handlers', async () => {

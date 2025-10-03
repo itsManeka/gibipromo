@@ -1,33 +1,33 @@
 declare module 'paapi5-nodejs-sdk' {
-  export class ApiClient {
-    static instance: ApiClient;
-    accessKey: string;
-    secretKey: string;
-    host: string;
-    region: string;
-  }
+    export class ApiClient {
+        static instance: ApiClient;
+        accessKey: string;
+        secretKey: string;
+        host: string;
+        region: string;
+    }
 
-  export class DefaultApi {
-    constructor();
-    getItems(request: GetItemsRequest): Promise<GetItemsResponse>;
-  }
+    export class DefaultApi {
+        constructor();
+        getItems(request: GetItemsRequest): Promise<GetItemsResponse>;
+    }
 
-  export class GetItemsRequest {
-    constructor();
-    PartnerTag: string;
-    PartnerType: string;
-    ItemIds: string[];
-    Resources: string[];
-    Marketplace?: string;
-    Merchant?: string;
-    Condition?: string;
-  }
+    export class GetItemsRequest {
+        constructor();
+        PartnerTag: string;
+        PartnerType: string;
+        ItemIds: string[];
+        Resources: string[];
+        Marketplace?: string;
+        Merchant?: string;
+        Condition?: string;
+    }
 
-  export class GetItemsResponse {
-    static constructFromObject(data: any): GetItemsResponse;
-    ItemsResult?: {
-      Items?: Array<{
-        ASIN?: string;
+    export class GetItemsResponse {
+        static constructFromObject(data: any): GetItemsResponse;
+        ItemsResult?: {
+            Items?: Array<{
+                ASIN?: string;
                 DetailPageURL?: string;
                 Images?: {
                     Primary?: {
@@ -82,13 +82,13 @@ declare module 'paapi5-nodejs-sdk' {
                         Availability?: {
                             Type?: string;
                         };
-          }>;
+                    }>;
+                };
+            }>;
         };
-      }>;
-    };
-    Errors?: Array<{
-      Code: string;
-      Message: string;
-    }>;
-  }
+        Errors?: Array<{
+            Code: string;
+            Message: string;
+        }>;
+    }
 }

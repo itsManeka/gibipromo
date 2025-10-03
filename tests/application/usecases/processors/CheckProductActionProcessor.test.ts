@@ -3,6 +3,7 @@ import { ActionRepository } from '../../../../src/application/ports/ActionReposi
 import { ProductRepository } from '../../../../src/application/ports/ProductRepository';
 import { AmazonProductAPI } from '../../../../src/application/ports/AmazonProductAPI';
 import { Product } from '../../../../src/domain/entities/Product';
+import { ActionType, createCheckProductAction } from '../../../../src/domain/entities/Action';
 
 // Helper function to create test products
 const createTestProduct = (
@@ -13,16 +14,18 @@ const createTestProduct = (
   users: string[] = []
 ): Product => ({
   id,
-  offerid: `offer-${id}`,
+  offer_id: `offer-${id}`,
   title,
-  preco_cheio: fullPrice,
-  preco: currentPrice,
-  menor_preco: currentPrice,
-  link: `https://amazon.com.br/dp/${id}`,
-  imagem: `http://example.com/${id}.jpg`,
-  estoque: true,
-  pre_venda: false,
-  usuarios: users
+  full_price: fullPrice,
+  price: currentPrice,
+  lowest_price: currentPrice,
+  url: `https://amazon.com.br/dp/${id}`,
+  image: `http://example.com/${id}.jpg`,
+  in_stock: true,
+  preorder: false,
+  users: users,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
 });
 
 // Mocks
@@ -204,6 +207,109 @@ describe('CheckProductActionProcessor', () => {
       // Verifica que os produtos foram processados na ordem correta
       expect(mockAmazonApi.getProducts.mock.calls[0][0]).toEqual(['B0001AAAA']);
       expect(mockAmazonApi.getProducts.mock.calls[1][0]).toEqual(['B0002BBBB']);
+    });
+
+    it('deve tratar erro durante atualização de produto específico', async () => {
+      // Arrange
+      const products = [
+        createTestProduct('B0001AAAA', 'Product A', 100, 90),
+        createTestProduct('B0002BBBB', 'Product B', 200, 180)
+      ];
+
+      const amazonProducts = new Map([
+        ['B0001AAAA', { title: 'Product A', currentPrice: 85, offerId: 'offer-1', fullPrice: 100, inStock: true, imageUrl: 'img1.jpg', isPreOrder: false, url: 'https://amazon.com.br/dp/B0001AAAA' }],
+        ['B0002BBBB', { title: 'Product B', currentPrice: 170, offerId: 'offer-2', fullPrice: 200, inStock: true, imageUrl: 'img2.jpg', isPreOrder: false, url: 'https://amazon.com.br/dp/B0002BBBB' }]
+      ]);
+
+      mockProductRepo.getNextProductsToCheck.mockResolvedValue(products);
+      mockAmazonApi.getProducts.mockResolvedValue(amazonProducts);
+      
+      // Mock para simular erro apenas no segundo produto
+      mockProductRepo.update
+        .mockResolvedValueOnce(products[0]) // Primeiro produto ok
+        .mockRejectedValueOnce(new Error('Database error')); // Segundo produto falha
+
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      // Act
+      const result = await processor.processNext(2);
+
+      // Assert
+      expect(result).toBe(1); // Apenas 1 produto processado com sucesso
+      expect(consoleSpy).toHaveBeenCalledWith('Erro ao atualizar produto B0002BBBB:', expect.any(Error));
+      
+      consoleSpy.mockRestore();
+    });
+
+    it('deve tratar erro na API da Amazon durante processNext', async () => {
+      // Arrange
+      const products = [createTestProduct('B0001AAAA', 'Product A', 100, 90)];
+      
+      mockProductRepo.getNextProductsToCheck.mockResolvedValue(products);
+      mockAmazonApi.getProducts.mockRejectedValue(new Error('Amazon API error'));
+
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      // Act & Assert
+      await expect(processor.processNext(1)).rejects.toThrow('Amazon API error');
+      
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('error handling', () => {
+    it('deve tratar erro durante process de ação individual', async () => {
+      // Arrange
+      const action = createCheckProductAction('B0001AAAA');
+
+      mockProductRepo.findById.mockRejectedValue(new Error('Database connection failed'));
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      // Act
+      await processor.process(action);
+
+      // Assert
+      expect(consoleSpy).toHaveBeenCalledWith('Erro ao processar ação de verificação de produto:', expect.any(Error));
+      expect(mockActionRepo.markProcessed).not.toHaveBeenCalled(); // Não deve marcar como processado em caso de erro
+      
+      consoleSpy.mockRestore();
+    });
+
+    it('deve tratar produto não encontrado durante process', async () => {
+      // Arrange
+      const action = createCheckProductAction('B0001AAAA');
+
+      mockProductRepo.findById.mockResolvedValue(null);
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+      // Act
+      await processor.process(action);
+
+      // Assert
+      expect(consoleSpy).toHaveBeenCalledWith('Produto não encontrado: B0001AAAA');
+      expect(mockActionRepo.markProcessed).toHaveBeenCalledWith(action.id);
+      
+      consoleSpy.mockRestore();
+    });
+
+    it('deve tratar produto não encontrado na Amazon durante process', async () => {
+      // Arrange
+      const action = createCheckProductAction('B0001AAAA');
+
+      const product = createTestProduct('B0001AAAA', 'Product A', 100, 90);
+      
+      mockProductRepo.findById.mockResolvedValue(product);
+      mockAmazonApi.getProduct.mockResolvedValue(null);
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+      // Act
+      await processor.process(action);
+
+      // Assert
+      expect(consoleSpy).toHaveBeenCalledWith('Produto não encontrado na Amazon: B0001AAAA');
+      expect(mockActionRepo.markProcessed).toHaveBeenCalledWith(action.id);
+      
+      consoleSpy.mockRestore();
     });
   });
 });

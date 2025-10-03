@@ -12,12 +12,45 @@ export class DynamoDBProductRepository extends DynamoDBRepository<Product> imple
     super('Products');
   }
 
+  async create(entity: Product): Promise<Product> {
+    const now = new Date().toISOString();
+    const productWithTimestamps = {
+      ...entity,
+      created_at: now,
+      updated_at: now
+    };
+
+    const params: DocumentClient.PutItemInput = {
+      TableName: this.tableName,
+      Item: productWithTimestamps
+    };
+
+    await documentClient.put(params).promise();
+    return productWithTimestamps;
+  }
+
+  async update(entity: Product): Promise<Product> {
+    const now = new Date().toISOString();
+    const productWithUpdatedTimestamp = {
+      ...entity,
+      updated_at: now
+    };
+
+    const params: DocumentClient.PutItemInput = {
+      TableName: this.tableName,
+      Item: productWithUpdatedTimestamp
+    };
+
+    await documentClient.put(params).promise();
+    return productWithUpdatedTimestamp;
+  }
+
   async findByUserId(userId: string, page: number, pageSize: number): Promise<{ products: Product[]; total: number }> {
     console.log(`[DynamoDB] Buscando produtos do usuário ${userId} (página ${page}, ${pageSize} itens por página)`);
     
     const params: DocumentClient.ScanInput = {
       TableName: this.tableName,
-      FilterExpression: 'contains(usuarios, :userId)',
+      FilterExpression: 'contains(users, :userId)',
       ExpressionAttributeValues: {
         ':userId': userId
       }
@@ -53,10 +86,10 @@ export class DynamoDBProductRepository extends DynamoDBRepository<Product> imple
   async findByLink(link: string): Promise<Product | null> {
     const params: DocumentClient.QueryInput = {
       TableName: this.tableName,
-      IndexName: 'LinkIndex',
-      KeyConditionExpression: 'link = :link',
+      IndexName: 'UrlIndex',
+      KeyConditionExpression: 'url = :url',
       ExpressionAttributeValues: {
-        ':link': link
+        ':url': link
       }
     };
 
@@ -70,17 +103,21 @@ export class DynamoDBProductRepository extends DynamoDBRepository<Product> imple
     if (!product) return;
 
     // Se o usuário já está na lista, não faz nada
-    if (product.usuarios?.includes(userId)) {
+    if (product.users?.includes(userId)) {
       return;
     }
 
     const params: DocumentClient.UpdateItemInput = {
       TableName: this.tableName,
       Key: { id: productId },
-      UpdateExpression: 'SET usuarios = list_append(if_not_exists(usuarios, :empty), :userId)',
+      UpdateExpression: 'SET #users = list_append(if_not_exists(#users, :empty), :userId), updated_at = :updated_at',
+      ExpressionAttributeNames: {
+        '#users': 'users'
+      },
       ExpressionAttributeValues: {
         ':userId': [userId],
-        ':empty': []
+        ':empty': [],
+        ':updated_at': new Date().toISOString()
       }
     };
 
@@ -93,15 +130,19 @@ export class DynamoDBProductRepository extends DynamoDBRepository<Product> imple
     if (!product) return;
 
     // Remove o usuário da lista
-    const usuarios = product.usuarios.filter(id => id !== userId);
+    const users = product.users.filter((id: string) => id !== userId);
 
     // Atualiza o produto
     const params: DocumentClient.UpdateItemInput = {
       TableName: this.tableName,
       Key: { id: productId },
-      UpdateExpression: 'SET usuarios = :usuarios',
+      UpdateExpression: 'SET #users = :users, updated_at = :updated_at',
+      ExpressionAttributeNames: {
+        '#users': 'users'
+      },
       ExpressionAttributeValues: {
-        ':usuarios': usuarios
+        ':users': users,
+        ':updated_at': new Date().toISOString()
       }
     };
 
@@ -118,7 +159,10 @@ export class DynamoDBProductRepository extends DynamoDBRepository<Product> imple
         TableName: this.tableName,
         Limit: limit,
         // Busca apenas produtos que têm usuários monitorando
-        FilterExpression: 'attribute_exists(usuarios) AND size(usuarios) > :zero',
+        FilterExpression: 'attribute_exists(#users) AND size(#users) > :zero',
+        ExpressionAttributeNames: {
+          '#users': 'users'
+        },
         ExpressionAttributeValues: {
           ':zero': 0
         }

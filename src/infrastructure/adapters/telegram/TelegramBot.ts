@@ -210,16 +210,16 @@ export class TelegramBot {
         return;
       }
 
-      const formattedPrice = this.formatPrice(product.preco);
-      const formattedMinPrice = this.formatPrice(product.menor_preco);
+      const formattedPrice = this.formatPrice(product.price);
+      const formattedMinPrice = this.formatPrice(product.lowest_price);
 
       const message = `
 *${this.escapeMarkdown(product.title)}*
 
 💰 Preço atual: R$ ${formattedPrice}
 📉 Menor preço: R$ ${formattedMinPrice}
-${product.estoque ? '✅ Em estoque' : '❌ Fora de estoque'}
-${product.pre_venda ? '\n⏳ Em pré\\-venda' : ''}`;
+${product.in_stock ? '✅ Em estoque' : '❌ Fora de estoque'}
+${product.preorder ? '\n⏳ Em pré\\-venda' : ''}`;
 
       await ctx.reply(message, {
         parse_mode: 'MarkdownV2',
@@ -227,7 +227,7 @@ ${product.pre_venda ? '\n⏳ Em pré\\-venda' : ''}`;
           inline_keyboard: [[
             {
               text: '🛒 Ver Produto',
-              url: product.link
+              url: product.url
             }
           ]]
         }

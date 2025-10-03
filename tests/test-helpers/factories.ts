@@ -30,20 +30,23 @@ export const createAmazonProduct = (asin: string, overrides?: Partial<AmazonProd
   inStock: true,
   imageUrl: `http://example.com/${asin}.jpg`,
   isPreOrder: false,
+  url: `https://www.amazon.com.br/dp/${asin}/`,
   ...overrides
 });
 
 export const createProduct = (asin: string, overrides?: Partial<Product>): Product => ({
   id: asin,
-  offerid: `offer-${asin}`,
+  offer_id: `offer-${asin}`,
   title: `Test Product ${asin}`,
-  preco_cheio: 100,
-  preco: 95,
-  menor_preco: 95,
-  link: `https://amazon.com.br/dp/${asin}`,
-  imagem: `http://example.com/${asin}.jpg`,
-  usuarios: [],
-  estoque: true,
-  pre_venda: false,
+  full_price: 100,
+  price: 95,
+  lowest_price: 95,
+  url: `https://amazon.com.br/dp/${asin}`,
+  image: `http://example.com/${asin}.jpg`,
+  users: [],
+  in_stock: true,
+  preorder: false,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
   ...overrides
 });

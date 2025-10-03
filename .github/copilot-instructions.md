@@ -29,8 +29,8 @@ Criar um bot de Telegram em **TypeScript** para monitoramento de preços da Amaz
 
 ## Fluxos Principais
 ### Telegram
-- `/start` → Ativa monitoramento (`Users.enabled = true`)
-- `/stop` → Desativa monitoramento (`Users.enabled = false`)
+- `/enable` → Ativa monitoramento (`Users.enabled = true`)
+- `/disable` → Desativa monitoramento (`Users.enabled = false`)
 - `/help` → Lista comandos disponíveis
 - `/addlink` → Registra ação para monitorar um produto da Amazon
 
@@ -86,6 +86,13 @@ Criar um bot de Telegram em **TypeScript** para monitoramento de preços da Amaz
 - Criar testes unitários e integrados
 - Documentar o código (JSDoc/TypeDoc)
 - Atualizar **README.md** com mudanças relevantes
+- Executar os testes para garantir que a alteração não quebrou nada
+- Testar erros de linting e corrigi-los
+
+---
+
+## Regras absolutas
+- Sempre execute os testes com de cobertura com o parâmetro `--maxWorkers=1` para evitar problemas de travamento
 
 ---
 

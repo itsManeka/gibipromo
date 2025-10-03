@@ -9,6 +9,7 @@ export interface AmazonProduct {
   inStock: boolean;
   imageUrl: string;
   isPreOrder: boolean;
+  url: string;
 }
 
 /**

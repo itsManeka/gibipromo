@@ -13,6 +13,8 @@ export enum ActionType {
  * Base interface for all actions
  */
 export interface Action extends Entity {
+  user_id?: string; // Optional, only for ADD_PRODUCT actions
+  product_link?: string; // Optional, only for ADD_PRODUCT actions
   type: ActionType;
   created_at: string;
   is_processed: number; // 0 = false, 1 = true

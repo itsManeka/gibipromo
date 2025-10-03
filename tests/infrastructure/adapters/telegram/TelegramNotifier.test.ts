@@ -16,15 +16,17 @@ describe('TelegramNotifier', () => {
   const mockProduct: Product = {
     id: 'B08PP8QHFQ',
     title: 'Produto de Teste',
-    offerid: 'offer-123',
-    preco_cheio: 99.99,
-    preco: 89.99,
-    menor_preco: 89.99,
-    usuarios: ['123456789'],
-    estoque: true,
-    link: 'https://amazon.com.br/dp/B08PP8QHFQ',
-    imagem: 'https://example.com/image.jpg',
-    pre_venda: false
+    offer_id: 'offer-123',
+    full_price: 99.99,
+    price: 89.99,
+    lowest_price: 89.99,
+    users: ['123456789'],
+    in_stock: true,
+    url: 'https://amazon.com.br/dp/B08PP8QHFQ',
+    image: 'https://example.com/image.jpg',
+    preorder: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
 
   beforeEach(() => {

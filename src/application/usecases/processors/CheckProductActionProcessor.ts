@@ -35,15 +35,15 @@ export class CheckProductActionProcessor implements ActionProcessor<CheckProduct
         return;
       }
 
-      const oldPrice = product.preco;
+      const oldPrice = product.price;
       const shouldNotify = updateProductPrice(product, amazonProduct.currentPrice);
 
       // Atualiza outras informações do produto
-      product.offerid = amazonProduct.offerId;
-      product.preco_cheio = amazonProduct.fullPrice;
-      product.estoque = amazonProduct.inStock;
-      product.imagem = amazonProduct.imageUrl;
-      product.pre_venda = amazonProduct.isPreOrder;
+      product.offer_id = amazonProduct.offerId;
+      product.full_price = amazonProduct.fullPrice;
+      product.in_stock = amazonProduct.inStock;
+      product.image = amazonProduct.imageUrl;
+      product.preorder = amazonProduct.isPreOrder;
 
       await this.productRepository.update(product);
       await this.actionRepository.markProcessed(action.id);
@@ -92,15 +92,15 @@ export class CheckProductActionProcessor implements ActionProcessor<CheckProduct
           continue;
         }
 
-        const oldPrice = product.preco;
+        const oldPrice = product.price;
         const shouldNotify = updateProductPrice(product, amazonProduct.currentPrice);
 
         // Atualiza outras informações do produto
-        product.offerid = amazonProduct.offerId;
-        product.preco_cheio = amazonProduct.fullPrice;
-        product.estoque = amazonProduct.inStock;
-        product.imagem = amazonProduct.imageUrl;
-        product.pre_venda = amazonProduct.isPreOrder;
+        product.offer_id = amazonProduct.offerId;
+        product.full_price = amazonProduct.fullPrice;
+        product.in_stock = amazonProduct.inStock;
+        product.image = amazonProduct.imageUrl;
+        product.preorder = amazonProduct.isPreOrder;
 
         await this.productRepository.update(product);
         processedCount++;

@@ -5,7 +5,7 @@ docker/
 
 # Environment variables
 .env
-.env.test
+*/.env.test
 .env.local
 
 # Coverage directory

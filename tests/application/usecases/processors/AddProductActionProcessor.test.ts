@@ -98,11 +98,11 @@ describe('AddProductActionProcessor', () => {
         expect(mockProductRepo.create).toHaveBeenCalledWith(expect.objectContaining({
           id: TEST_ASIN,
           title: amazonProduct.title,
-          preco: amazonProduct.currentPrice,
-          preco_cheio: amazonProduct.fullPrice,
-          estoque: amazonProduct.inStock,
-          imagem: amazonProduct.imageUrl,
-          pre_venda: amazonProduct.isPreOrder
+          price: amazonProduct.currentPrice,
+          full_price: amazonProduct.fullPrice,
+          in_stock: amazonProduct.inStock,
+          image: amazonProduct.imageUrl,
+          preorder: amazonProduct.isPreOrder
         }));
         expect(mockProductRepo.addUser).toHaveBeenCalledWith(TEST_ASIN, testUser.id);
         expect(mockActionRepo.markProcessed).toHaveBeenCalledWith(testAction.id);
@@ -136,13 +136,13 @@ describe('AddProductActionProcessor', () => {
         // Verify
         expect(mockProductRepo.update).toHaveBeenCalledWith(expect.objectContaining({
           id: TEST_ASIN,
-          preco: amazonProduct.currentPrice,
-          preco_cheio: amazonProduct.fullPrice
+          price: amazonProduct.currentPrice,
+          full_price: amazonProduct.fullPrice
         }));
         expect(mockActionRepo.create).toHaveBeenCalledWith(expect.objectContaining({
           type: ActionType.NOTIFY_PRICE,
           product_id: TEST_ASIN,
-          old_price: 95, // existingProduct.preco
+          old_price: 95, // existingProduct.price
           new_price: 90  // amazonProduct.currentPrice
         }));
       });
@@ -164,7 +164,7 @@ describe('AddProductActionProcessor', () => {
 
       it('should update product without notification when price stays the same', async () => {
         // Setup
-        const samePriceProduct = createAmazonProduct(TEST_ASIN, { currentPrice: existingProduct.preco });
+        const samePriceProduct = createAmazonProduct(TEST_ASIN, { currentPrice: existingProduct.price });
         mockUserRepo.findById.mockResolvedValue(testUser);
         mockProductRepo.findById.mockResolvedValue(existingProduct);
         mockAmazonApi.getProducts.mockResolvedValue(new Map([[TEST_ASIN, samePriceProduct]]));

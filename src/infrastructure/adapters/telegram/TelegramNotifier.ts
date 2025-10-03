@@ -38,8 +38,8 @@ export class TelegramNotifier {
 ✨ *Novo preço: R$ ${formattedNewPrice}*
 📉 Redução: ${formattedDifference}%
 
-${product.estoque ? '✅ Produto em estoque' : '❌ Produto fora de estoque'}
-${product.pre_venda ? '\n⏳ *Produto em pré\\-venda*' : ''}
+${product.in_stock ? '✅ Produto em estoque' : '❌ Produto fora de estoque'}
+${product.preorder ? '\n⏳ *Produto em pré\\-venda*' : ''}
 
 _Clique no botão abaixo para ver produto_
 `;
@@ -52,7 +52,7 @@ _Clique no botão abaixo para ver produto_
             [
               {
                 text: '🛒 Ver produto',
-                url: product.link
+                url: product.url
               }
             ]
           ]

@@ -42,7 +42,7 @@ const tables = [
         TableName: 'Products',
         AttributeDefinitions: [
             { AttributeName: 'id', AttributeType: 'S' },
-            { AttributeName: 'link', AttributeType: 'S' },
+            { AttributeName: 'url', AttributeType: 'S' },
             { AttributeName: 'offer_id', AttributeType: 'S' }
         ],
         KeySchema: [
@@ -50,9 +50,9 @@ const tables = [
         ],
         GlobalSecondaryIndexes: [
             {
-                IndexName: 'LinkIndex',
+                IndexName: 'UrlIndex',
                 KeySchema: [
-                    { AttributeName: 'link', KeyType: 'HASH' }
+                    { AttributeName: 'url', KeyType: 'HASH' }
                 ],
                 Projection: { ProjectionType: 'ALL' },
                 ProvisionedThroughput: {

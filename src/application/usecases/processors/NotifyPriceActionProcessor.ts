@@ -27,7 +27,7 @@ export class NotifyPriceActionProcessor implements ActionProcessor<NotifyPriceAc
       }
 
       // Verifica se tem usuários monitorando
-      if (!product.usuarios || product.usuarios.length === 0) {
+      if (!product.users || product.users.length === 0) {
         console.log(`Nenhum usuário monitorando o produto ${product.id}`);
         await this.actionRepository.markProcessed(action.id);
         return;
@@ -35,7 +35,7 @@ export class NotifyPriceActionProcessor implements ActionProcessor<NotifyPriceAc
 
       // Notifica todos os usuários que monitoram o produto
       await Promise.all(
-        product.usuarios.map(userId =>
+        product.users.map((userId: string) =>
           this.notifier.notifyPriceChange(
             userId,
             product,

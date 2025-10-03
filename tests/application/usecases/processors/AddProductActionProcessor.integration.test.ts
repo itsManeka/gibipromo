@@ -189,8 +189,8 @@ class ExtendedDynamoDBProductRepository extends DynamoDBProductRepository {
   async addUser(productId: string, userId: string): Promise<void> {
     const product = this.products.get(productId);
     if (product) {
-      if (!product.usuarios.includes(userId)) {
-        product.usuarios.push(userId);
+      if (!product.users.includes(userId)) {
+        product.users.push(userId);
       }
     }
   }
@@ -378,7 +378,7 @@ describe('AddProductActionProcessor Integration Tests', () => {
     it('deve criar notificação quando preço diminui', async () => {
       // Arrange
       const originalProduct = createProduct('B012345678', {
-        preco: 100
+        price: 100
       });
       await productRepository.create(originalProduct);
 

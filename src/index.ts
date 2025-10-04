@@ -6,42 +6,42 @@ import { createAmazonClient } from './infrastructure/adapters/amazon';
 dotenv.config();
 
 async function main(): Promise<void> {
-  try {
+    try {
 
-    // Inicializa o cliente da Amazon
-    const amazonClient = createAmazonClient();
+        // Inicializa o cliente da Amazon
+        const amazonClient = createAmazonClient();
 
-    // Configura e inicia o scheduler
-    const scheduler = createActionScheduler(
-      amazonClient
-    );
+        // Configura e inicia o scheduler
+        const scheduler = createActionScheduler(
+            amazonClient
+        );
 
-    // Inicializa o bot
-    const bot = createTelegramBot();
-    bot.start();
-    console.log('Bot iniciado com sucesso! 🤖');
+        // Inicializa o bot
+        const bot = createTelegramBot();
+        bot.start();
+        console.log('Bot iniciado com sucesso! 🤖');
 
-    // Configuração de desligamento gracioso
-    process.on('SIGINT', () => {
-      scheduler.stop();
-      process.exit(0);
-    });
+        // Configuração de desligamento gracioso
+        process.on('SIGINT', () => {
+            scheduler.stop();
+            process.exit(0);
+        });
 
-    process.on('SIGTERM', () => {
-      scheduler.stop();
-      process.exit(0);
-    });
+        process.on('SIGTERM', () => {
+            scheduler.stop();
+            process.exit(0);
+        });
 
-    process.on('unhandledRejection', (reason, promise) => {
-      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-      scheduler.stop();
-      process.exit(1);
-    });
+        process.on('unhandledRejection', (reason, promise) => {
+            console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+            scheduler.stop();
+            process.exit(1);
+        });
 
-  } catch (error) {
-    console.error('Erro ao iniciar a aplicação:', error);
-    process.exit(1);
-  }
+    } catch (error) {
+        console.error('Erro ao iniciar a aplicação:', error);
+        process.exit(1);
+    }
 }
 
 main();

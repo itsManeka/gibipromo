@@ -11,13 +11,13 @@ dotenv.config();
  * @returns {AmazonProductAPI} Cliente da PA-API (real ou mock)
  */
 export function createAmazonClient(): AmazonProductAPI {
-  const useMockPAAPI = process.env.USE_MOCK_PAAPI === 'true';
+    const useMockPAAPI = process.env.USE_MOCK_PAAPI === 'true';
   
-  if (useMockPAAPI) {
-    console.log('🔧 Usando mock da PA-API');
-    return new MockAmazonPAAPIClient();
-  }
+    if (useMockPAAPI) {
+        console.log('🔧 Usando mock da PA-API');
+        return new MockAmazonPAAPIClient();
+    }
 
-  console.log('🌐 Usando PA-API real');
-  return new AmazonPAAPIClient();
+    console.log('🌐 Usando PA-API real');
+    return new AmazonPAAPIClient();
 }

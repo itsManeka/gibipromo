@@ -54,38 +54,38 @@ export type ActionUnion = AddProductAction | CheckProductAction | NotifyPriceAct
  * Factory function to create an AddProductAction
  */
 export function createAddProductAction(userId: string, productLink: string): AddProductAction {
-  return {
-    id: `add-${Date.now()}`,
-    type: ActionType.ADD_PRODUCT,
-    user_id: userId,
-    value: productLink,
-    created_at: new Date().toISOString(),
-    is_processed: 0
-  };
+    return {
+        id: `add-${Date.now()}`,
+        type: ActionType.ADD_PRODUCT,
+        user_id: userId,
+        value: productLink,
+        created_at: new Date().toISOString(),
+        is_processed: 0
+    };
 }
 
 /**
  * Factory function to create a CheckProductAction
  */
 export function createCheckProductAction(productId: string): CheckProductAction {
-  return {
-    id: `check-${Date.now()}`,
-    type: ActionType.CHECK_PRODUCT,
-    value: productId,
-    created_at: new Date().toISOString(),
-    is_processed: 0
-  };
+    return {
+        id: `check-${Date.now()}`,
+        type: ActionType.CHECK_PRODUCT,
+        value: productId,
+        created_at: new Date().toISOString(),
+        is_processed: 0
+    };
 }
 
 /**
  * Factory function to create a NotifyPriceAction
  */
 export function createNotifyPriceAction(productId: string): NotifyPriceAction {
-  return {
-    id: `notify-${Date.now()}`,
-    type: ActionType.NOTIFY_PRICE,
-    value: productId,
-    created_at: new Date().toISOString(),
-    is_processed: 0
-  };
+    return {
+        id: `notify-${Date.now()}`,
+        type: ActionType.NOTIFY_PRICE,
+        value: productId,
+        created_at: new Date().toISOString(),
+        is_processed: 0
+    };
 }

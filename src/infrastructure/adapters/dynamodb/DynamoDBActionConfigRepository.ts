@@ -9,32 +9,32 @@ import { DocumentClient } from 'aws-sdk/clients/dynamodb';
  * DynamoDB implementation of ActionConfigRepository
  */
 export class DynamoDBActionConfigRepository extends DynamoDBRepository<ActionConfig> implements ActionConfigRepository {
-  constructor() {
-    super('ActionConfigs');
-  }
+    constructor() {
+        super('ActionConfigs');
+    }
 
-  async findByType(type: ActionType): Promise<ActionConfig | null> {
-    const params: DocumentClient.GetItemInput = {
-      TableName: this.tableName,
-      Key: {
-        action_type: type
-      }
-    };
+    async findByType(type: ActionType): Promise<ActionConfig | null> {
+        const params: DocumentClient.GetItemInput = {
+            TableName: this.tableName,
+            Key: {
+                action_type: type
+            }
+        };
 
-    const result = await documentClient.get(params).promise();
-    return result.Item ? (result.Item as ActionConfig) : null;
-  }
+        const result = await documentClient.get(params).promise();
+        return result.Item ? (result.Item as ActionConfig) : null;
+    }
 
-  async findEnabled(): Promise<ActionConfig[]> {
-    const params: DocumentClient.ScanInput = {
-      TableName: this.tableName,
-      FilterExpression: 'enabled = :enabled',
-      ExpressionAttributeValues: {
-        ':enabled': true
-      }
-    };
+    async findEnabled(): Promise<ActionConfig[]> {
+        const params: DocumentClient.ScanInput = {
+            TableName: this.tableName,
+            FilterExpression: 'enabled = :enabled',
+            ExpressionAttributeValues: {
+                ':enabled': true
+            }
+        };
 
-    const result = await documentClient.scan(params).promise();
-    return (result.Items || []) as ActionConfig[];
-  }
+        const result = await documentClient.scan(params).promise();
+        return (result.Items || []) as ActionConfig[];
+    }
 }

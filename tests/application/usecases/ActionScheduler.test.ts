@@ -8,234 +8,234 @@ import { ActionConfig } from '../../../src/domain/entities/ActionConfig';
 
 // Mock do toad-scheduler
 jest.mock('toad-scheduler', () => ({
-  ToadScheduler: jest.fn().mockImplementation(() => ({
-    addSimpleIntervalJob: jest.fn(),
-    stop: jest.fn()
-  })),
-  SimpleIntervalJob: jest.fn(),
-  AsyncTask: jest.fn()
+    ToadScheduler: jest.fn().mockImplementation(() => ({
+        addSimpleIntervalJob: jest.fn(),
+        stop: jest.fn()
+    })),
+    SimpleIntervalJob: jest.fn(),
+    AsyncTask: jest.fn()
 }));
 
 describe('ActionScheduler', () => {
-  let scheduler: ActionScheduler;
-  let mockProcessors: jest.Mocked<ActionProcessor<any>>[];
-  let mockProductRepo: jest.Mocked<ProductRepository>;
-  let mockActionRepo: jest.Mocked<ActionRepository>;
-  let mockActionConfigRepo: jest.Mocked<ActionConfigRepository>;
+    let scheduler: ActionScheduler;
+    let mockProcessors: jest.Mocked<ActionProcessor<any>>[];
+    let mockProductRepo: jest.Mocked<ProductRepository>;
+    let mockActionRepo: jest.Mocked<ActionRepository>;
+    let mockActionConfigRepo: jest.Mocked<ActionConfigRepository>;
 
-  const mockConfigs: ActionConfig[] = [
-    {
-      id: 'config-1',
-      action_type: ActionType.ADD_PRODUCT,
-      interval_minutes: 5,
-      enabled: true
-    },
-    {
-      id: 'config-2',
-      action_type: ActionType.CHECK_PRODUCT,
-      interval_minutes: 10,
-      enabled: true
-    }
-  ];
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-
-    // Mock dos processadores
-    mockProcessors = [
-      {
-        actionType: ActionType.ADD_PRODUCT,
-        process: jest.fn(),
-        processNext: jest.fn().mockResolvedValue(5)
-      } as any,
-      {
-        actionType: ActionType.CHECK_PRODUCT,
-        process: jest.fn(),
-        processNext: jest.fn().mockResolvedValue(3)
-      } as any
+    const mockConfigs: ActionConfig[] = [
+        {
+            id: 'config-1',
+            action_type: ActionType.ADD_PRODUCT,
+            interval_minutes: 5,
+            enabled: true
+        },
+        {
+            id: 'config-2',
+            action_type: ActionType.CHECK_PRODUCT,
+            interval_minutes: 10,
+            enabled: true
+        }
     ];
 
-    // Mock dos repositórios
-    mockProductRepo = {
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      findById: jest.fn(),
-      findByUserId: jest.fn(),
-      findByLink: jest.fn(),
-      addUser: jest.fn(),
-      removeUser: jest.fn(),
-      getNextProductsToCheck: jest.fn()
-    };
+    beforeEach(() => {
+        jest.clearAllMocks();
 
-    mockActionRepo = {
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      findById: jest.fn(),
-      findByType: jest.fn(),
-      findPendingByType: jest.fn(),
-      markProcessed: jest.fn()
-    };
+        // Mock dos processadores
+        mockProcessors = [
+      {
+          actionType: ActionType.ADD_PRODUCT,
+          process: jest.fn(),
+          processNext: jest.fn().mockResolvedValue(5)
+      } as any,
+      {
+          actionType: ActionType.CHECK_PRODUCT,
+          process: jest.fn(),
+          processNext: jest.fn().mockResolvedValue(3)
+      } as any
+        ];
 
-    mockActionConfigRepo = {
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      findById: jest.fn(),
-      findByType: jest.fn(),
-      findEnabled: jest.fn().mockResolvedValue(mockConfigs)
-    };
-  });
+        // Mock dos repositórios
+        mockProductRepo = {
+            create: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
+            findById: jest.fn(),
+            findByUserId: jest.fn(),
+            findByLink: jest.fn(),
+            addUser: jest.fn(),
+            removeUser: jest.fn(),
+            getNextProductsToCheck: jest.fn()
+        };
 
-  describe('constructor', () => {
-    it('deve criar uma instância do ActionScheduler', () => {
-      // Act
-      scheduler = new ActionScheduler(
-        mockProcessors,
-        mockProductRepo,
-        mockActionRepo,
-        mockActionConfigRepo
-      );
+        mockActionRepo = {
+            create: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
+            findById: jest.fn(),
+            findByType: jest.fn(),
+            findPendingByType: jest.fn(),
+            markProcessed: jest.fn()
+        };
 
-      // Assert
-      expect(scheduler).toBeInstanceOf(ActionScheduler);
+        mockActionConfigRepo = {
+            create: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
+            findById: jest.fn(),
+            findByType: jest.fn(),
+            findEnabled: jest.fn().mockResolvedValue(mockConfigs)
+        };
     });
 
-    it('deve configurar jobs baseados nas configurações habilitadas', async () => {
-      // Arrange
-      const { ToadScheduler } = require('toad-scheduler');
-      const mockSchedulerInstance = {
-        addSimpleIntervalJob: jest.fn(),
-        stop: jest.fn()
-      };
-      ToadScheduler.mockImplementation(() => mockSchedulerInstance);
+    describe('constructor', () => {
+        it('deve criar uma instância do ActionScheduler', () => {
+            // Act
+            scheduler = new ActionScheduler(
+                mockProcessors,
+                mockProductRepo,
+                mockActionRepo,
+                mockActionConfigRepo
+            );
 
-      // Act
-      scheduler = new ActionScheduler(
-        mockProcessors,
-        mockProductRepo,
-        mockActionRepo,
-        mockActionConfigRepo
-      );
+            // Assert
+            expect(scheduler).toBeInstanceOf(ActionScheduler);
+        });
 
-      // Aguarda a configuração async
-      await new Promise(resolve => setTimeout(resolve, 0));
+        it('deve configurar jobs baseados nas configurações habilitadas', async () => {
+            // Arrange
+            const { ToadScheduler } = require('toad-scheduler');
+            const mockSchedulerInstance = {
+                addSimpleIntervalJob: jest.fn(),
+                stop: jest.fn()
+            };
+            ToadScheduler.mockImplementation(() => mockSchedulerInstance);
 
-      // Assert
-      expect(mockActionConfigRepo.findEnabled).toHaveBeenCalled();
+            // Act
+            scheduler = new ActionScheduler(
+                mockProcessors,
+                mockProductRepo,
+                mockActionRepo,
+                mockActionConfigRepo
+            );
+
+            // Aguarda a configuração async
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+            // Assert
+            expect(mockActionConfigRepo.findEnabled).toHaveBeenCalled();
+        });
+
+        it('deve avisar quando processador não é encontrado para um tipo de ação', async () => {
+            // Arrange
+            const configsWithUnknownType = [
+                ...mockConfigs,
+                {
+                    id: 'config-3',
+                    action_type: 'UNKNOWN_TYPE' as ActionType,
+                    interval_minutes: 15,
+                    enabled: true
+                }
+            ];
+            mockActionConfigRepo.findEnabled.mockResolvedValue(configsWithUnknownType);
+
+            const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+            // Act
+            scheduler = new ActionScheduler(
+                mockProcessors,
+                mockProductRepo,
+                mockActionRepo,
+                mockActionConfigRepo
+            );
+
+            // Aguarda a configuração async
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+            // Assert
+            expect(consoleSpy).toHaveBeenCalledWith(
+                'Processador não encontrado para o tipo de ação UNKNOWN_TYPE'
+            );
+
+            consoleSpy.mockRestore();
+        });
     });
 
-    it('deve avisar quando processador não é encontrado para um tipo de ação', async () => {
-      // Arrange
-      const configsWithUnknownType = [
-        ...mockConfigs,
-        {
-          id: 'config-3',
-          action_type: 'UNKNOWN_TYPE' as ActionType,
-          interval_minutes: 15,
-          enabled: true
-        }
-      ];
-      mockActionConfigRepo.findEnabled.mockResolvedValue(configsWithUnknownType);
+    describe('stop', () => {
+        it('deve parar o scheduler', () => {
+            // Arrange
+            const { ToadScheduler } = require('toad-scheduler');
+            const mockSchedulerInstance = {
+                addSimpleIntervalJob: jest.fn(),
+                stop: jest.fn()
+            };
+            ToadScheduler.mockImplementation(() => mockSchedulerInstance);
 
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+            scheduler = new ActionScheduler(
+                mockProcessors,
+                mockProductRepo,
+                mockActionRepo,
+                mockActionConfigRepo
+            );
 
-      // Act
-      scheduler = new ActionScheduler(
-        mockProcessors,
-        mockProductRepo,
-        mockActionRepo,
-        mockActionConfigRepo
-      );
+            // Act
+            scheduler.stop();
 
-      // Aguarda a configuração async
-      await new Promise(resolve => setTimeout(resolve, 0));
-
-      // Assert
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Processador não encontrado para o tipo de ação UNKNOWN_TYPE'
-      );
-
-      consoleSpy.mockRestore();
+            // Assert
+            expect(mockSchedulerInstance.stop).toHaveBeenCalled();
+        });
     });
-  });
 
-  describe('stop', () => {
-    it('deve parar o scheduler', () => {
-      // Arrange
-      const { ToadScheduler } = require('toad-scheduler');
-      const mockSchedulerInstance = {
-        addSimpleIntervalJob: jest.fn(),
-        stop: jest.fn()
-      };
-      ToadScheduler.mockImplementation(() => mockSchedulerInstance);
-
-      scheduler = new ActionScheduler(
-        mockProcessors,
-        mockProductRepo,
-        mockActionRepo,
-        mockActionConfigRepo
-      );
-
-      // Act
-      scheduler.stop();
-
-      // Assert
-      expect(mockSchedulerInstance.stop).toHaveBeenCalled();
-    });
-  });
-
-  describe('task execution', () => {
-    it('deve configurar tasks corretamente', async () => {
-      // Arrange
-      const { AsyncTask, SimpleIntervalJob } = require('toad-scheduler');
-      const mockSchedulerInstance = {
-        addSimpleIntervalJob: jest.fn(),
-        stop: jest.fn()
-      };
+    describe('task execution', () => {
+        it('deve configurar tasks corretamente', async () => {
+            // Arrange
+            const { AsyncTask, SimpleIntervalJob } = require('toad-scheduler');
+            const mockSchedulerInstance = {
+                addSimpleIntervalJob: jest.fn(),
+                stop: jest.fn()
+            };
       
-      require('toad-scheduler').ToadScheduler.mockImplementation(() => mockSchedulerInstance);
+            require('toad-scheduler').ToadScheduler.mockImplementation(() => mockSchedulerInstance);
 
-      // Act
-      scheduler = new ActionScheduler(
-        mockProcessors,
-        mockProductRepo,
-        mockActionRepo,
-        mockActionConfigRepo
-      );
+            // Act
+            scheduler = new ActionScheduler(
+                mockProcessors,
+                mockProductRepo,
+                mockActionRepo,
+                mockActionConfigRepo
+            );
 
-      // Aguarda a configuração async
-      await new Promise(resolve => setTimeout(resolve, 100));
+            // Aguarda a configuração async
+            await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Assert
-      expect(mockActionConfigRepo.findEnabled).toHaveBeenCalled();
-      expect(AsyncTask).toHaveBeenCalledTimes(2); // Um para cada processador
-      expect(SimpleIntervalJob).toHaveBeenCalledTimes(2);
-      expect(mockSchedulerInstance.addSimpleIntervalJob).toHaveBeenCalledTimes(2);
-    });
+            // Assert
+            expect(mockActionConfigRepo.findEnabled).toHaveBeenCalled();
+            expect(AsyncTask).toHaveBeenCalledTimes(2); // Um para cada processador
+            expect(SimpleIntervalJob).toHaveBeenCalledTimes(2);
+            expect(mockSchedulerInstance.addSimpleIntervalJob).toHaveBeenCalledTimes(2);
+        });
 
-    it('deve parar o scheduler corretamente', () => {
-      // Arrange
-      const mockSchedulerInstance = {
-        addSimpleIntervalJob: jest.fn(),
-        stop: jest.fn()
-      };
+        it('deve parar o scheduler corretamente', () => {
+            // Arrange
+            const mockSchedulerInstance = {
+                addSimpleIntervalJob: jest.fn(),
+                stop: jest.fn()
+            };
       
-      require('toad-scheduler').ToadScheduler.mockImplementation(() => mockSchedulerInstance);
+            require('toad-scheduler').ToadScheduler.mockImplementation(() => mockSchedulerInstance);
 
-      scheduler = new ActionScheduler(
-        mockProcessors,
-        mockProductRepo,
-        mockActionRepo,
-        mockActionConfigRepo
-      );
+            scheduler = new ActionScheduler(
+                mockProcessors,
+                mockProductRepo,
+                mockActionRepo,
+                mockActionConfigRepo
+            );
 
-      // Act
-      scheduler.stop();
+            // Act
+            scheduler.stop();
 
-      // Assert
-      expect(mockSchedulerInstance.stop).toHaveBeenCalled();
+            // Assert
+            expect(mockSchedulerInstance.stop).toHaveBeenCalled();
+        });
     });
-  });
 });

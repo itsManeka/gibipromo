@@ -3,5 +3,5 @@ import path from 'path';
 
 // Carrega as variáveis de ambiente de teste
 config({
-  path: path.resolve(__dirname, '.env.test')
+    path: path.resolve(__dirname, '.env.test')
 });

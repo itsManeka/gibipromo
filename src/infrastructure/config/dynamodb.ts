@@ -7,15 +7,15 @@ dotenv.config();
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 const config: AWS.DynamoDB.ClientConfiguration = {
-  region: process.env.AWS_REGION || 'us-east-1'
+    region: process.env.AWS_REGION || 'us-east-1'
 };
 
 if (isDevelopment) {
-  config.endpoint = process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000';
-  config.credentials = {
-    accessKeyId: 'local',
-    secretAccessKey: 'local'
-  };
+    config.endpoint = process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000';
+    config.credentials = {
+        accessKeyId: 'local',
+        secretAccessKey: 'local'
+    };
 }
 
 export const dynamodb = new AWS.DynamoDB(config);

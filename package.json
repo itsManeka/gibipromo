@@ -10,7 +10,8 @@
     "test": "jest",
     "test:coverage": "jest --coverage --watchAll=false --maxWorkers=1",
     "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix"
+    "lint:fix": "eslint . --ext .ts --fix",
+    "init:dynamo": "node scripts/initDynamoDB.js"
   },
   "dependencies": {
     "aws-sdk": "^2.1480.0",

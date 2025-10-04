@@ -79,7 +79,10 @@ describe('AddProductActionProcessor', () => {
             mockActionRepo,
             mockProductRepo,
             mockUserRepo,
-            mockAmazonApi
+            mockAmazonApi,
+            {
+                handlePriceChange: jest.fn()
+            } as any
         );
     });
 

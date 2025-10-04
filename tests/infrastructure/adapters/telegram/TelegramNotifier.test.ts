@@ -57,7 +57,9 @@ describe('TelegramNotifier', () => {
                             {
                                 text: '🛒 Ver produto',
                                 url: mockProduct.url
-                            },
+                            }
+                        ],
+                        [
                             {
                                 text: '🛑 Parar monitoria',
                                 callback_data: `stop_monitor:${mockProduct.id}:${userId}`

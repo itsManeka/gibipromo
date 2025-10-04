@@ -7,8 +7,9 @@ import { ActionRepository } from '../../ports/ActionRepository';
 import { ProductRepository } from '../../ports/ProductRepository';
 import { UserRepository } from '../../ports/UserRepository';
 import { AmazonProduct, AmazonProductAPI } from '../../ports/AmazonProductAPI';
-import { createProduct } from '../../../domain/entities/Product';
+import { createProduct, updateProductPrice } from '../../../domain/entities/Product';
 import { ActionProcessor } from '../../ports/ActionProcessor';
+import { ProductStatsService } from '../ProductStatsService';
 
 /**
  * Processador de ações de adição de produtos
@@ -20,7 +21,8 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 		private readonly actionRepository: ActionRepository,
 		private readonly productRepository: ProductRepository,
 		private readonly userRepository: UserRepository,
-		private readonly amazonApi: AmazonProductAPI
+		private readonly amazonApi: AmazonProductAPI,
+		private readonly productStatsService: ProductStatsService
     ) { }
 
     async process(action: AddProductAction): Promise<void> {
@@ -109,16 +111,29 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
             product.offer_id = amazonProduct.offerId;
             product.title = amazonProduct.title;
             product.full_price = amazonProduct.fullPrice;
-            product.price = amazonProduct.currentPrice;
             product.in_stock = amazonProduct.inStock;
             product.image = amazonProduct.imageUrl;
             product.preorder = amazonProduct.isPreOrder;
 
+            // Atualiza o preço usando a função do domínio e verifica se deve notificar
+            const shouldNotify = updateProductPrice(product, newPrice);
+
             await this.productRepository.update(product);
 
+            // Gera estatísticas se houve uma redução significativa de preço (>=5%)
+            try {
+                const stats = await this.productStatsService.handlePriceChange(product);
+                if (stats) {
+                    console.log(`Estatística criada para ${product.title}: redução de ${stats.percentage_change.toFixed(2)}%`);
+                }
+            } catch (error) {
+                console.error('Erro ao gerar estatísticas do produto:', error);
+                // Não falha o processamento se houver erro nas estatísticas
+            }
+
             // Se o preço diminuiu, cria ação de notificação
-            if (newPrice < oldPrice) {
-                console.log(`Preço diminuiu para ${product.title}: R$ ${oldPrice} -> R$ ${newPrice}`);
+            if (shouldNotify) {
+                console.log(`Preço diminuiu para ${product.title}: R$ ${product.old_price} -> R$ ${product.price}`);
                 const notifyAction = createNotifyPriceAction(product.id);
                 await this.actionRepository.create(notifyAction);
                 console.log(`Ação de notificação criada: ${notifyAction.id}`);

@@ -2,6 +2,7 @@ import { User } from '../../src/domain/entities/User';
 import { Product } from '../../src/domain/entities/Product';
 import { ActionType, AddProductAction } from '../../src/domain/entities/Action';
 import { AmazonProduct } from '../../src/application/ports/AmazonProductAPI';
+import { ProductStats } from '../../src/domain/entities/ProductStats';
 
 export const createTestUser = (overrides?: Partial<User>): User => ({
     id: 'user-1',
@@ -48,5 +49,15 @@ export const createProduct = (asin: string, overrides?: Partial<Product>): Produ
     preorder: false,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    ...overrides
+});
+
+export const createProductStats = (overrides?: Partial<ProductStats>): ProductStats => ({
+    id: 'stats-1',
+    product_id: 'prod-1',
+    price: 85,
+    old_price: 100,
+    percentage_change: 15,
+    created_at: new Date().toISOString(),
     ...overrides
 });

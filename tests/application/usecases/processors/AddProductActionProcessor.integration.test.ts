@@ -219,7 +219,10 @@ describe('AddProductActionProcessor Integration Tests', () => {
             actionRepository,
             productRepository,
             userRepository,
-            amazonApi
+            amazonApi,
+            {
+                handlePriceChange: jest.fn()
+            } as any
         );
 
         // Clear all repositories

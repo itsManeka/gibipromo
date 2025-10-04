@@ -12,7 +12,10 @@ describe('AddProductActionProcessor URL Validation', () => {
         mockDeps.actionRepository,
         mockDeps.productRepository,
         mockDeps.userRepository,
-        mockDeps.amazonApi
+        mockDeps.amazonApi,
+        {
+            handlePriceChange: jest.fn()
+        } as any
     );
 
     const testCases = [

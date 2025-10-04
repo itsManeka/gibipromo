@@ -67,7 +67,10 @@ describe('CheckProductActionProcessor', () => {
         processor = new CheckProductActionProcessor(
             mockActionRepo,
             mockProductRepo,
-            mockAmazonApi
+            mockAmazonApi,
+            {
+                handlePriceChange: jest.fn()
+            } as any
         );
     });
 

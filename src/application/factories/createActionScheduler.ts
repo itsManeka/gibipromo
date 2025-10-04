@@ -2,11 +2,13 @@ import { ActionScheduler } from '../usecases/ActionScheduler';
 import { AddProductActionProcessor } from '../usecases/processors/AddProductActionProcessor';
 import { CheckProductActionProcessor } from '../usecases/processors/CheckProductActionProcessor';
 import { NotifyPriceActionProcessor } from '../usecases/processors/NotifyPriceActionProcessor';
+import { ProductStatsService } from '../usecases/ProductStatsService';
 import { 
     DynamoDBActionRepository, 
     DynamoDBProductRepository, 
     DynamoDBUserRepository,
-    DynamoDBActionConfigRepository 
+    DynamoDBActionConfigRepository,
+    DynamoDBProductStatsRepository
 } from '../../infrastructure/adapters/dynamodb';
 import { AmazonProductAPI } from '../ports/AmazonProductAPI';
 import { TelegramNotifier } from '../../infrastructure/adapters/telegram';
@@ -19,6 +21,10 @@ export function createActionScheduler(
     const productRepository = new DynamoDBProductRepository();
     const userRepository = new DynamoDBUserRepository();
     const actionConfigRepository = new DynamoDBActionConfigRepository();
+    const productStatsRepository = new DynamoDBProductStatsRepository();
+
+    // Serviços
+    const productStatsService = new ProductStatsService(productStatsRepository);
 
     // Notificador
     const notifier = new TelegramNotifier();
@@ -29,12 +35,14 @@ export function createActionScheduler(
             actionRepository,
             productRepository,
             userRepository,
-            amazonApi
+            amazonApi,
+            productStatsService
         ),
         new CheckProductActionProcessor(
             actionRepository,
             productRepository,
-            amazonApi
+            amazonApi,
+            productStatsService
         ),
         new NotifyPriceActionProcessor(
             actionRepository,

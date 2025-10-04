@@ -4,6 +4,7 @@ import { ActionRepository } from '../../ports/ActionRepository';
 import { ProductRepository } from '../../ports/ProductRepository';
 import { AmazonProductAPI } from '../../ports/AmazonProductAPI';
 import { updateProductPrice } from '../../../domain/entities/Product';
+import { ProductStatsService } from '../ProductStatsService';
 
 /**
  * Processador de ações de verificação de produtos
@@ -14,7 +15,8 @@ export class CheckProductActionProcessor implements ActionProcessor<CheckProduct
     constructor(
     private readonly actionRepository: ActionRepository,
     private readonly productRepository: ProductRepository,
-    private readonly amazonApi: AmazonProductAPI
+    private readonly amazonApi: AmazonProductAPI,
+    private readonly productStatsService: ProductStatsService
     ) {}
 
     async process(action: CheckProductAction): Promise<void> {
@@ -46,6 +48,17 @@ export class CheckProductActionProcessor implements ActionProcessor<CheckProduct
 
             await this.productRepository.update(product);
             await this.actionRepository.markProcessed(action.id);
+
+            // Gera estatísticas se houve uma redução significativa de preço (>=5%)
+            try {
+                const stats = await this.productStatsService.handlePriceChange(product);
+                if (stats) {
+                    console.log(`Estatística criada para ${product.title}: redução de ${stats.percentage_change.toFixed(2)}%`);
+                }
+            } catch (error) {
+                console.error('Erro ao gerar estatísticas do produto:', error);
+                // Não falha o processamento se houver erro nas estatísticas
+            }
 
             // Se o preço baixou, cria ação de notificação
             if (shouldNotify) {
@@ -98,6 +111,17 @@ export class CheckProductActionProcessor implements ActionProcessor<CheckProduct
 
                 await this.productRepository.update(product);
                 processedCount++;
+
+                // Gera estatísticas se houve uma redução significativa de preço (>=5%)
+                try {
+                    const stats = await this.productStatsService.handlePriceChange(product);
+                    if (stats) {
+                        console.log(`Estatística criada para ${product.title}: redução de ${stats.percentage_change.toFixed(2)}%`);
+                    }
+                } catch (error) {
+                    console.error('Erro ao gerar estatísticas do produto:', error);
+                    // Não falha o processamento se houver erro nas estatísticas
+                }
 
                 // Se o preço baixou, cria ação de notificação
                 if (shouldNotify) {

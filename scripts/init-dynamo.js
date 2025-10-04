@@ -133,6 +133,36 @@ const tables = [
             ReadCapacityUnits: 5,
             WriteCapacityUnits: 5
         }
+    },
+    {
+        TableName: 'ProductStats',
+        AttributeDefinitions: [
+            { AttributeName: 'id', AttributeType: 'S' },
+            { AttributeName: 'product_id', AttributeType: 'S' },
+            { AttributeName: 'created_at', AttributeType: 'S' }
+        ],
+        KeySchema: [
+            { AttributeName: 'id', KeyType: 'HASH' }
+        ],
+        GlobalSecondaryIndexes: [
+            {
+                IndexName: 'ProductStatsIndex',
+                KeySchema: [
+                    { AttributeName: 'product_id', KeyType: 'HASH' },
+                    { AttributeName: 'created_at', KeyType: 'RANGE' }
+                ],
+                Projection: { ProjectionType: 'ALL' },
+                ProvisionedThroughput: {
+                    ReadCapacityUnits: 5,
+                    WriteCapacityUnits: 5
+                }
+            }
+        ],
+        BillingMode: 'PROVISIONED',
+        ProvisionedThroughput: {
+            ReadCapacityUnits: 5,
+            WriteCapacityUnits: 5
+        }
     }
 ];
 
@@ -214,9 +244,15 @@ async function recreateTable(params) {
 
 // Executar a criação das tabelas e inserir configurações
 async function init() {
-    console.log('Iniciando setup do DynamoDB local...');
-    for (const tableParams of tables) {
-        await recreateTable(tableParams);
+    // Utiliza o parâmetro --reset para limpar e recriar as tabelas
+    const args = process.argv.slice(2);
+    const reset = args.includes('--reset');
+
+    if (reset) {
+        console.log('Recriando tabelas...');
+        for (const tableParams of tables) {
+            await recreateTable(tableParams);
+        }
     }
     
     console.log('Inserindo configurações padrão...');

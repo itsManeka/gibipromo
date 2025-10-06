@@ -49,32 +49,46 @@ ${product.preorder ? '\n⏳ *Produto em pré\\-venda*' : ''}
 _Clique nos botões abaixo para ver o produto ou parar de monitorar_
 `;
 
-        try {
-            await this.bot.telegram.sendMessage(userId, message, {
-                parse_mode: 'MarkdownV2',
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            {
-                                text: '🛒 Ver produto',
-                                url: product.url
-                            }
-                        ],
-                        [
-                            {
-                                text: '🛑 Parar monitoria',
-                                callback_data: `stop_monitor:${product.id}:${userId}`
-                            }
-                        ],
-                        [
-                            {
-                                text: `💰 Atualizar preço desejado para R$ ${unescapedSuggestedPrice} (-5%)`,
-                                callback_data: `update_price:${product.id}:${userId}:${suggestedPrice}`
-                            }
-                        ]
-                    ]
+        const inlineKeyboard = [
+            [
+                {
+                    text: '🛒 Ver produto',
+                    url: product.url
                 }
-            });
+            ],
+            [
+                {
+                    text: '🛑 Parar monitoria',
+                    callback_data: `stop_monitor:${product.id}:${userId}`
+                }
+            ],
+            [
+                {
+                    text: `💰 Atualizar preço desejado para R$ ${unescapedSuggestedPrice} (-5%)`,
+                    callback_data: `update_price:${product.id}:${userId}:${suggestedPrice}`
+                }
+            ]
+        ];
+
+        try {
+            // Se o produto tem imagem, envia como foto com legenda
+            if (product.image && product.image.trim() !== '') {
+                await this.bot.telegram.sendPhoto(userId, product.image, {
+                    caption: message,
+                    parse_mode: 'MarkdownV2',
+                    reply_markup: {
+                        inline_keyboard: inlineKeyboard
+                    }
+                });
+            } else {
+                // Fallback: envia como mensagem de texto se não há imagem
+                await this.bot.telegram.sendMessage(userId, message, {
+                    parse_mode: 'MarkdownV2',
+                    reply_markup: {
+                        inline_keyboard: inlineKeyboard
+                    }
+                });
+            }
         } catch (error) {
             console.error(`Erro ao enviar notificação para usuário ${userId}:`, error);
         }

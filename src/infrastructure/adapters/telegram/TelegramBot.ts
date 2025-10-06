@@ -189,7 +189,7 @@ export class TelegramBot {
     /**
    * Exibe a lista de produtos paginada
    */
-    private async showProductList(ctx: Context, page: number): Promise<void> {
+    private async showProductList(ctx: Context, page: number, editMessage: boolean = false): Promise<void> {
         const userId = ctx.from!.id.toString();
         const pageSize = 5;
 
@@ -197,7 +197,11 @@ export class TelegramBot {
         const { productUsers, total } = await this.productUserRepository.findByUserId(userId, page, pageSize);
 
         if (productUsers.length === 0) {
-            await ctx.reply('Você não está monitorando nenhum produto ainda. Use /addlink para começar.');
+            if (editMessage && 'editMessageText' in ctx) {
+                await ctx.editMessageText('Você ainda não está monitorando nenhum produto. Use /addlink para começar 📦');
+            } else {
+                await ctx.reply('Você ainda não está monitorando nenhum produto. Use /addlink para começar 📦');
+            }
             return;
         }
 
@@ -212,7 +216,11 @@ export class TelegramBot {
         const validProducts = products.filter(product => product !== null);
 
         if (validProducts.length === 0) {
-            await ctx.reply('Erro ao carregar os produtos. Tente novamente.');
+            if (editMessage && 'editMessageText' in ctx) {
+                await ctx.editMessageText('Erro ao carregar os produtos. Tente novamente.');
+            } else {
+                await ctx.reply('Erro ao carregar os produtos. Tente novamente.');
+            }
             return;
         }
 
@@ -220,7 +228,7 @@ export class TelegramBot {
         const message = `📋 Seus produtos monitorados (Página ${page}/${totalPages}):`;
 
         const keyboard: any[] = validProducts.map(product => [{
-            text: product!.title, // Não usar escapeMarkdown no texto do botão
+            text: `${product!.title} (R$ ${product!.price.toFixed(2)})`, // Formato compacto: Nome (Preço atual)
             callback_data: `product:${product!.id}`
         }]);
 
@@ -228,13 +236,13 @@ export class TelegramBot {
         const navigationButtons = [];
         if (page > 1) {
             navigationButtons.push({
-                text: '⬅ Prev',
+                text: '⬅️ Ant',
                 callback_data: `page:${page - 1}`
             });
         }
         if (page < totalPages) {
             navigationButtons.push({
-                text: 'Next ➡',
+                text: 'Prox ➡️',
                 callback_data: `page:${page + 1}`
             });
         }
@@ -243,11 +251,17 @@ export class TelegramBot {
             keyboard.push(navigationButtons);
         }
 
-        await ctx.reply(message, {
+        const options = {
             reply_markup: {
                 inline_keyboard: keyboard
             }
-        });
+        };
+
+        if (editMessage && 'editMessageText' in ctx) {
+            await ctx.editMessageText(message, options);
+        } else {
+            await ctx.reply(message, options);
+        }
     }
 
     /**
@@ -258,6 +272,8 @@ export class TelegramBot {
             if (!('match' in ctx) || !ctx.match || !Array.isArray(ctx.match)) return;
 
             const productId = ctx.match[1] as string;
+            const userId = ctx.from!.id.toString();
+            
             const product = await this.productRepository.findById(productId);
 
             if (!product) {
@@ -265,28 +281,73 @@ export class TelegramBot {
                 return;
             }
 
+            // Busca informações do relacionamento ProductUser para preço desejado
+            const productUser = await this.productUserRepository.findByProductAndUser(productId, userId);
+
             const formattedPrice = this.formatPrice(product.price);
-            const formattedMinPrice = this.formatPrice(product.lowest_price);
+            const formattedOldPrice = product.old_price ? this.formatPrice(product.old_price) : null;
+            
+            // Calcula redução se há preço anterior
+            let reductionText = '';
+            if (product.old_price && product.old_price > product.price) {
+                const reduction = ((product.old_price - product.price) / product.old_price * 100).toFixed(2);
+                reductionText = `\n📉 Redução: ${this.escapeMarkdown(reduction)}%`;
+            }
+
+            // Calcula o preço sugerido (preço atual -5%)
+            const suggestedPrice = product.price * 0.95;
+            const unescapedSuggestedPrice = suggestedPrice.toFixed(2);
 
             const message = `
 *${this.escapeMarkdown(product.title)}*
 
-💰 Preço atual: R$ ${formattedPrice}
-📉 Menor preço: R$ ${formattedMinPrice}
-${product.in_stock ? '✅ Em estoque' : '❌ Fora de estoque'}
-${product.preorder ? '\n⏳ Em pré\\-venda' : ''}`;
+${formattedOldPrice ? `💰 Preço anterior: R$ ${formattedOldPrice}\n✨ *Preço atual: R$ ${formattedPrice}*${reductionText}` : `💰 Preço atual: R$ ${formattedPrice}`}
 
-            await ctx.reply(message, {
-                parse_mode: 'MarkdownV2',
-                reply_markup: {
-                    inline_keyboard: [[
-                        {
-                            text: '🛒 Ver Produto',
-                            url: product.url
-                        }
-                    ]]
-                }
-            });
+${product.in_stock ? '✅ Em estoque' : '❌ Fora de estoque'}
+${product.preorder ? '\n⏳ Em pré\\-venda' : ''}
+
+_Clique nos botões abaixo para ver o produto ou gerenciar sua monitoria_
+`;
+
+            const inlineKeyboard = [
+                [
+                    {
+                        text: '🛒 Ver Produto',
+                        url: product.url
+                    }
+                ],
+                [
+                    {
+                        text: '🛑 Parar monitoria',
+                        callback_data: `stop_monitor:${product.id}:${userId}`
+                    }
+                ],
+                [
+                    {
+                        text: `💰 Atualizar preço desejado para R$ ${unescapedSuggestedPrice} (-5%)`,
+                        callback_data: `update_price:${product.id}:${userId}:${suggestedPrice}`
+                    }
+                ]
+            ];
+
+            // Se o produto tem imagem, envia como foto com legenda
+            if (product.image && product.image.trim() !== '') {
+                await ctx.telegram.sendPhoto(ctx.chat!.id, product.image, {
+                    caption: message,
+                    parse_mode: 'MarkdownV2',
+                    reply_markup: {
+                        inline_keyboard: inlineKeyboard
+                    }
+                });
+            } else {
+                // Fallback: envia como mensagem de texto se não há imagem
+                await ctx.reply(message, {
+                    parse_mode: 'MarkdownV2',
+                    reply_markup: {
+                        inline_keyboard: inlineKeyboard
+                    }
+                });
+            }
         } catch (error) {
             console.error('Erro ao mostrar detalhes do produto:', error);
             await ctx.reply('Desculpe, ocorreu um erro ao carregar os detalhes do produto. 😕');
@@ -301,7 +362,7 @@ ${product.preorder ? '\n⏳ Em pré\\-venda' : ''}`;
             if (!('match' in ctx) || !ctx.match || !Array.isArray(ctx.match)) return;
 
             const page = parseInt(ctx.match[1] as string);
-            await this.showProductList(ctx, page);
+            await this.showProductList(ctx, page, true); // true = editar mensagem atual
         } catch (error) {
             console.error('Erro ao mudar de página:', error);
             await ctx.reply('Desculpe, ocorreu um erro ao carregar a página. 😕');

@@ -483,6 +483,78 @@ describe('TelegramBot', () => {
             );
         });
 
+        it('deve exibir formato compacto nos botões da lista', async () => {
+            // Arrange
+            const mockCtx = {
+                from: { id: 123456789 },
+                reply: jest.fn()
+            } as unknown as Context;
+
+            const mockUser: User = {
+                id: '123456789',
+                name: 'Test',
+                username: 'testuser',
+                language: 'pt',
+                enabled: true
+            };
+
+            mockUserRepo.findById.mockResolvedValue(mockUser);
+
+            const mockProduct: Product = {
+                id: 'B06Y6J6XV1',
+                title: 'Echo Dot 5ª Geração',
+                price: 349.00,
+                full_price: 349.00,
+                old_price: 399.00,
+                lowest_price: 349.00,
+                url: 'https://www.amazon.com.br/echo-dot/dp/B06Y6J6XV1',
+                image: 'https://m.media-amazon.com/images/I/51-lXivXh7L._SL500_.jpg',
+                in_stock: true,
+                preorder: false,
+                offer_id: 'A1ZZFT5FULY4LN',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+
+            const mockProductUser: ProductUser = {
+                id: 'B06Y6J6XV1#123456789',
+                product_id: 'B06Y6J6XV1',
+                user_id: '123456789',
+                desired_price: undefined,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+
+            mockProductUserRepo.findByUserId.mockResolvedValue({ 
+                productUsers: [mockProductUser], 
+                total: 1 
+            });
+            mockProductRepo.findById.mockResolvedValue(mockProduct);
+
+            // Get the handler function
+            const listHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'list')[1];
+
+            // Act
+            await listHandler(mockCtx);
+
+            // Assert
+            expect(mockCtx.reply).toHaveBeenCalledWith(
+                expect.stringContaining('📋 Seus produtos monitorados'),
+                expect.objectContaining({
+                    reply_markup: expect.objectContaining({
+                        inline_keyboard: expect.arrayContaining([
+                            expect.arrayContaining([
+                                expect.objectContaining({
+                                    text: 'Echo Dot 5ª Geração (R$ 349.00)',
+                                    callback_data: 'product:B06Y6J6XV1'
+                                })
+                            ])
+                        ])
+                    })
+                })
+            );
+        });
+
         it('deve testar comando /list sem produtos', async () => {
             // Arrange
             const mockCtx = {
@@ -510,7 +582,63 @@ describe('TelegramBot', () => {
 
             // Assert
             expect(mockProductUserRepo.findByUserId).toHaveBeenCalledWith('123456789', 1, 5);
-            expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Você não está monitorando nenhum produto ainda'));
+            expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Você ainda não está monitorando nenhum produto. Use /addlink para começar 📦'));
+        });
+
+        it('deve editar mensagem na paginação em vez de criar nova', async () => {
+            // Arrange
+            const mockCtx = {
+                from: { id: 123456789 },
+                match: ['page:2', '2'],
+                editMessageText: jest.fn(),
+                reply: jest.fn()
+            } as unknown as Context;
+
+            const mockProducts: Product[] = [
+                {
+                    id: 'B06Y6J6XV1',
+                    title: 'Ten',
+                    price: 187.5,
+                    full_price: 187.5,
+                    old_price: 187.5,
+                    lowest_price: 187.5,
+                    url: 'https://www.amazon.com.br/Ten-Pearl-Jam/dp/B06Y6J6XV1',
+                    image: 'https://m.media-amazon.com/images/I/51-lXivXh7L._SL500_.jpg',
+                    in_stock: true,
+                    preorder: false,
+                    offer_id: 'A1ZZFT5FULY4LN',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                }
+            ];
+
+            const mockProductUsers: ProductUser[] = [
+                {
+                    id: 'B06Y6J6XV1#123456789',
+                    product_id: 'B06Y6J6XV1',
+                    user_id: '123456789',
+                    desired_price: undefined,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                }
+            ];
+
+            mockProductUserRepo.findByUserId.mockResolvedValue({ productUsers: mockProductUsers, total: 6 }); // Total > 5 para ter múltiplas páginas
+            mockProductRepo.findById.mockResolvedValue(mockProducts[0]);
+
+            // Get the page handler function
+            const pageHandler = mockBot.action.mock.calls.find((call: any) => call[0].toString().includes('page'))[1];
+
+            // Act
+            await pageHandler(mockCtx);
+
+            // Assert
+            expect(mockProductUserRepo.findByUserId).toHaveBeenCalledWith('123456789', 2, 5);
+            expect(mockCtx.editMessageText).toHaveBeenCalledWith(
+                expect.stringContaining('📋 Seus produtos monitorados (Página 2/'),
+                expect.any(Object)
+            );
+            expect(mockCtx.reply).not.toHaveBeenCalled(); // Não deve criar nova mensagem
         });
 
         it('deve testar comando /delete com usuário existente', async () => {
@@ -825,6 +953,213 @@ describe('TelegramBot', () => {
             expect(mockCtx.reply).toHaveBeenCalledWith('Desculpe, ocorreu um erro ao parar a monitoria. 😕');
 
             consoleSpy.mockRestore();
+        });
+    });
+
+    describe('handleProductDetails', () => {
+        it('deve exibir detalhes do produto com imagem e botões de ação', async () => {
+            // Arrange
+            const mockProduct: Product = {
+                id: 'B08PP8QHFQ',
+                title: 'Echo Dot 5ª Geração',
+                offer_id: 'offer-123',
+                full_price: 399.00,
+                price: 349.00,
+                old_price: 399.00,
+                lowest_price: 349.00,
+                in_stock: true,
+                url: 'https://amazon.com.br/echo-dot',
+                image: 'https://example.com/echo-dot.jpg',
+                preorder: false,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+
+            const mockProductUser = {
+                id: 'B08PP8QHFQ#123456789',
+                product_id: 'B08PP8QHFQ',
+                user_id: '123456789',
+                desired_price: undefined,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+
+            const mockCtx = {
+                from: { id: 123456789 },
+                match: ['product:B08PP8QHFQ', 'B08PP8QHFQ'],
+                chat: { id: 123456789 },
+                telegram: {
+                    sendPhoto: jest.fn().mockResolvedValue(true)
+                }
+            } as unknown as Context;
+
+            mockProductRepo.findById.mockResolvedValue(mockProduct);
+            mockProductUserRepo.findByProductAndUser.mockResolvedValue(mockProductUser);
+
+            // Get the handler function
+            const productHandler = mockBot.action.mock.calls.find((call: any) => 
+                call[0].toString() === '/^product:(.+)$/'
+            )[1];
+
+            // Act
+            await productHandler(mockCtx);
+
+            // Assert
+            expect(mockProductRepo.findById).toHaveBeenCalledWith('B08PP8QHFQ');
+            expect(mockProductUserRepo.findByProductAndUser).toHaveBeenCalledWith('B08PP8QHFQ', '123456789');
+            expect(mockCtx.telegram.sendPhoto).toHaveBeenCalledWith(
+                123456789,
+                'https://example.com/echo-dot.jpg',
+                expect.objectContaining({
+                    caption: expect.stringContaining('Echo Dot 5ª Geração'),
+                    parse_mode: 'MarkdownV2',
+                    reply_markup: expect.objectContaining({
+                        inline_keyboard: expect.arrayContaining([
+                            expect.arrayContaining([
+                                expect.objectContaining({
+                                    text: '🛒 Ver Produto',
+                                    url: 'https://amazon.com.br/echo-dot'
+                                })
+                            ]),
+                            expect.arrayContaining([
+                                expect.objectContaining({
+                                    text: '🛑 Parar monitoria',
+                                    callback_data: 'stop_monitor:B08PP8QHFQ:123456789'
+                                })
+                            ]),
+                            expect.arrayContaining([
+                                expect.objectContaining({
+                                    text: expect.stringContaining('💰 Atualizar preço desejado'),
+                                    callback_data: expect.stringContaining('update_price:B08PP8QHFQ:123456789:')
+                                })
+                            ])
+                        ])
+                    })
+                })
+            );
+        });
+
+        it('deve exibir detalhes com redução quando há preço anterior', async () => {
+            // Arrange
+            const mockProduct: Product = {
+                id: 'B08PP8QHFQ',
+                title: 'Echo Dot 5ª Geração',
+                offer_id: 'offer-123',
+                full_price: 399.00,
+                price: 299.00,
+                old_price: 399.00,
+                lowest_price: 299.00,
+                in_stock: true,
+                url: 'https://amazon.com.br/echo-dot',
+                image: 'https://example.com/echo-dot.jpg',
+                preorder: false,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+
+            const mockCtx = {
+                from: { id: 123456789 },
+                match: ['product:B08PP8QHFQ', 'B08PP8QHFQ'],
+                chat: { id: 123456789 },
+                telegram: {
+                    sendPhoto: jest.fn().mockResolvedValue(true)
+                }
+            } as unknown as Context;
+
+            mockProductRepo.findById.mockResolvedValue(mockProduct);
+            mockProductUserRepo.findByProductAndUser.mockResolvedValue(null);
+
+            // Get the handler function
+            const productHandler = mockBot.action.mock.calls.find((call: any) => 
+                call[0].toString() === '/^product:(.+)$/'
+            )[1];
+
+            // Act
+            await productHandler(mockCtx);
+
+            // Assert
+            expect(mockCtx.telegram.sendPhoto).toHaveBeenCalledWith(
+                123456789,
+                'https://example.com/echo-dot.jpg',
+                expect.objectContaining({
+                    caption: expect.stringMatching(/Redução: 25\\\.06%/)
+                })
+            );
+        });
+
+        it('deve enviar mensagem de texto quando produto não tem imagem', async () => {
+            // Arrange
+            const mockProduct: Product = {
+                id: 'B08PP8QHFQ',
+                title: 'Echo Dot 5ª Geração',
+                offer_id: 'offer-123',
+                full_price: 399.00,
+                price: 349.00,
+                old_price: 399.00,
+                lowest_price: 349.00,
+                in_stock: true,
+                url: 'https://amazon.com.br/echo-dot',
+                image: '',
+                preorder: false,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+
+            const mockCtx = {
+                from: { id: 123456789 },
+                match: ['product:B08PP8QHFQ', 'B08PP8QHFQ'],
+                reply: jest.fn()
+            } as unknown as Context;
+
+            mockProductRepo.findById.mockResolvedValue(mockProduct);
+            mockProductUserRepo.findByProductAndUser.mockResolvedValue(null);
+
+            // Get the handler function
+            const productHandler = mockBot.action.mock.calls.find((call: any) => 
+                call[0].toString() === '/^product:(.+)$/'
+            )[1];
+
+            // Act
+            await productHandler(mockCtx);
+
+            // Assert
+            expect(mockCtx.reply).toHaveBeenCalledWith(
+                expect.stringContaining('Echo Dot 5ª Geração'),
+                expect.objectContaining({
+                    parse_mode: 'MarkdownV2',
+                    reply_markup: expect.objectContaining({
+                        inline_keyboard: expect.arrayContaining([
+                            expect.arrayContaining([
+                                expect.objectContaining({
+                                    text: '🛒 Ver Produto'
+                                })
+                            ])
+                        ])
+                    })
+                })
+            );
+        });
+
+        it('deve tratar erro quando produto não é encontrado', async () => {
+            // Arrange
+            const mockCtx = {
+                from: { id: 123456789 },
+                match: ['product:NOT_FOUND', 'NOT_FOUND'],
+                reply: jest.fn()
+            } as unknown as Context;
+
+            mockProductRepo.findById.mockResolvedValue(null);
+
+            // Get the handler function
+            const productHandler = mockBot.action.mock.calls.find((call: any) => 
+                call[0].toString() === '/^product:(.+)$/'
+            )[1];
+
+            // Act
+            await productHandler(mockCtx);
+
+            // Assert
+            expect(mockCtx.reply).toHaveBeenCalledWith('Produto não encontrado.');
         });
     });
 });

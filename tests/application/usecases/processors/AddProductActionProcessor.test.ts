@@ -2,6 +2,7 @@ import { AddProductActionProcessor } from '../../../../src/application/usecases/
 import { ActionRepository } from '../../../../src/application/ports/ActionRepository';
 import { ProductRepository } from '../../../../src/application/ports/ProductRepository';
 import { UserRepository } from '../../../../src/application/ports/UserRepository';
+import { ProductUserRepository } from '../../../../src/application/ports/ProductUserRepository';
 import { AmazonProduct, AmazonProductAPI } from '../../../../src/application/ports/AmazonProductAPI';
 import { User } from '../../../../src/domain/entities/User';
 import { Product } from '../../../../src/domain/entities/Product';
@@ -16,14 +17,16 @@ import {
 jest.mock('../../../../src/application/ports/ActionRepository');
 jest.mock('../../../../src/application/ports/ProductRepository');
 jest.mock('../../../../src/application/ports/UserRepository');
+jest.mock('../../../../src/application/ports/ProductUserRepository');
 jest.mock('../../../../src/application/ports/AmazonProductAPI');
 
 describe('AddProductActionProcessor', () => {
-    const TEST_ASIN = 'B0001AAAA';
+    const TEST_ASIN = 'B012345678';
   
     let mockActionRepo: jest.Mocked<ActionRepository>;
     let mockProductRepo: jest.Mocked<ProductRepository>;
     let mockUserRepo: jest.Mocked<UserRepository>; 
+    let mockProductUserRepo: jest.Mocked<ProductUserRepository>;
     let mockAmazonApi: jest.Mocked<AmazonProductAPI>;
     let processor: AddProductActionProcessor;
 
@@ -49,10 +52,7 @@ describe('AddProductActionProcessor', () => {
             delete: jest.fn(),
             findById: jest.fn(),
             findByLink: jest.fn(),
-            addUser: jest.fn(),
-            removeUser: jest.fn(),
-            getNextProductsToCheck: jest.fn(),
-            findByUserId: jest.fn()
+            getNextProductsToCheck: jest.fn()
         };
 
         mockUserRepo = {
@@ -62,6 +62,19 @@ describe('AddProductActionProcessor', () => {
             findById: jest.fn(),
             findByUsername: jest.fn(),
             setEnabled: jest.fn()
+        };
+
+        mockProductUserRepo = {
+            create: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
+            findById: jest.fn(),
+            findByProductAndUser: jest.fn(),
+            findByProductId: jest.fn(),
+            findByUserId: jest.fn(),
+            upsert: jest.fn(),
+            updateDesiredPrice: jest.fn(),
+            removeByProductAndUser: jest.fn()
         };
 
         mockAmazonApi = {
@@ -78,6 +91,7 @@ describe('AddProductActionProcessor', () => {
         processor = new AddProductActionProcessor(
             mockActionRepo,
             mockProductRepo,
+            mockProductUserRepo,
             mockUserRepo,
             mockAmazonApi,
             {
@@ -107,7 +121,10 @@ describe('AddProductActionProcessor', () => {
                     image: amazonProduct.imageUrl,
                     preorder: amazonProduct.isPreOrder
                 }));
-                expect(mockProductRepo.addUser).toHaveBeenCalledWith(TEST_ASIN, testUser.id);
+                expect(mockProductUserRepo.upsert).toHaveBeenCalledWith(expect.objectContaining({
+                    product_id: TEST_ASIN,
+                    user_id: testUser.id
+                }));
                 expect(mockActionRepo.markProcessed).toHaveBeenCalledWith(testAction.id);
             });
 
@@ -234,8 +251,8 @@ describe('AddProductActionProcessor', () => {
     describe('processNext', () => {
         it('should process multiple actions in batch', async () => {
             // Setup
-            const secondAction = createTestAction('B0002BBBB');
-            const secondProduct = createAmazonProduct('B0002BBBB');
+            const secondAction = createTestAction('B087654321');
+            const secondProduct = createAmazonProduct('B087654321');
       
             mockActionRepo.findPendingByType.mockResolvedValue([testAction, secondAction]);
             mockUserRepo.findById.mockResolvedValue(testUser);
@@ -243,7 +260,7 @@ describe('AddProductActionProcessor', () => {
 
             const amazonProducts = new Map();
             amazonProducts.set(TEST_ASIN, amazonProduct);
-            amazonProducts.set('B0002BBBB', secondProduct);
+            amazonProducts.set('B087654321', secondProduct);
             mockAmazonApi.getProducts.mockResolvedValue(amazonProducts);
 
             // Execute
@@ -251,7 +268,7 @@ describe('AddProductActionProcessor', () => {
 
             // Verify
             expect(result).toBe(2);
-            expect(mockAmazonApi.getProducts).toHaveBeenCalledWith([TEST_ASIN, 'B0002BBBB']);
+            expect(mockAmazonApi.getProducts).toHaveBeenCalledWith([TEST_ASIN, 'B087654321']);
             expect(mockProductRepo.create).toHaveBeenCalledTimes(2);
             expect(mockActionRepo.markProcessed).toHaveBeenCalledTimes(2);
         });

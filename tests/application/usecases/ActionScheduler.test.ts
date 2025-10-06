@@ -5,6 +5,7 @@ import { ActionRepository } from '../../../src/application/ports/ActionRepositor
 import { ActionConfigRepository } from '../../../src/application/ports/ActionConfigRepository';
 import { ActionType } from '../../../src/domain/entities/Action';
 import { ActionConfig } from '../../../src/domain/entities/ActionConfig';
+import { ToadScheduler, AsyncTask, SimpleIntervalJob } from 'toad-scheduler';
 
 // Mock do toad-scheduler
 jest.mock('toad-scheduler', () => ({
@@ -43,16 +44,16 @@ describe('ActionScheduler', () => {
 
         // Mock dos processadores
         mockProcessors = [
-      {
-          actionType: ActionType.ADD_PRODUCT,
-          process: jest.fn(),
-          processNext: jest.fn().mockResolvedValue(5)
-      } as any,
-      {
-          actionType: ActionType.CHECK_PRODUCT,
-          process: jest.fn(),
-          processNext: jest.fn().mockResolvedValue(3)
-      } as any
+            {
+                actionType: ActionType.ADD_PRODUCT,
+                process: jest.fn(),
+                processNext: jest.fn().mockResolvedValue(5)
+            } as any,
+            {
+                actionType: ActionType.CHECK_PRODUCT,
+                process: jest.fn(),
+                processNext: jest.fn().mockResolvedValue(3)
+            } as any
         ];
 
         // Mock dos repositórios
@@ -61,10 +62,7 @@ describe('ActionScheduler', () => {
             update: jest.fn(),
             delete: jest.fn(),
             findById: jest.fn(),
-            findByUserId: jest.fn(),
             findByLink: jest.fn(),
-            addUser: jest.fn(),
-            removeUser: jest.fn(),
             getNextProductsToCheck: jest.fn()
         };
 
@@ -104,12 +102,11 @@ describe('ActionScheduler', () => {
 
         it('deve configurar jobs baseados nas configurações habilitadas', async () => {
             // Arrange
-            const { ToadScheduler } = require('toad-scheduler');
             const mockSchedulerInstance = {
                 addSimpleIntervalJob: jest.fn(),
                 stop: jest.fn()
             };
-            ToadScheduler.mockImplementation(() => mockSchedulerInstance);
+            (ToadScheduler as jest.Mock).mockImplementation(() => mockSchedulerInstance);
 
             // Act
             scheduler = new ActionScheduler(
@@ -164,12 +161,11 @@ describe('ActionScheduler', () => {
     describe('stop', () => {
         it('deve parar o scheduler', () => {
             // Arrange
-            const { ToadScheduler } = require('toad-scheduler');
             const mockSchedulerInstance = {
                 addSimpleIntervalJob: jest.fn(),
                 stop: jest.fn()
             };
-            ToadScheduler.mockImplementation(() => mockSchedulerInstance);
+            (ToadScheduler as jest.Mock).mockImplementation(() => mockSchedulerInstance);
 
             scheduler = new ActionScheduler(
                 mockProcessors,
@@ -189,13 +185,12 @@ describe('ActionScheduler', () => {
     describe('task execution', () => {
         it('deve configurar tasks corretamente', async () => {
             // Arrange
-            const { AsyncTask, SimpleIntervalJob } = require('toad-scheduler');
             const mockSchedulerInstance = {
                 addSimpleIntervalJob: jest.fn(),
                 stop: jest.fn()
             };
-      
-            require('toad-scheduler').ToadScheduler.mockImplementation(() => mockSchedulerInstance);
+
+            (ToadScheduler as jest.Mock).mockImplementation(() => mockSchedulerInstance);
 
             // Act
             scheduler = new ActionScheduler(
@@ -221,8 +216,8 @@ describe('ActionScheduler', () => {
                 addSimpleIntervalJob: jest.fn(),
                 stop: jest.fn()
             };
-      
-            require('toad-scheduler').ToadScheduler.mockImplementation(() => mockSchedulerInstance);
+
+            (ToadScheduler as jest.Mock).mockImplementation(() => mockSchedulerInstance);
 
             scheduler = new ActionScheduler(
                 mockProcessors,

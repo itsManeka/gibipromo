@@ -20,7 +20,6 @@ describe('TelegramNotifier', () => {
         full_price: 99.99,
         price: 89.99,
         lowest_price: 89.99,
-        users: ['123456789'],
         in_stock: true,
         url: 'https://amazon.com.br/dp/B08PP8QHFQ',
         image: 'https://example.com/image.jpg',
@@ -63,6 +62,12 @@ describe('TelegramNotifier', () => {
                             {
                                 text: '🛑 Parar monitoria',
                                 callback_data: `stop_monitor:${mockProduct.id}:${userId}`
+                            }
+                        ],
+                        [
+                            {
+                                text: expect.stringContaining('💰 Atualizar preço desejado'),
+                                callback_data: expect.stringContaining(`update_price:${mockProduct.id}:${userId}:`)
                             }
                         ]
                     ]

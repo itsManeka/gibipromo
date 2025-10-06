@@ -6,6 +6,7 @@ import { ProductStatsService } from '../usecases/ProductStatsService';
 import { 
     DynamoDBActionRepository, 
     DynamoDBProductRepository, 
+    DynamoDBProductUserRepository,
     DynamoDBUserRepository,
     DynamoDBActionConfigRepository,
     DynamoDBProductStatsRepository
@@ -19,6 +20,7 @@ export function createActionScheduler(
     // Repositórios
     const actionRepository = new DynamoDBActionRepository();
     const productRepository = new DynamoDBProductRepository();
+    const productUserRepository = new DynamoDBProductUserRepository();
     const userRepository = new DynamoDBUserRepository();
     const actionConfigRepository = new DynamoDBActionConfigRepository();
     const productStatsRepository = new DynamoDBProductStatsRepository();
@@ -34,6 +36,7 @@ export function createActionScheduler(
         new AddProductActionProcessor(
             actionRepository,
             productRepository,
+            productUserRepository,
             userRepository,
             amazonApi,
             productStatsService
@@ -47,6 +50,7 @@ export function createActionScheduler(
         new NotifyPriceActionProcessor(
             actionRepository,
             productRepository,
+            productUserRepository,
             notifier
         )
     ];

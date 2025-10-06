@@ -14,8 +14,8 @@ export interface User extends Entity {
  * Factory function to create a new User
  */
 export function createUser(params: Omit<User, 'enabled'>): User {
-	return {
-		...params,
-		enabled: false // Users start with monitoring disabled
-	};
+    return {
+        ...params,
+        enabled: false // Users start with monitoring disabled
+    };
 }

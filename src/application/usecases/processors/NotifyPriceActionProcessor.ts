@@ -2,7 +2,9 @@ import { ActionProcessor } from '../../ports/ActionProcessor';
 import { ActionType, NotifyPriceAction } from '../../../domain/entities/Action';
 import { ActionRepository } from '../../ports/ActionRepository';
 import { ProductRepository } from '../../ports/ProductRepository';
+import { ProductUserRepository } from '../../ports/ProductUserRepository';
 import { TelegramNotifier } from '../../../infrastructure/adapters/telegram';
+import { shouldNotifyForPrice } from '../../../domain/entities/ProductUser';
 
 /**
  * Processador de ações de notificação de preço
@@ -13,6 +15,7 @@ export class NotifyPriceActionProcessor implements ActionProcessor<NotifyPriceAc
     constructor(
     private readonly actionRepository: ActionRepository,
     private readonly productRepository: ProductRepository,
+    private readonly productUserRepository: ProductUserRepository,
     private readonly notifier: TelegramNotifier
     ) {}
 
@@ -26,8 +29,9 @@ export class NotifyPriceActionProcessor implements ActionProcessor<NotifyPriceAc
                 return;
             }
 
-            // Verifica se tem usuários monitorando
-            if (!product.users || product.users.length === 0) {
+            // Busca todos os usuários que monitoram este produto
+            const productUsers = await this.productUserRepository.findByProductId(action.value);
+            if (!productUsers || productUsers.length === 0) {
                 console.log(`Nenhum usuário monitorando o produto ${product.id}`);
                 await this.actionRepository.markProcessed(action.id);
                 return;
@@ -37,11 +41,22 @@ export class NotifyPriceActionProcessor implements ActionProcessor<NotifyPriceAc
             const currentPrice = product.price;
             const oldPrice = product.old_price ?? product.price; // Fallback para o preço atual se old_price não existir
 
-            // Notifica todos os usuários que monitoram o produto
+            // Filtra usuários que devem receber notificação baseado no desired_price
+            const usersToNotify = productUsers.filter(productUser => 
+                shouldNotifyForPrice(productUser, currentPrice)
+            );
+
+            if (usersToNotify.length === 0) {
+                console.log(`Nenhum usuário deve ser notificado para o produto ${product.id} com preço ${currentPrice}`);
+                await this.actionRepository.markProcessed(action.id);
+                return;
+            }
+
+            // Notifica todos os usuários filtrados
             await Promise.all(
-                product.users.map((userId: string) =>
+                usersToNotify.map((productUser) =>
                     this.notifier.notifyPriceChange(
-                        userId,
+                        productUser.user_id,
                         product,
                         oldPrice,
                         currentPrice

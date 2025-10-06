@@ -6,6 +6,8 @@ describe('AddProductActionProcessor URL Validation', () => {
         productRepository: {} as any,
         userRepository: {} as any,
         amazonApi: {} as any,
+        productUserRepository: {} as any,
+        productStatsService: {} as any,
     };
 
     const processor = new AddProductActionProcessor(
@@ -13,41 +15,40 @@ describe('AddProductActionProcessor URL Validation', () => {
         mockDeps.productRepository,
         mockDeps.userRepository,
         mockDeps.amazonApi,
-        {
-            handlePriceChange: jest.fn()
-        } as any
+        mockDeps.productUserRepository,
+        mockDeps.productStatsService
     );
 
     const testCases = [
         {
             description: 'handles standard URL format',
-            url: 'https://amazon.com.br/dp/B0001AAAA/',
-            expectedASIN: 'B0001AAAA'
+            url: 'https://amazon.com.br/dp/B012345678/',
+            expectedASIN: 'B012345678'
         },
         {
             description: 'handles URL with www prefix',
-            url: 'https://www.amazon.com.br/dp/B0001AAAA/',
-            expectedASIN: 'B0001AAAA'
+            url: 'https://www.amazon.com.br/dp/B012345678/',
+            expectedASIN: 'B012345678'
         },
         {
             description: 'handles product URL format',
-            url: 'https://amazon.com.br/gp/product/B0001AAAA/',
-            expectedASIN: 'B0001AAAA'
+            url: 'https://amazon.com.br/gp/product/B012345678/',
+            expectedASIN: 'B012345678'
         },
         {
             description: 'handles product URL with www prefix',
-            url: 'https://www.amazon.com.br/gp/product/B0001AAAA/',
-            expectedASIN: 'B0001AAAA'
+            url: 'https://www.amazon.com.br/gp/product/B012345678/',
+            expectedASIN: 'B012345678'
         },
         {
             description: 'handles lowercase ASIN',
-            url: 'https://amazon.com.br/dp/b0001aaaa/',
-            expectedASIN: 'B0001AAAA'
+            url: 'https://amazon.com.br/dp/b012345678/',
+            expectedASIN: 'B012345678'
         },
         {
             description: 'handles URL with query parameters',
-            url: 'https://amazon.com.br/dp/B0001AAAA?ref=something',
-            expectedASIN: 'B0001AAAA'
+            url: 'https://amazon.com.br/dp/B012345678?ref=something',
+            expectedASIN: 'B012345678'
         }
     ];
 
@@ -66,7 +67,7 @@ describe('AddProductActionProcessor URL Validation', () => {
         },
         {
             description: 'rejects invalid URL format',
-            url: 'https://amazon.com.br/invalid/B0001AAAA'
+            url: 'https://amazon.com.br/invalid/B012345678'
         },
         {
             description: 'rejects URL with invalid ASIN length',
@@ -74,7 +75,7 @@ describe('AddProductActionProcessor URL Validation', () => {
         },
         {
             description: 'rejects URL with invalid ASIN characters',
-            url: 'https://amazon.com.br/dp/B00!1AAAA'
+            url: 'https://amazon.com.br/dp/B00!123456'
         }
     ];
 

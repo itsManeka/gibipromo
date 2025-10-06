@@ -1,19 +1,23 @@
 import { NotifyPriceActionProcessor } from '../../../../src/application/usecases/processors/NotifyPriceActionProcessor';
 import { ActionRepository } from '../../../../src/application/ports/ActionRepository';
 import { ProductRepository } from '../../../../src/application/ports/ProductRepository';
+import { ProductUserRepository } from '../../../../src/application/ports/ProductUserRepository';
 import { TelegramNotifier } from '../../../../src/infrastructure/adapters/telegram';
 import { ActionType, NotifyPriceAction } from '../../../../src/domain/entities/Action';
 import { Product } from '../../../../src/domain/entities/Product';
+import { ProductUser } from '../../../../src/domain/entities/ProductUser';
 import { createProduct } from '../../../test-helpers/factories';
 
 jest.mock('../../../../src/application/ports/ActionRepository');
 jest.mock('../../../../src/application/ports/ProductRepository');
+jest.mock('../../../../src/application/ports/ProductUserRepository');
 jest.mock('../../../../src/infrastructure/adapters/telegram');
 
 describe('NotifyPriceActionProcessor', () => {
     let processor: NotifyPriceActionProcessor;
     let mockActionRepo: jest.Mocked<ActionRepository>;
     let mockProductRepo: jest.Mocked<ProductRepository>;
+    let mockProductUserRepo: jest.Mocked<ProductUserRepository>;
     let mockNotifier: jest.Mocked<TelegramNotifier>;
 
     const mockNotifyAction: NotifyPriceAction = {
@@ -26,9 +30,27 @@ describe('NotifyPriceActionProcessor', () => {
 
     const mockProduct: Product = createProduct('B01234567', {
         price: 80,
-        old_price: 100,
-        users: ['user1', 'user2']
+        old_price: 100
     });
+
+    const mockProductUsers: ProductUser[] = [
+        {
+            id: 'pu1',
+            product_id: 'B01234567',
+            user_id: 'user1',
+            desired_price: 90,
+            created_at: '2024-01-01T00:00:00.000Z',
+            updated_at: '2024-01-01T00:00:00.000Z'
+        },
+        {
+            id: 'pu2',
+            product_id: 'B01234567',
+            user_id: 'user2',
+            desired_price: 85,
+            created_at: '2024-01-01T00:00:00.000Z',
+            updated_at: '2024-01-01T00:00:00.000Z'
+        }
+    ];
 
     beforeEach(() => {
         mockActionRepo = {
@@ -46,11 +68,21 @@ describe('NotifyPriceActionProcessor', () => {
             update: jest.fn(),
             delete: jest.fn(),
             findById: jest.fn(),
-            findByUserId: jest.fn(),
             findByLink: jest.fn(),
-            addUser: jest.fn(),
-            removeUser: jest.fn(),
             getNextProductsToCheck: jest.fn()
+        };
+
+        mockProductUserRepo = {
+            create: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
+            findById: jest.fn(),
+            findByProductAndUser: jest.fn(),
+            findByProductId: jest.fn(),
+            findByUserId: jest.fn(),
+            upsert: jest.fn(),
+            updateDesiredPrice: jest.fn(),
+            removeByProductAndUser: jest.fn()
         };
 
         mockNotifier = {
@@ -60,6 +92,7 @@ describe('NotifyPriceActionProcessor', () => {
         processor = new NotifyPriceActionProcessor(
             mockActionRepo,
             mockProductRepo,
+            mockProductUserRepo,
             mockNotifier
         );
 
@@ -71,6 +104,7 @@ describe('NotifyPriceActionProcessor', () => {
         it('deve notificar todos os usuários que monitoram o produto', async () => {
             // Arrange
             mockProductRepo.findById.mockResolvedValue(mockProduct);
+            mockProductUserRepo.findByProductId.mockResolvedValue(mockProductUsers);
             mockNotifier.notifyPriceChange.mockResolvedValue();
 
             // Act
@@ -78,6 +112,7 @@ describe('NotifyPriceActionProcessor', () => {
 
             // Assert
             expect(mockProductRepo.findById).toHaveBeenCalledWith('B01234567');
+            expect(mockProductUserRepo.findByProductId).toHaveBeenCalledWith('B01234567');
             expect(mockNotifier.notifyPriceChange).toHaveBeenCalledTimes(2);
             expect(mockNotifier.notifyPriceChange).toHaveBeenCalledWith(
                 'user1',
@@ -109,28 +144,32 @@ describe('NotifyPriceActionProcessor', () => {
 
         it('deve marcar ação como processada quando não há usuários monitorando', async () => {
             // Arrange
-            const productWithoutUsers = createProduct('B01234567', { users: [] });
+            const productWithoutUsers = createProduct('B01234567');
             mockProductRepo.findById.mockResolvedValue(productWithoutUsers);
+            mockProductUserRepo.findByProductId.mockResolvedValue([]);
 
             // Act
             await processor.process(mockNotifyAction);
 
             // Assert
             expect(mockProductRepo.findById).toHaveBeenCalledWith('B01234567');
+            expect(mockProductUserRepo.findByProductId).toHaveBeenCalledWith('B01234567');
             expect(mockNotifier.notifyPriceChange).not.toHaveBeenCalled();
             expect(mockActionRepo.markProcessed).toHaveBeenCalledWith('notify-123');
         });
 
         it('deve marcar ação como processada quando users é undefined', async () => {
             // Arrange
-            const productWithUndefinedUsers = createProduct('B01234567', { users: undefined as any });
+            const productWithUndefinedUsers = createProduct('B01234567');
             mockProductRepo.findById.mockResolvedValue(productWithUndefinedUsers);
+            mockProductUserRepo.findByProductId.mockResolvedValue([]);
 
             // Act
             await processor.process(mockNotifyAction);
 
             // Assert
             expect(mockProductRepo.findById).toHaveBeenCalledWith('B01234567');
+            expect(mockProductUserRepo.findByProductId).toHaveBeenCalledWith('B01234567');
             expect(mockNotifier.notifyPriceChange).not.toHaveBeenCalled();
             expect(mockActionRepo.markProcessed).toHaveBeenCalledWith('notify-123');
         });
@@ -138,6 +177,7 @@ describe('NotifyPriceActionProcessor', () => {
         it('não deve marcar como processada quando há erro na notificação', async () => {
             // Arrange
             mockProductRepo.findById.mockResolvedValue(mockProduct);
+            mockProductUserRepo.findByProductId.mockResolvedValue(mockProductUsers);
             mockNotifier.notifyPriceChange.mockRejectedValue(new Error('Network error'));
 
             // Act
@@ -145,6 +185,7 @@ describe('NotifyPriceActionProcessor', () => {
 
             // Assert
             expect(mockProductRepo.findById).toHaveBeenCalledWith('B01234567');
+            expect(mockProductUserRepo.findByProductId).toHaveBeenCalledWith('B01234567');
             expect(mockNotifier.notifyPriceChange).toHaveBeenCalled();
             expect(mockActionRepo.markProcessed).not.toHaveBeenCalled();
         });
@@ -172,6 +213,7 @@ describe('NotifyPriceActionProcessor', () => {
             ];
             mockActionRepo.findPendingByType.mockResolvedValue(actions);
             mockProductRepo.findById.mockResolvedValue(mockProduct);
+            mockProductUserRepo.findByProductId.mockResolvedValue(mockProductUsers);
             mockNotifier.notifyPriceChange.mockResolvedValue();
 
             // Act

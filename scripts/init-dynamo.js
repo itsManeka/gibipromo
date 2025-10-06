@@ -122,6 +122,35 @@ const tables = [
         }
     },
     {
+        TableName: 'ProductUsers',
+        AttributeDefinitions: [
+            { AttributeName: 'product_id', AttributeType: 'S' },
+            { AttributeName: 'user_id', AttributeType: 'S' }
+        ],
+        KeySchema: [
+            { AttributeName: 'product_id', KeyType: 'HASH' },
+            { AttributeName: 'user_id', KeyType: 'RANGE' }
+        ],
+        GlobalSecondaryIndexes: [
+            {
+                IndexName: 'UserIdIndex',
+                KeySchema: [
+                    { AttributeName: 'user_id', KeyType: 'HASH' }
+                ],
+                Projection: { ProjectionType: 'ALL' },
+                ProvisionedThroughput: {
+                    ReadCapacityUnits: 5,
+                    WriteCapacityUnits: 5
+                }
+            }
+        ],
+        BillingMode: 'PROVISIONED',
+        ProvisionedThroughput: {
+            ReadCapacityUnits: 5,
+            WriteCapacityUnits: 5
+        }
+    },
+    {
         TableName: 'ActionConfigs',
         AttributeDefinitions: [
             { AttributeName: 'action_type', AttributeType: 'S' }
@@ -252,9 +281,13 @@ async function init() {
         console.log('Recriando tabelas...');
         for (const tableParams of tables) {
             await recreateTable(tableParams);
+        
         }
+    } else {
+        console.log('Criando tabelas se não existirem...');
+        await createTables();
     }
-    
+
     console.log('Inserindo configurações padrão...');
     await insertDefaultActionConfigs();
     console.log('Setup concluído!');

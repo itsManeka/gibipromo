@@ -1,5 +1,4 @@
 import {
-    ProductStats,
     createProductStats,
     calculatePercentageChange,
     shouldCreateStats

@@ -6,7 +6,7 @@ import { Entity } from './Entity';
 export enum ActionType {
   ADD_PRODUCT = 'ADD_PRODUCT',
   CHECK_PRODUCT = 'CHECK_PRODUCT',
-  NOTIFY_PRICE = 'NOTIFY_PRICE'
+  NOTIFY_PRICE = 'NOTIFY_PRICE',
 }
 
 /**

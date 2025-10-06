@@ -29,6 +29,11 @@ export class TelegramNotifier {
         const formattedOldPrice = this.escapeMarkdown(oldPrice.toFixed(2));
         const formattedNewPrice = this.escapeMarkdown(newPrice.toFixed(2));
         const formattedDifference = this.escapeMarkdown(difference);
+        
+        // Calcula o preço sugerido (preço atual -5%)
+        const suggestedPrice = newPrice * 0.95;
+        const unescapedSuggestedPrice = suggestedPrice.toFixed(2); // Para uso no botão
+        
         const message = `
 *Boa notícia\\! O preço baixou\\!*
 
@@ -59,6 +64,12 @@ _Clique nos botões abaixo para ver o produto ou parar de monitorar_
                             {
                                 text: '🛑 Parar monitoria',
                                 callback_data: `stop_monitor:${product.id}:${userId}`
+                            }
+                        ],
+                        [
+                            {
+                                text: `💰 Atualizar preço desejado para R$ ${unescapedSuggestedPrice} (-5%)`,
+                                callback_data: `update_price:${product.id}:${userId}:${suggestedPrice}`
                             }
                         ]
                     ]

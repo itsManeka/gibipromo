@@ -5,18 +5,18 @@ import { MockAmazonPAAPIClient } from '../../../../src/infrastructure/adapters/a
 import { ProductStatsRepository } from '../../../../src/application/ports/ProductStatsRepository';
 import { ActionRepository } from '../../../../src/application/ports/ActionRepository';
 import { ProductRepository } from '../../../../src/application/ports/ProductRepository';
+import { ProductUserRepository } from '../../../../src/application/ports/ProductUserRepository';
 import { UserRepository } from '../../../../src/application/ports/UserRepository';
 import { ProductStats } from '../../../../src/domain/entities/ProductStats';
+import { ProductUser } from '../../../../src/domain/entities/ProductUser';
 import { Product } from '../../../../src/domain/entities/Product';
 import { User } from '../../../../src/domain/entities/User';
-import { Action, ActionType, AddProductAction, CheckProductAction } from '../../../../src/domain/entities/Action';
-import { AmazonProduct } from '../../../../src/application/ports/AmazonProductAPI';
+import { Action, ActionType, CheckProductAction } from '../../../../src/domain/entities/Action';
 import { 
     createTestUser, 
     createTestAction, 
     createAmazonProduct, 
-    createProduct,
-    createProductStats 
+    createProduct
 } from '../../../test-helpers/factories';
 
 /**
@@ -153,43 +153,78 @@ class MockProductRepository implements ProductRepository {
         }
     }
 
-    async addUser(productId: string, userId: string): Promise<void> {
-        const product = await this.findById(productId);
-        if (product && !product.users.includes(userId)) {
-            product.users.push(userId);
-        }
-    }
-
-    async removeUser(productId: string, userId: string): Promise<void> {
-        const product = await this.findById(productId);
-        if (product) {
-            product.users = product.users.filter(id => id !== userId);
-        }
-    }
-
     async getNextProductsToCheck(limit: number): Promise<Product[]> {
         return this.products.slice(0, limit);
     }
+}
+
+class MockProductUserRepository implements ProductUserRepository {
+    private productUsers: ProductUser[] = [];
+
+    async findById(id: string): Promise<ProductUser | null> {
+        return this.productUsers.find(pu => pu.id === id) || null;
+    }
+
+    async findByProductAndUser(productId: string, userId: string): Promise<ProductUser | null> {
+        return this.productUsers.find(pu => pu.product_id === productId && pu.user_id === userId) || null;
+    }
+
+    async findByProductId(productId: string): Promise<ProductUser[]> {
+        return this.productUsers.filter(pu => pu.product_id === productId);
+    }
 
     async findByUserId(userId: string, page: number, pageSize: number): Promise<{
-        products: Product[];
+        productUsers: ProductUser[];
         total: number;
     }> {
-        const userProducts = this.products.filter(p => p.users.includes(userId));
-        const startIndex = (page - 1) * pageSize;
-        const products = userProducts.slice(startIndex, startIndex + pageSize);
-        return {
-            products,
-            total: userProducts.length
-        };
+        const filtered = this.productUsers.filter(pu => pu.user_id === userId);
+        const total = filtered.length;
+        const start = (page - 1) * pageSize;
+        const productUsers = filtered.slice(start, start + pageSize);
+        return { productUsers, total };
     }
 
-    async findByUser(userId: string, page: number, limit: number): Promise<Product[]> {
-        return this.products.filter(p => p.users.includes(userId));
+    async create(productUser: ProductUser): Promise<ProductUser> {
+        this.productUsers.push(productUser);
+        return productUser;
     }
 
-    async countByUser(userId: string): Promise<number> {
-        return this.products.filter(p => p.users.includes(userId)).length;
+    async upsert(productUser: ProductUser): Promise<void> {
+        const existing = await this.findByProductAndUser(productUser.product_id, productUser.user_id);
+        if (existing) {
+            const index = this.productUsers.findIndex(pu => pu.id === existing.id);
+            this.productUsers[index] = { ...productUser, id: existing.id };
+        } else {
+            const newProductUser = { ...productUser, id: `${productUser.product_id}#${productUser.user_id}` };
+            this.productUsers.push(newProductUser);
+        }
+    }
+
+    async update(productUser: ProductUser): Promise<ProductUser> {
+        const index = this.productUsers.findIndex(pu => pu.id === productUser.id);
+        if (index !== -1) {
+            this.productUsers[index] = productUser;
+        }
+        return productUser;
+    }
+
+    async removeByProductAndUser(productId: string, userId: string): Promise<void> {
+        this.productUsers = this.productUsers.filter(
+            pu => !(pu.product_id === productId && pu.user_id === userId)
+        );
+    }
+
+    async updateDesiredPrice(productId: string, userId: string, desiredPrice: number): Promise<void> {
+        const productUser = await this.findByProductAndUser(productId, userId);
+        if (productUser) {
+            productUser.desired_price = desiredPrice;
+            productUser.updated_at = new Date().toISOString();
+            await this.update(productUser);
+        }
+    }
+
+    async delete(id: string): Promise<void> {
+        this.productUsers = this.productUsers.filter(pu => pu.id !== id);
     }
 }
 
@@ -252,6 +287,7 @@ describe('ProductStats Integration Tests', () => {
     let actionRepository: MockActionRepository;
     let userRepository: MockUserRepository;
     let productRepository: MockProductRepository;
+    let productUserRepository: MockProductUserRepository;
     let productStatsRepository: MockProductStatsRepository;
     let productStatsService: ProductStatsService;
     let addProductProcessor: AddProductActionProcessor;
@@ -262,6 +298,7 @@ describe('ProductStats Integration Tests', () => {
         actionRepository = new MockActionRepository();
         userRepository = new MockUserRepository();
         productRepository = new MockProductRepository();
+        productUserRepository = new MockProductUserRepository();
         productStatsRepository = new MockProductStatsRepository();
         productStatsService = new ProductStatsService(productStatsRepository);
         amazonApi = new MockAmazonPAAPIClient();
@@ -269,6 +306,7 @@ describe('ProductStats Integration Tests', () => {
         addProductProcessor = new AddProductActionProcessor(
             actionRepository,
             productRepository,
+            productUserRepository,
             userRepository,
             amazonApi,
             productStatsService
@@ -284,7 +322,7 @@ describe('ProductStats Integration Tests', () => {
 
     describe('AddProductActionProcessor with ProductStats', () => {
         it('should create statistics when price reduces by 5% or more', async () => {
-            const asin = 'B01234567';
+            const asin = 'B012345679';
             
             // Cria produto existente com preço inicial
             const existingProduct = createProduct(asin, {
@@ -319,7 +357,7 @@ describe('ProductStats Integration Tests', () => {
         });
 
         it('should not create statistics when price reduces by less than 5%', async () => {
-            const asin = 'B01234567';
+            const asin = 'B012345679';
             
             // Cria produto existente com preço inicial
             const existingProduct = createProduct(asin, {
@@ -350,7 +388,7 @@ describe('ProductStats Integration Tests', () => {
         });
 
         it('should not create statistics when price increases', async () => {
-            const asin = 'B01234567';
+            const asin = 'B012345679';
             
             // Cria produto existente com preço inicial
             const existingProduct = createProduct(asin, {
@@ -383,7 +421,7 @@ describe('ProductStats Integration Tests', () => {
 
     describe('CheckProductActionProcessor with ProductStats', () => {
         it('should create statistics when checking products with significant price drop', async () => {
-            const asin = 'B01234567';
+            const asin = 'B012345679';
             
             // Cria produto existente com preço inicial
             const existingProduct = createProduct(asin, {
@@ -425,7 +463,7 @@ describe('ProductStats Integration Tests', () => {
         });
 
         it('should handle multiple price reductions correctly', async () => {
-            const asin = 'B01234567';
+            const asin = 'B012345679';
             
             // Cria produto existente
             const existingProduct = createProduct(asin, {

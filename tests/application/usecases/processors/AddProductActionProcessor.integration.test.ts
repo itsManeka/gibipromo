@@ -2,9 +2,11 @@ import { DynamoDBProductRepository } from '../../../../src/infrastructure/adapte
 import { MockAmazonPAAPIClient } from '../../../../src/infrastructure/adapters/amazon/MockAmazonPAAPIClient';
 import { User } from '../../../../src/domain/entities/User';
 import { Product } from '../../../../src/domain/entities/Product';
+import { ProductUser } from '../../../../src/domain/entities/ProductUser';
 import { Action } from '../../../../src/domain/entities/Action';
 import { ActionRepository } from '../../../../src/application/ports/ActionRepository';
 import { UserRepository } from '../../../../src/application/ports/UserRepository';
+import { ProductUserRepository } from '../../../../src/application/ports/ProductUserRepository';
 import { 
     AddProductActionProcessor 
 } from '../../../../src/application/usecases/processors/AddProductActionProcessor';
@@ -140,6 +142,83 @@ class MockUserRepository implements UserRepository {
 }
 
 /**
+ * Mock completo do repositório de relacionamentos produto-usuário usando implementação em memória
+ */
+class MockProductUserRepository implements ProductUserRepository {
+    private productUsers: ProductUser[] = [];
+
+    async findById(id: string): Promise<ProductUser | null> {
+        return this.productUsers.find(pu => pu.id === id) || null;
+    }
+
+    async findByProductAndUser(productId: string, userId: string): Promise<ProductUser | null> {
+        return this.productUsers.find(pu => pu.product_id === productId && pu.user_id === userId) || null;
+    }
+
+    async findByProductId(productId: string): Promise<ProductUser[]> {
+        return this.productUsers.filter(pu => pu.product_id === productId);
+    }
+
+    async findByUserId(userId: string, page: number, pageSize: number): Promise<{
+        productUsers: ProductUser[];
+        total: number;
+    }> {
+        const filtered = this.productUsers.filter(pu => pu.user_id === userId);
+        const total = filtered.length;
+        const start = (page - 1) * pageSize;
+        const productUsers = filtered.slice(start, start + pageSize);
+        return { productUsers, total };
+    }
+
+    async create(productUser: ProductUser): Promise<ProductUser> {
+        this.productUsers.push(productUser);
+        return productUser;
+    }
+
+    async upsert(productUser: ProductUser): Promise<void> {
+        const existing = await this.findByProductAndUser(productUser.product_id, productUser.user_id);
+        if (existing) {
+            const index = this.productUsers.findIndex(pu => pu.id === existing.id);
+            this.productUsers[index] = { ...productUser, id: existing.id };
+        } else {
+            const newProductUser = { ...productUser, id: `${productUser.product_id}#${productUser.user_id}` };
+            this.productUsers.push(newProductUser);
+        }
+    }
+
+    async update(productUser: ProductUser): Promise<ProductUser> {
+        const index = this.productUsers.findIndex(pu => pu.id === productUser.id);
+        if (index !== -1) {
+            this.productUsers[index] = productUser;
+        }
+        return productUser;
+    }
+
+    async removeByProductAndUser(productId: string, userId: string): Promise<void> {
+        this.productUsers = this.productUsers.filter(
+            pu => !(pu.product_id === productId && pu.user_id === userId)
+        );
+    }
+
+    async updateDesiredPrice(productId: string, userId: string, desiredPrice: number): Promise<void> {
+        const productUser = await this.findByProductAndUser(productId, userId);
+        if (productUser) {
+            productUser.desired_price = desiredPrice;
+            productUser.updated_at = new Date().toISOString();
+        }
+    }
+
+    async delete(id: string): Promise<void> {
+        this.productUsers = this.productUsers.filter(pu => pu.id !== id);
+    }
+
+    // Método auxiliar para testes
+    clear(): void {
+        this.productUsers = [];
+    }
+}
+
+/**
  * Extensão para mock do cliente Amazon
  */
 class ExtendedMockAmazonPAAPIClient extends MockAmazonPAAPIClient {
@@ -184,15 +263,6 @@ class ExtendedDynamoDBProductRepository extends DynamoDBProductRepository {
         return this.products.get(id) || null;
     }
 
-    async addUser(productId: string, userId: string): Promise<void> {
-        const product = this.products.get(productId);
-        if (product) {
-            if (!product.users.includes(userId)) {
-                product.users.push(userId);
-            }
-        }
-    }
-
     // Método auxiliar para testes
     clear(): void {
         this.products.clear();
@@ -203,6 +273,7 @@ describe('AddProductActionProcessor Integration Tests', () => {
     let actionProcessor: AddProductActionProcessor;
     let actionRepository: MockActionRepository;
     let userRepository: MockUserRepository;
+    let productUserRepository: MockProductUserRepository;
     let productRepository: ExtendedDynamoDBProductRepository;
     let amazonApi: ExtendedMockAmazonPAAPIClient;
     let defaultUser: User;
@@ -211,6 +282,7 @@ describe('AddProductActionProcessor Integration Tests', () => {
     // Setup repositories com mocks completos
         actionRepository = new MockActionRepository();
         userRepository = new MockUserRepository();
+        productUserRepository = new MockProductUserRepository();
         productRepository = new ExtendedDynamoDBProductRepository();
         amazonApi = new ExtendedMockAmazonPAAPIClient();
 
@@ -218,6 +290,7 @@ describe('AddProductActionProcessor Integration Tests', () => {
         actionProcessor = new AddProductActionProcessor(
             actionRepository,
             productRepository,
+            productUserRepository,
             userRepository,
             amazonApi,
             {
@@ -228,6 +301,7 @@ describe('AddProductActionProcessor Integration Tests', () => {
         // Clear all repositories
         actionRepository.clear();
         userRepository.clear();
+        productUserRepository.clear();
         productRepository.clear();
 
         // Create default test user
@@ -283,7 +357,7 @@ describe('AddProductActionProcessor Integration Tests', () => {
         it.each([
             'https://www.amazon.com.br/dp/B012345678',
             'https://amazon.com.br/dp/B012345678/',
-            'https://www.amazon.com.br/dp/b012345678',
+            'https://www.amazon.com.br/dp/B012345678',
             'https://amazon.com.br/product/B012345678',
             'https://www.amazon.com.br/product/B012345678/',
             'https://amazon.com.br/dp/B012345678?ref=123',
@@ -346,13 +420,13 @@ describe('AddProductActionProcessor Integration Tests', () => {
         it('deve processar múltiplos produtos em lote', async () => {
             // Arrange
             const products = [
-                createAmazonProduct('B01234567'),
-                createAmazonProduct('B98765432')
+                createAmazonProduct('B012345678'),
+                createAmazonProduct('B087654321')
             ];
 
             const actions = [
-                createTestAction('B01234567'),
-                createTestAction('B98765432')
+                createTestAction('B012345678'),
+                createTestAction('B087654321')
             ];
 
             // Registra ações

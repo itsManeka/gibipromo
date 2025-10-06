@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import { UserRepository } from '../../../application/ports/UserRepository';
 import { ActionRepository } from '../../../application/ports/ActionRepository';
 import { ProductRepository } from '../../../application/ports/ProductRepository';
+import { ProductUserRepository } from '../../../application/ports/ProductUserRepository';
 import { createUser } from '../../../domain/entities/User';
 import { createAddProductAction } from '../../../domain/entities/Action';
 
@@ -14,7 +15,8 @@ export class TelegramBot {
     constructor(
     private readonly userRepository: UserRepository,
     private readonly actionRepository: ActionRepository,
-    private readonly productRepository: ProductRepository
+    private readonly productRepository: ProductRepository,
+    private readonly productUserRepository: ProductUserRepository
     ) {
         const token = process.env.TELEGRAM_BOT_TOKEN;
         if (!token) {
@@ -42,6 +44,7 @@ export class TelegramBot {
         this.bot.action(/^page:(\d+)$/, this.handlePageChange.bind(this));
         this.bot.action(/^delete:(yes|no)$/, this.handleDeleteConfirmation.bind(this));
         this.bot.action(/^stop_monitor:(.+):(.+)$/, this.handleStopMonitoring.bind(this));
+        this.bot.action(/^update_price:(.+):(.+):(.+)$/, this.handleUpdateDesiredPrice.bind(this));
 
         // Handler para mensagens normais (links)
         this.bot.on('text', this.handleText.bind(this));
@@ -190,19 +193,35 @@ export class TelegramBot {
         const userId = ctx.from!.id.toString();
         const pageSize = 5;
 
-        const { products, total } = await this.productRepository.findByUserId(userId, page, pageSize);
+        // Busca os relacionamentos ProductUser para este usuário
+        const { productUsers, total } = await this.productUserRepository.findByUserId(userId, page, pageSize);
 
-        if (products.length === 0) {
+        if (productUsers.length === 0) {
             await ctx.reply('Você não está monitorando nenhum produto ainda. Use /addlink para começar.');
+            return;
+        }
+
+        // Busca os detalhes dos produtos
+        const products = await Promise.all(
+            productUsers.map(async (productUser) => {
+                const product = await this.productRepository.findById(productUser.product_id);
+                return product;
+            })
+        );
+
+        const validProducts = products.filter(product => product !== null);
+
+        if (validProducts.length === 0) {
+            await ctx.reply('Erro ao carregar os produtos. Tente novamente.');
             return;
         }
 
         const totalPages = Math.ceil(total / pageSize);
         const message = `📋 Seus produtos monitorados (Página ${page}/${totalPages}):`;
 
-        const keyboard: any[] = products.map(product => [{
-            text: `${this.escapeMarkdown(product.title)}`,
-            callback_data: `product:${product.id}`
+        const keyboard: any[] = validProducts.map(product => [{
+            text: product!.title, // Não usar escapeMarkdown no texto do botão
+            callback_data: `product:${product!.id}`
         }]);
 
         // Adiciona botões de navegação
@@ -441,6 +460,57 @@ ${product.preorder ? '\n⏳ Em pré\\-venda' : ''}`;
     }
 
     /**
+   * Manipula o callback de atualizar preço desejado
+   */
+    private async handleUpdateDesiredPrice(ctx: Context): Promise<void> {
+        try {
+            if (!('match' in ctx) || !ctx.match || !Array.isArray(ctx.match)) return;
+
+            const productId = ctx.match[1] as string;
+            const userId = ctx.match[2] as string;
+            const desiredPrice = parseFloat(ctx.match[3] as string);
+            const currentUserId = ctx.from!.id.toString();
+
+            // Verifica se o usuário do callback é o mesmo que clicou o botão
+            if (userId !== currentUserId) {
+                await ctx.reply('⚠️ Este botão não é para você.');
+                return;
+            }
+
+            // Verifica se o produto existe
+            const product = await this.productRepository.findById(productId);
+            if (!product) {
+                await ctx.reply('❌ Produto não encontrado.');
+                return;
+            }
+
+            // Verifica se o usuário está monitorando este produto
+            const productUser = await this.productUserRepository.findByProductAndUser(productId, userId);
+            if (!productUser) {
+                await ctx.reply('ℹ️ Você não está monitorando este produto.');
+                return;
+            }
+
+            // Atualiza o preço desejado diretamente
+            const updatedProductUser = {
+                ...productUser,
+                desired_price: desiredPrice,
+                updated_at: new Date().toISOString()
+            };
+            await this.productUserRepository.update(updatedProductUser);
+
+            const formattedPrice = this.escapeMarkdown(desiredPrice.toFixed(2));
+            const message = `${this.escapeMarkdown('✅ Preço desejado atualizado para R$ ')}${formattedPrice}\n*${this.escapeMarkdown(product.title)}*\n\n${this.escapeMarkdown('Você será notificado apenas quando o preço for igual ou menor que este valor.')}`;
+            await ctx.reply(message, {
+                parse_mode: 'MarkdownV2'
+            });
+        } catch (error) {
+            console.error('Erro ao atualizar preço desejado:', error);
+            await ctx.reply('Desculpe, ocorreu um erro ao atualizar o preço desejado. 😕');
+        }
+    }
+
+    /**
    * Manipula o callback de parar monitoria de um produto específico
    */
     private async handleStopMonitoring(ctx: Context): Promise<void> {
@@ -465,13 +535,14 @@ ${product.preorder ? '\n⏳ Em pré\\-venda' : ''}`;
             }
 
             // Verifica se o usuário está monitorando este produto
-            if (!product.users?.includes(userId)) {
+            const productUser = await this.productUserRepository.findByProductAndUser(productId, userId);
+            if (!productUser) {
                 await ctx.reply('ℹ️ Você não está monitorando este produto.');
                 return;
             }
 
-            // Remove o usuário da lista de monitoramento
-            await this.productRepository.removeUser(productId, userId);
+            // Remove o relacionamento ProductUser
+            await this.productUserRepository.removeByProductAndUser(productId, userId);
 
             await ctx.reply(`✅ Você não está mais monitorando este produto:\n*${this.escapeMarkdown(product.title)}*`, {
                 parse_mode: 'MarkdownV2'

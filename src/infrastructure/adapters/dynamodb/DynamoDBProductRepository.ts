@@ -45,44 +45,6 @@ export class DynamoDBProductRepository extends DynamoDBRepository<Product> imple
         return productWithUpdatedTimestamp;
     }
 
-    async findByUserId(userId: string, page: number, pageSize: number): Promise<{ products: Product[]; total: number }> {
-        console.log(`[DynamoDB] Buscando produtos do usuário ${userId} (página ${page}, ${pageSize} itens por página)`);
-    
-        const params: DocumentClient.ScanInput = {
-            TableName: this.tableName,
-            FilterExpression: 'contains(users, :userId)',
-            ExpressionAttributeValues: {
-                ':userId': userId
-            }
-        };
-
-        try {
-            // Primeiro faz um scan para pegar todos os produtos do usuário
-            const result = await documentClient.scan(params).promise();
-            const allProducts = (result.Items || []) as Product[];
-      
-            // Ordena por ID (que contém timestamp) em ordem decrescente
-            const sortedProducts = allProducts.sort((a, b) => b.id.localeCompare(a.id));
-      
-            // Calcula o offset e limite para a paginação
-            const start = (page - 1) * pageSize;
-            const end = start + pageSize;
-      
-            // Retorna apenas os produtos da página solicitada
-            const paginatedProducts = sortedProducts.slice(start, end);
-      
-            console.log(`[DynamoDB] Encontrados ${allProducts.length} produtos, retornando ${paginatedProducts.length}`);
-      
-            return {
-                products: paginatedProducts,
-                total: allProducts.length
-            };
-        } catch (error) {
-            console.error('[DynamoDB] Erro ao buscar produtos do usuário:', error);
-            throw error;
-        }
-    }
-
     async findByLink(link: string): Promise<Product | null> {
         const params: DocumentClient.QueryInput = {
             TableName: this.tableName,
@@ -97,58 +59,6 @@ export class DynamoDBProductRepository extends DynamoDBRepository<Product> imple
         return result.Items && result.Items.length > 0 ? (result.Items[0] as Product) : null;
     }
 
-    async addUser(productId: string, userId: string): Promise<void> {
-    // Primeiro busca o produto para verificar se o usuário já está na lista
-        const product = await this.findById(productId);
-        if (!product) return;
-
-        // Se o usuário já está na lista, não faz nada
-        if (product.users?.includes(userId)) {
-            return;
-        }
-
-        const params: DocumentClient.UpdateItemInput = {
-            TableName: this.tableName,
-            Key: { id: productId },
-            UpdateExpression: 'SET #users = list_append(if_not_exists(#users, :empty), :userId), updated_at = :updated_at',
-            ExpressionAttributeNames: {
-                '#users': 'users'
-            },
-            ExpressionAttributeValues: {
-                ':userId': [userId],
-                ':empty': [],
-                ':updated_at': new Date().toISOString()
-            }
-        };
-
-        await documentClient.update(params).promise();
-    }
-
-    async removeUser(productId: string, userId: string): Promise<void> {
-    // Primeiro busca o produto para pegar a lista atual de usuários
-        const product = await this.findById(productId);
-        if (!product) return;
-
-        // Remove o usuário da lista
-        const users = product.users.filter((id: string) => id !== userId);
-
-        // Atualiza o produto
-        const params: DocumentClient.UpdateItemInput = {
-            TableName: this.tableName,
-            Key: { id: productId },
-            UpdateExpression: 'SET #users = :users, updated_at = :updated_at',
-            ExpressionAttributeNames: {
-                '#users': 'users'
-            },
-            ExpressionAttributeValues: {
-                ':users': users,
-                ':updated_at': new Date().toISOString()
-            }
-        };
-
-        await documentClient.update(params).promise();
-    }
-
     private lastEvaluatedKey: DocumentClient.Key | undefined;
 
     async getNextProductsToCheck(limit: number): Promise<Product[]> {
@@ -157,15 +67,7 @@ export class DynamoDBProductRepository extends DynamoDBRepository<Product> imple
 
             const params: DocumentClient.ScanInput = {
                 TableName: this.tableName,
-                Limit: limit,
-                // Busca apenas produtos que têm usuários monitorando
-                FilterExpression: 'attribute_exists(#users) AND size(#users) > :zero',
-                ExpressionAttributeNames: {
-                    '#users': 'users'
-                },
-                ExpressionAttributeValues: {
-                    ':zero': 0
-                }
+                Limit: limit
             };
 
             // Se tiver uma chave salva, usa para continuar de onde parou

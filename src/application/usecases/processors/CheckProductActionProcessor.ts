@@ -19,6 +19,14 @@ export class CheckProductActionProcessor implements ActionProcessor<CheckProduct
     private readonly productStatsService: ProductStatsService
     ) {}
 
+    /**
+     * Valida se um ID é um ASIN válido da Amazon
+     */
+    private isValidASIN(asin: string): boolean {
+        // ASIN deve ter 10 caracteres alfanuméricos (pode começar com letra ou número)
+        return /^[A-Z0-9]{10}$/.test(asin);
+    }
+
     async process(action: CheckProductAction): Promise<void> {
         try {
             // Busca o produto no banco
@@ -84,16 +92,37 @@ export class CheckProductActionProcessor implements ActionProcessor<CheckProduct
 
         console.log(`Verificando lote de ${products.length} produtos`);
     
-        // Busca todos os produtos na Amazon de uma vez
-        const asins = products.map(p => p.id);
-        const amazonProducts = await this.amazonApi.getProducts(asins);
+        // Filtra apenas produtos com ASINs válidos
+        const validProducts = products.filter(p => this.isValidASIN(p.id));
+        const invalidProducts = products.filter(p => !this.isValidASIN(p.id));
+
+        // Log produtos com ASINs inválidos
+        if (invalidProducts.length > 0) {
+            console.warn(`Ignorando ${invalidProducts.length} produtos com ASINs inválidos:`, 
+                invalidProducts.map(p => p.id));
+        }
+
+        let amazonProducts = new Map();
+        
+        // Busca apenas produtos com ASINs válidos na Amazon
+        if (validProducts.length > 0) {
+            const validAsins = validProducts.map(p => p.id);
+            amazonProducts = await this.amazonApi.getProducts(validAsins);
+        }
 
         let processedCount = 0;
         let updatedCount = 0;
 
-        // Processa cada produto
+        // Processa todos os produtos (válidos e inválidos)
         for (const product of products) {
             try {
+                // Para produtos com ASIN inválido, apenas pula o processamento
+                if (!this.isValidASIN(product.id)) {
+                    console.warn(`Produto com ASIN inválido ignorado: ${product.id}`);
+                    processedCount++;
+                    continue;
+                }
+
                 const amazonProduct = amazonProducts.get(product.id);
                 if (!amazonProduct) {
                     console.warn(`Produto não encontrado na Amazon: ${product.id}`);

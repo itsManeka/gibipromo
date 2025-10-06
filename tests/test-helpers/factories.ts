@@ -44,7 +44,6 @@ export const createProduct = (asin: string, overrides?: Partial<Product>): Produ
     lowest_price: 95,
     url: `https://amazon.com.br/dp/${asin}`,
     image: `http://example.com/${asin}.jpg`,
-    users: [],
     in_stock: true,
     preorder: false,
     created_at: new Date().toISOString(),

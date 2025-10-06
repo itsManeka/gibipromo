@@ -5,9 +5,11 @@ import {
 } from '../../../domain/entities/Action';
 import { ActionRepository } from '../../ports/ActionRepository';
 import { ProductRepository } from '../../ports/ProductRepository';
+import { ProductUserRepository } from '../../ports/ProductUserRepository';
 import { UserRepository } from '../../ports/UserRepository';
 import { AmazonProduct, AmazonProductAPI } from '../../ports/AmazonProductAPI';
 import { createProduct, updateProductPrice } from '../../../domain/entities/Product';
+import { createProductUser } from '../../../domain/entities/ProductUser';
 import { ActionProcessor } from '../../ports/ActionProcessor';
 import { ProductStatsService } from '../ProductStatsService';
 
@@ -20,10 +22,19 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
     constructor(
 		private readonly actionRepository: ActionRepository,
 		private readonly productRepository: ProductRepository,
+		private readonly productUserRepository: ProductUserRepository,
 		private readonly userRepository: UserRepository,
 		private readonly amazonApi: AmazonProductAPI,
 		private readonly productStatsService: ProductStatsService
     ) { }
+
+    /**
+     * Valida se um ID é um ASIN válido da Amazon
+     */
+    private isValidASIN(asin: string): boolean {
+        // ASIN deve ter 10 caracteres alfanuméricos (pode começar com letra ou número)
+        return /^[A-Z0-9]{10}$/.test(asin);
+    }
 
     async process(action: AddProductAction): Promise<void> {
         try {
@@ -40,6 +51,13 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
             const asin = this.extractASIN(action.value);
             if (!asin) {
                 console.warn(`Link inválido: ${action.value}`);
+                await this.actionRepository.markProcessed(action.id);
+                return;
+            }
+
+            // Verifica se o ASIN é válido antes de consultar a Amazon
+            if (!this.isValidASIN(asin)) {
+                console.warn(`ASIN inválido: ${asin} (extraído de ${action.value})`);
                 await this.actionRepository.markProcessed(action.id);
                 return;
             }
@@ -97,11 +115,14 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
             const oldPrice = product.price;
             const newPrice = amazonProduct.currentPrice;
 
+            // Verifica se o usuário já monitora este produto
+            const existingProductUser = await this.productUserRepository.findByProductAndUser(product.id, action.user_id);
+
             //-- Atualiza apenas se houver mudança em algum campo relevante
             if (oldPrice === newPrice &&
 				product.in_stock === amazonProduct.inStock &&
 				product.preorder === amazonProduct.isPreOrder &&
-				product.users.includes(action.user_id)) {
+				existingProductUser) {
                 console.log(`Nenhuma mudança para o produto ${product.title}, pulando atualização.`);
                 await this.actionRepository.markProcessed(action.id);
                 return true;
@@ -142,10 +163,16 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
             }
         }
 
-        // Adiciona o usuário à lista de monitoramento do produto
+        // Adiciona o usuário à lista de monitoramento do produto (tabela ProductUsers)
         const user = await this.userRepository.findById(action.user_id);
         if (user) {
-            await this.productRepository.addUser(product.id, user.id);
+            // Cria ou atualiza o relacionamento usando upsert
+            const productUser = createProductUser({
+                product_id: product.id,
+                user_id: user.id
+            });
+            await this.productUserRepository.upsert(productUser);
+            console.log(`Usuário ${user.id} adicionado ao monitoramento do produto ${product.id}`);
         }
         await this.actionRepository.markProcessed(action.id);
         return true;
@@ -158,19 +185,30 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 
         console.log(`Processando ${actions.length} ações de adicionar produtos em lote`);
 
-        // Obtém a lista de ASINs únicos das ações
+        // Obtém a lista de ASINs únicos das ações e filtra apenas os válidos
         const asins: string[] = [];
+        const invalidActions: any[] = [];
+        
         for (const action of actions) {
             const asin = this.extractASIN((action as AddProductAction).value);
-            if (asin) asins.push(asin);
+            if (asin && this.isValidASIN(asin)) {
+                asins.push(asin);
+            } else {
+                invalidActions.push(action);
+                console.warn(`ASIN inválido ou não encontrado na ação ${action.id}: ${(action as AddProductAction).value}`);
+            }
         }
 
-        // Se não houver ASINs válidos, marca todas como processadas
+        // Marca ações com ASINs inválidos como processadas
+        if (invalidActions.length > 0) {
+            await Promise.all(
+                invalidActions.map(action => this.actionRepository.markProcessed(action.id))
+            );
+        }
+
+        // Se não houver ASINs válidos, retorna
         if (asins.length === 0) {
             console.warn('Nenhum ASIN válido encontrado nas ações');
-            await Promise.all(
-                actions.map(action => this.actionRepository.markProcessed(action.id))
-            );
             return actions.length;
         }
 
@@ -237,8 +275,8 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 
         const asin = match[1].toUpperCase();
 
-        // ASINs are typically 9 or 10 characters
-        if (asin.length >= 9 && asin.length <= 10) {
+        // ASINs devem ter exatamente 10 caracteres para Amazon PA-API
+        if (asin.length === 10) {
             return asin;
         }
 

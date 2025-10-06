@@ -27,7 +27,6 @@ describe('Product Entity', () => {
 
     it('should create a product with initial price as lowest_price and timestamps', () => {
         expect(product.lowest_price).toBe(product.price);
-        expect(product.users).toEqual([]);
         expect(product.created_at).toBe(fixedDate);
         expect(product.updated_at).toBe(fixedDate);
     });

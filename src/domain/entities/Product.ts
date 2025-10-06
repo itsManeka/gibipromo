@@ -10,7 +10,6 @@ export interface Product extends Entity {
     price: number;
     old_price?: number;
     lowest_price: number;
-    users: string[];
     in_stock: boolean;
     url: string;
     image: string;
@@ -22,12 +21,11 @@ export interface Product extends Entity {
 /**
  * Factory function to create a new Product
  */
-export function createProduct(params: Omit<Product, 'lowest_price' | 'users' | 'created_at' | 'updated_at'>): Product {
+export function createProduct(params: Omit<Product, 'lowest_price' | 'created_at' | 'updated_at'>): Product {
     const now = new Date().toISOString();
     return {
         ...params,
         lowest_price: params.price,
-        users: [],
         created_at: now,
         updated_at: now
     };

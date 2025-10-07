@@ -317,4 +317,110 @@ describe('AddProductActionProcessor', () => {
             expect(mockActionRepo.markProcessed).toHaveBeenCalledWith(testAction.id);
         });
     });
+
+    describe('Short URL Support', () => {        
+        beforeEach(() => {
+            // Mock direto da função na instância do processor
+            jest.spyOn(processor as any, 'resolveUrl').mockImplementation(async (...args: unknown[]) => {
+                const url = args[0] as string;
+                if (url === 'https://amzn.to/43PBc2v') {
+                    return 'https://www.amazon.com.br/dp/B012345678';
+                }
+                if (url === 'https://amzn.to/invalid') {
+                    return null;
+                }
+                if (url === 'https://amzn.to/external') {
+                    return null;
+                }
+                if (url === 'https://amzn.to/error') {
+                    throw new Error('Network error');
+                }
+                if (url === 'https://www.amazon.com.br/dp/B012345678') {
+                    return url;
+                }
+                return url;
+            });
+        });
+
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it('should resolve short URLs before processing', async () => {
+            // Setup
+            const shortUrl = 'https://amzn.to/43PBc2v';
+            const shortUrlAction = createTestAction(TEST_ASIN, { value: shortUrl });
+
+            mockUserRepo.findById.mockResolvedValue(testUser);
+            mockProductRepo.findById.mockResolvedValue(null);
+            mockAmazonApi.getProducts.mockResolvedValue(new Map([[TEST_ASIN, amazonProduct]]));
+
+            // Execute
+            await processor.process(shortUrlAction);
+
+            // Verify
+            expect(mockAmazonApi.getProducts).toHaveBeenCalledWith([TEST_ASIN]);
+            expect(mockActionRepo.markProcessed).toHaveBeenCalledWith(shortUrlAction.id);
+        });
+
+        it('should mark action as processed when URL resolution fails', async () => {
+            // Setup
+            const shortUrl = 'https://amzn.to/invalid';
+            const shortUrlAction = createTestAction(TEST_ASIN, { value: shortUrl });
+
+            mockUserRepo.findById.mockResolvedValue(testUser);
+
+            // Execute
+            await processor.process(shortUrlAction);
+
+            // Verify - should just mark as processed, no error action created
+            expect(mockActionRepo.create).not.toHaveBeenCalled();
+            expect(mockActionRepo.markProcessed).toHaveBeenCalledWith(shortUrlAction.id);
+            expect(mockAmazonApi.getProducts).not.toHaveBeenCalled();
+        });
+
+        it('should mark action as processed when resolved URL is not Amazon', async () => {
+            // Setup
+            const shortUrl = 'https://amzn.to/external';
+            const shortUrlAction = createTestAction(TEST_ASIN, { value: shortUrl });
+
+            mockUserRepo.findById.mockResolvedValue(testUser);
+
+            // Execute
+            await processor.process(shortUrlAction);
+
+            // Verify - should just mark as processed, no error action created
+            expect(mockActionRepo.create).not.toHaveBeenCalled();
+            expect(mockActionRepo.markProcessed).toHaveBeenCalledWith(shortUrlAction.id);
+            expect(mockAmazonApi.getProducts).not.toHaveBeenCalled();
+        });
+
+        it('should handle URL resolution errors gracefully', async () => {
+            // Setup
+            const shortUrl = 'https://amzn.to/error';
+            const shortUrlAction = createTestAction(TEST_ASIN, { value: shortUrl });
+
+            mockUserRepo.findById.mockResolvedValue(testUser);
+
+            // Execute & Verify - should throw
+            await expect(processor.process(shortUrlAction)).rejects.toThrow('Network error');
+        });
+
+        it('should process regular Amazon URLs without URL resolution', async () => {
+            // Setup
+            const amazonUrl = 'https://www.amazon.com.br/dp/B012345678';
+            const amazonUrlAction = createTestAction(TEST_ASIN, { value: amazonUrl });
+
+            mockUserRepo.findById.mockResolvedValue(testUser);
+            mockProductRepo.findById.mockResolvedValue(null);
+            mockAmazonApi.getProducts.mockResolvedValue(new Map([[TEST_ASIN, amazonProduct]]));
+
+            // Execute
+            await processor.process(amazonUrlAction);
+
+            // Verify
+            expect(mockAmazonApi.getProducts).toHaveBeenCalledWith([TEST_ASIN]);
+            expect(mockActionRepo.markProcessed).toHaveBeenCalledWith(amazonUrlAction.id);
+        });
+    });
 });

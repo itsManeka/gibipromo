@@ -12,6 +12,7 @@ import { createProduct, updateProductPrice } from '../../../domain/entities/Prod
 import { createProductUser } from '../../../domain/entities/ProductUser';
 import { ActionProcessor } from '../../ports/ActionProcessor';
 import { ProductStatsService } from '../ProductStatsService';
+import { resolveShortUrl } from '../../../infrastructure/utils/urlResolver';
 
 /**
  * Processador de ações de adição de produtos
@@ -36,6 +37,32 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
         return /^[A-Z0-9]{10}$/.test(asin);
     }
 
+    /**
+     * Resolve uma URL (pode ser encurtada) para a URL final da Amazon
+     * @param url URL original (pode ser encurtada)
+     * @returns URL final resolvida ou null se inválida
+     */
+    private async resolveUrl(url: string): Promise<string | null> {
+        try {
+            const result = await resolveShortUrl(url);
+            
+            if (!result.success) {
+                console.warn(`Erro ao resolver URL ${url}: ${result.error}`);
+                return null;
+            }
+
+            if (!result.isAmazonUrl) {
+                console.warn(`URL ${url} não é da Amazon: ${result.error}`);
+                return null;
+            }
+
+            return result.finalUrl;
+        } catch (error) {
+            console.error(`Erro inesperado ao resolver URL ${url}:`, error);
+            return null;
+        }
+    }
+
     async process(action: AddProductAction): Promise<void> {
         try {
             console.log(`Processando ação individual: ${action.id}`);
@@ -48,22 +75,32 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
                 return;
             }
 
-            const asin = this.extractASIN(action.value);
+            // Resolve a URL (pode ser encurtada) para a URL final da Amazon
+            const resolvedUrl = await this.resolveUrl(action.value);
+            if (!resolvedUrl) {
+                console.warn(`Não foi possível resolver a URL: ${action.value}`);
+                await this.actionRepository.markProcessed(action.id);
+                return;
+            }
+
+            const asin = this.extractASIN(resolvedUrl);
             if (!asin) {
-                console.warn(`Link inválido: ${action.value}`);
+                console.warn(`Link inválido após resolução: ${resolvedUrl} (original: ${action.value})`);
                 await this.actionRepository.markProcessed(action.id);
                 return;
             }
 
             // Verifica se o ASIN é válido antes de consultar a Amazon
             if (!this.isValidASIN(asin)) {
-                console.warn(`ASIN inválido: ${asin} (extraído de ${action.value})`);
+                console.warn(`ASIN inválido: ${asin} (extraído de ${resolvedUrl}, original: ${action.value})`);
                 await this.actionRepository.markProcessed(action.id);
                 return;
             }
 
             const amazonProducts = await this.amazonApi.getProducts([asin]);
-            await this.processAction(action, amazonProducts);
+            // Usa a URL resolvida para processamento
+            const modifiedAction = { ...action, value: resolvedUrl };
+            await this.processAction(modifiedAction, amazonProducts);
         } catch (error) {
             console.error('Erro ao processar ação de adição de produto:', error);
             throw error; // Re-throw para tratamento adequado
@@ -179,27 +216,39 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
     }
 
     async processNext(limit: number): Promise<number> {
-    // Busca até 10 ações pendentes
+        // Busca até 10 ações pendentes
         const actions = await this.actionRepository.findPendingByType(this.actionType, limit);
         if (actions.length === 0) return 0;
 
         console.log(`Processando ${actions.length} ações de adicionar produtos em lote`);
 
-        // Obtém a lista de ASINs únicos das ações e filtra apenas os válidos
+        // Resolve todas as URLs primeiro e obtém a lista de ASINs únicos das ações válidas
         const asins: string[] = [];
         const invalidActions: any[] = [];
+        const resolvedActions: { action: AddProductAction; resolvedUrl: string; asin: string }[] = [];
         
         for (const action of actions) {
-            const asin = this.extractASIN((action as AddProductAction).value);
+            const addProductAction = action as AddProductAction;
+            
+            // Resolve a URL (pode ser encurtada) para a URL final da Amazon
+            const resolvedUrl = await this.resolveUrl(addProductAction.value);
+            if (!resolvedUrl) {
+                console.warn(`Não foi possível resolver a URL da ação ${action.id}: ${addProductAction.value}`);
+                invalidActions.push(action);
+                continue;
+            }
+            
+            const asin = this.extractASIN(resolvedUrl);
             if (asin && this.isValidASIN(asin)) {
                 asins.push(asin);
+                resolvedActions.push({ action: addProductAction, resolvedUrl, asin });
             } else {
                 invalidActions.push(action);
-                console.warn(`ASIN inválido ou não encontrado na ação ${action.id}: ${(action as AddProductAction).value}`);
+                console.warn(`ASIN inválido ou não encontrado na ação ${action.id}: ${addProductAction.value} (resolvida: ${resolvedUrl})`);
             }
         }
 
-        // Marca ações com ASINs inválidos como processadas
+        // Marca ações com URLs/ASINs inválidos como processadas
         if (invalidActions.length > 0) {
             await Promise.all(
                 invalidActions.map(action => this.actionRepository.markProcessed(action.id))
@@ -208,7 +257,7 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 
         // Se não houver ASINs válidos, retorna
         if (asins.length === 0) {
-            console.warn('Nenhum ASIN válido encontrado nas ações');
+            console.warn('Nenhum ASIN válido encontrado nas ações após resolução de URLs');
             return actions.length;
         }
 
@@ -220,34 +269,30 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
             amazonProducts = await this.amazonApi.getProducts(asins);
         } catch (error) {
             console.error('Erro ao buscar produtos na Amazon:', error);
-            // Em caso de erro da API, marca todas as ações como processadas
+            // Em caso de erro da API, marca todas as ações válidas como processadas
             await Promise.all(
-                actions.map(action => this.actionRepository.markProcessed(action.id))
+                resolvedActions.map(({ action }) => this.actionRepository.markProcessed(action.id))
             );
             return actions.length;
         }
 
         // Processa cada ação usando os produtos já buscados
         let processedCount = 0;
-        for (const action of actions) {
+        for (const resolvedAction of resolvedActions) {
             try {
-                const asin = this.extractASIN((action as AddProductAction).value);
-                if (!asin) {
-                    console.warn(`Link inválido: ${(action as AddProductAction).value}`);
-                    await this.actionRepository.markProcessed(action.id);
-                    processedCount++;
-                    continue;
-                }
-
+                const { action, resolvedUrl, asin } = resolvedAction;
+                
                 const amazonProduct = amazonProducts.get(asin);
                 console.log(`Processando ação ${action.id} para produto ${asin} (${amazonProduct?.title})`);
 
-                await this.processAction(action as AddProductAction, amazonProducts);
+                // Cria uma ação modificada com a URL resolvida
+                const modifiedAction = { ...action, value: resolvedUrl };
+                await this.processAction(modifiedAction, amazonProducts);
                 processedCount++;
 
                 console.log(`Ação ${action.id} processada com sucesso - Produto: ${amazonProduct?.title} (R$ ${amazonProduct?.currentPrice})`);
             } catch (error) {
-                console.error(`Erro ao processar ação ${action.id}:`, error);
+                console.error(`Erro ao processar ação ${resolvedAction.action.id}:`, error);
                 // Ainda conta como processada mesmo com erro
                 processedCount++;
             }

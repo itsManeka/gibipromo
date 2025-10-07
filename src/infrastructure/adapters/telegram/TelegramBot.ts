@@ -434,10 +434,16 @@ _Clique nos botões abaixo para ver o produto ou gerenciar sua monitoria_
             const messageText = (ctx.message as { text: string }).text;
             const links = messageText
                 .split(/[\n\s]+/) // Divide por espaços ou novas linhas
-                .filter(text => text.includes('amazon.com.br')); // Filtra apenas links da Amazon
+                .filter(text => {
+                    // Aceita links da Amazon e links encurtados conhecidos
+                    return text.includes('amazon.com') || 
+                           text.includes('amzn.to') || 
+                           text.includes('amzlink.to') || 
+                           text.includes('a.co');
+                });
 
             if (links.length === 0) {
-                await ctx.reply('🤔 Não encontrei nenhum link da Amazon Brasil na sua mensagem.\nPor favor, envie apenas links da Amazon Brasil.');
+                await ctx.reply('🤔 Não encontrei nenhum link da Amazon na sua mensagem.\nPor favor, envie links da Amazon (incluindo links encurtados como amzn.to).');
                 return;
             }
 

@@ -1,138 +1,326 @@
-# GibiPromo 📚
+# 🎯 GibiPromo Platform
 
-Monitor de preços da Amazon em TypeScript usando arquitetura limpa e AWS. Bot do Telegram que notifica quando os preços baixam!
+[![GitHub](https://img.shields.io/github/license/itsManeka/gibipromo)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)
 
-## Funcionalidades 🚀
+> **Advanced Amazon Price Monitoring System with Telegram Bot Interface**
 
-- **Monitoramento de Preços**: Acompanha as variações de preço na Amazon
-- **Notificações Automáticas**: Avisa quando o preço baixa
-- **Suporte Multi-usuário**: Cada usuário pode monitorar seus próprios produtos
-- **Botão Direto**: Link rápido para a Amazon nas notificações
+A professional, scalable solution for monitoring Amazon product prices using **Clean Architecture**, **AWS Free Tier**, and modern **TypeScript** development practices. Built as a monorepo platform ready for multi-application expansion.
 
-## Tecnologias 🛠
-
-- **TypeScript**: Linguagem principal
-- **Clean Architecture**: Organização do código
-- **AWS (Free Tier)**:
-  - Lambda: Execução serverless
-  - DynamoDB: Banco de dados
-  - S3: Armazenamento de arquivos
-- **Telegram Bot API**: Interface com usuários
-- **Jest**: Testes automatizados
-- **ESLint**: Qualidade do código
-
-## Configuração 🔧
-
-1. **Pré-requisitos**:
-   - Node.js 18+
-   - Docker (para DynamoDB local)
-   - NPM ou Yarn
-
-2. **Instalação**:
-   ```bash
-   # Instalar dependências
-   npm install
-
-   # Configurar ambiente
-   cp .env.example .env
-   # Edite .env com suas credenciais
-
-   # Iniciar DynamoDB local
-   docker compose up -d
-
-   # Criar tabelas
-   node scripts/init-dynamo.js
-   ```
-
-3. **Configuração do Ambiente**:
-   - `NODE_ENV`: Define o ambiente (`development`/`production`)
-   - `USE_MOCK_PAAPI`: Controla uso do mock da PA-API
-     - `true`: Usa mock (recomendado para dev)
-     - `false`: Usa PA-API real (necessário em prod)
-
-3. **Desenvolvimento**:
-   ```bash
-   # Iniciar em modo desenvolvimento
-   npm run dev
-
-   # Rodar testes
-   npm test
-
-   # Verificar cobertura
-   npm run test:coverage
-
-   # Verificar lint
-   npm run lint
-   ```
-
-## Comandos do Bot 🤖
-
-- `/start`: Inicia o bot e cria sua conta
-- `/enable`: Ativa a monitoria de preços
-- `/disable`: Desativa a monitoria
-- `/addlink`: Adiciona produto(s) para monitorar
-- `/list`: Lista produtos monitorados
-- `/delete`: Exclui sua conta permanentemente
-- `/help`: Lista os comandos disponíveis
-
-## Estrutura do Projeto 📁
+## 🏗️ Architecture Overview
 
 ```
+gibipromo-platform/
+├── packages/
+│   ├── shared/          # Shared TypeScript entities & utilities
+│   ├── telegram-bot/    # Core Telegram bot application
+│   ├── web-api/         # REST API for web interfaces
+│   ├── website/         # React-based management portal
+│   └── chrome-extension/# Amazon page integration
+├── scripts/             # Infrastructure setup scripts
+├── docker/              # Local development containers
+└── infrastructure/      # AWS deployment configurations
+```
+
+## ✨ Key Features
+
+### 🤖 **Intelligent Bot Interface**
+- Multi-command Telegram bot with intuitive UX
+- Real-time price monitoring and notifications
+- Batch processing for optimal API usage
+- Round-robin product verification strategy
+
+### 🏛️ **Enterprise-Grade Architecture**
+- **Clean Architecture** with clear separation of concerns
+- **Domain-Driven Design** principles
+- **SOLID** principles implementation
+- Comprehensive test coverage (80%+ requirement)
+
+### ☁️ **AWS-Optimized Infrastructure**
+- **DynamoDB** for scalable data storage
+- **Lambda** functions for serverless execution
+- **S3** for static asset management
+- Cost-optimized for Free Tier usage
+
+### 📊 **Advanced Monitoring System**
+- Batch processing for Amazon PA-API efficiency
+- Smart round-robin verification cycles
+- Configurable notification thresholds
+- Detailed price history tracking
+
+## 🚀 Quick Start
+
+### Prerequisites
+- **Node.js** >= 18.0.0
+- **npm** >= 8.0.0
+- **Docker** (for local DynamoDB)
+- **AWS CLI** (for deployment)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/itsManeka/gibipromo.git
+cd gibipromo
+
+# Install dependencies for all packages
+npm install
+
+# Setup environment variables
+cp .env.example .env
+# Configure your environment variables
+
+# Start local infrastructure
+docker compose up -d
+
+# Initialize database tables
+node scripts/init-dynamo.js
+
+# Start development server
+npm run dev:bot
+```
+
+## 📦 Package Architecture
+
+### 🔗 @gibipromo/shared
+**Core Types & Utilities**
+- Shared TypeScript entities
+- Common constants and enums
+- Cross-package type definitions
+- Utility functions
+
+### 🤖 @gibipromo/telegram-bot
+**Primary Application**
+- Clean Architecture implementation
+- Telegram Bot API integration
+- AWS DynamoDB adapters
+- Amazon PA-API client with fallback mocks
+
+### 🌐 @gibipromo/web-api
+**REST API Server**
+- Express.js-based API
+- Authentication & authorization
+- Product management endpoints
+- Statistics and analytics
+
+### 🖥️ @gibipromo/website
+**Management Portal**
+- React-based dashboard
+- Product monitoring interface
+- User account management
+- Price history visualization
+
+### 🔌 @gibipromo/chrome-extension
+**Browser Integration**
+- Amazon page enhancement
+- One-click product addition
+- Price comparison overlays
+- Quick monitoring controls
+
+## 🛠️ Development Commands
+
+### Global Commands
+```bash
+# Development
+npm run dev:bot              # Start Telegram bot
+npm run dev:api              # Start web API
+npm run dev:web              # Start website
+
+# Testing (Always use --maxWorkers=1)
+npm test                     # Run all tests
+npm run test:coverage        # Generate coverage reports
+npm run test:bot             # Test specific package
+
+# Build & Deploy
+npm run build                # Build all packages
+npm run lint                 # Code quality checks
+npm run deploy               # Deploy to AWS
+```
+
+### Package-Specific Commands
+```bash
+# Telegram Bot
+npm run dev --workspace=@gibipromo/telegram-bot
+npm run test --workspace=@gibipromo/telegram-bot
+
+# Web API
+npm run dev --workspace=@gibipromo/web-api
+npm run build --workspace=@gibipromo/web-api
+
+# Website
+npm run start --workspace=@gibipromo/website
+npm run build --workspace=@gibipromo/website
+```
+
+## 🤖 Bot Commands Reference
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `/start` | Initialize user account | First-time setup |
+| `/enable` | Activate price monitoring | Enable notifications |
+| `/disable` | Pause monitoring | Pause notifications |
+| `/addlink` | Add products to monitor | Send Amazon URLs |
+| `/list` | View monitored products | Product management |
+| `/delete` | Remove user account | Account deletion |
+| `/help` | Show command reference | Get assistance |
+
+## 🏗️ Technical Implementation
+
+### Clean Architecture Layers
+
+```typescript
 src/
-├── application/     # Casos de uso e portas
-├── domain/         # Entidades e regras de negócio
-├── infrastructure/ # Adaptadores externos
-└── types/          # Definições de tipos
+├── domain/              # Business Logic
+│   ├── entities/        # Core business entities
+│   └── usecases/        # Business use cases
+├── application/         # Application Logic
+│   ├── ports/           # Interface definitions
+│   ├── usecases/        # Application services
+│   └── factories/       # Dependency injection
+└── infrastructure/      # External Integrations
+    ├── adapters/        # External service adapters
+    ├── config/          # Configuration management
+    └── utils/           # Infrastructure utilities
 ```
 
-## Estratégias de Consulta 📊
+### Performance Optimizations
 
-1. **Processamento em Lote**:
-   - System busca até 10 ações `ADD_PRODUCT` pendentes
-   - Extrai os ASINs únicos de todas as ações
-   - Consulta a PA-API uma única vez para todos os produtos
-   - Cria/atualiza produtos em massa
-   - Reduz chamadas à API e melhora performance
+1. **Batch Processing Strategy**
+   - Collects up to 10 pending product actions
+   - Single PA-API call for multiple products
+   - Reduces API rate limits and costs
 
-2. **Round-Robin de Verificação**:
-   - Usa paginação do DynamoDB com `LastEvaluatedKey`
-   - A cada execução, busca próximo lote de produtos
-   - Quando chega ao fim da lista, reinicia do início
-   - Garante que todos os produtos são verificados
-   - Evita sobrecarga em produtos específicos
+2. **Round-Robin Verification**
+   - DynamoDB pagination with `LastEvaluatedKey`
+   - Cyclic product verification ensuring coverage
+   - Load balancing across product catalog
 
-## Fluxo de Funcionamento 🔄
+3. **Smart Caching**
+   - Product data caching strategies
+   - Price history compression
+   - Minimal AWS resource usage
 
-1. **Criação de Conta**:
-   - Usuário envia `/start`
-   - Bot cria conta do usuário
-   - Usuário pode usar `/enable` para ativar monitoramento
+## 📊 Testing & Quality Assurance
 
-2. **Adição de Produto**:
-   - Usuário envia `/addlink`
-   - Bot pede os links
-   - Usuário envia link(s) da Amazon
-   - Sistema processa em lote para eficiência
+### Test Coverage Requirements
+- **Minimum**: 80% code coverage
+- **Unit Tests**: All business logic
+- **Integration Tests**: External service adapters
+- **E2E Tests**: Critical user flows
 
-3. **Monitoramento**:
-   - Sistema verifica preços em lotes
-   - Quando há redução, cria ação de notificação
-   - Bot envia mensagem com o novo preço
-   - Botão direto para a Amazon
+### Quality Standards
+```bash
+# Run quality checks
+npm run lint                 # ESLint validation
+npm run test:coverage        # Coverage reporting
+npm run type-check           # TypeScript validation
+```
 
-4. **Gerenciamento de Conta**:
-   - `/enable` / `/disable` para controlar monitoramento
-   - `/list` para ver produtos monitorados
-   - `/delete` para excluir conta permanentemente
+### Code Style
+- **Tab indentation** (size: 4)
+- **TypeScript strict mode**
+- **JSDoc documentation**
+- **Conventional Commits**
 
-## Contribuindo 🤝
+## 🚀 Deployment & Infrastructure
 
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/nome`)
-3. Commit suas mudanças (`git commit -m 'Adiciona feature'`)
-4. Push para a branch (`git push origin feature/nome`)
-5. Abra um Pull Request
+### AWS Services Configuration
+- **Lambda**: Serverless bot execution
+- **DynamoDB**: Scalable NoSQL database
+- **S3**: Static asset storage
+- **CloudWatch**: Monitoring and logging
 
-## Licença 📝
+### Environment Management
+```bash
+# Development
+NODE_ENV=development
+USE_MOCK_PAAPI=true
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+# Production
+NODE_ENV=production
+USE_MOCK_PAAPI=false
+```
+
+## 📈 Roadmap
+
+### Phase 1: Core Platform ✅
+- [x] Telegram bot implementation
+- [x] Clean Architecture foundation
+- [x] AWS integration
+- [x] Comprehensive testing
+
+### Phase 2: Web Platform 🚧
+- [ ] REST API development
+- [ ] React management portal
+- [ ] User authentication system
+- [ ] Advanced analytics
+
+### Phase 3: Browser Extension 📋
+- [ ] Chrome extension development
+- [ ] Amazon page integration
+- [ ] Cross-platform compatibility
+- [ ] Advanced monitoring features
+
+### Phase 4: Enterprise Features 📋
+- [ ] Multi-user management
+- [ ] Advanced notification options
+- [ ] API rate optimization
+- [ ] Performance monitoring
+
+## 👨‍💻 Author & Maintainer
+
+**Emanuel Ozorio Dias (itsManeka)**
+- 📧 Email: [emanuel.ozoriodias@gmail.com](mailto:emanuel.ozoriodias@gmail.com)
+- 🐙 GitHub: [@itsManeka](https://github.com/itsManeka)
+
+### Expertise
+- **TypeScript/Node.js** Development
+- **Clean Architecture** Implementation
+- **AWS Serverless** Solutions
+- **Bot Development** & Automation
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these guidelines:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Test** thoroughly (`npm test`)
+5. **Push** to the branch (`git push origin feature/amazing-feature`)
+6. **Open** a Pull Request
+
+### Contribution Guidelines
+- Follow existing code style and architecture
+- Maintain test coverage above 80%
+- Update documentation for new features
+- Ensure all tests pass with `--maxWorkers=1`
+
+## 📄 License
+
+This project is licensed under a **Custom Commercial License**. 
+
+**Key Points:**
+- ✅ **Free for personal use**
+- ✅ **Open source development**
+- ❌ **Commercial use requires permission**
+- 💰 **Profit-sharing arrangement for commercial usage**
+
+See the [LICENSE](LICENSE) file for complete terms and conditions.
+
+## 🔗 Links & Resources
+
+- **Repository**: [GitHub](https://github.com/itsManeka/gibipromo)
+- **Issues**: [Bug Reports](https://github.com/itsManeka/gibipromo/issues)
+- **Discussions**: [Community](https://github.com/itsManeka/gibipromo/discussions)
+
+---
+
+<div align="center">
+
+**Built with ❤️ by [Emanuel Ozorio Dias](https://github.com/itsManeka)**
+
+*Transforming price monitoring into a professional, scalable solution*
+
+</div>

@@ -100,21 +100,21 @@ export class Logger {
 		// Em desenvolvimento, usa console para melhor legibilidade
 		// Em produção, pode ser enviado para serviços de logging
 		switch (level) {
-			case LogLevel.DEBUG:
-				console.debug(formattedMessage);
-				break;
-			case LogLevel.INFO:
-				console.log(formattedMessage);
-				break;
-			case LogLevel.WARN:
-				console.warn(formattedMessage);
-				break;
-			case LogLevel.ERROR:
-				console.error(formattedMessage);
-				if (error) {
-					console.error(error);
-				}
-				break;
+		case LogLevel.DEBUG:
+			console.debug(formattedMessage);
+			break;
+		case LogLevel.INFO:
+			console.log(formattedMessage);
+			break;
+		case LogLevel.WARN:
+			console.warn(formattedMessage);
+			break;
+		case LogLevel.ERROR:
+			console.error(formattedMessage);
+			if (error) {
+				console.error(error);
+			}
+			break;
 		}
 	}
 

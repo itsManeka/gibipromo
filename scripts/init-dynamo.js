@@ -14,16 +14,40 @@ const tables = [
 		TableName: 'Users',
 		AttributeDefinitions: [
 			{ AttributeName: 'id', AttributeType: 'S' },
-			{ AttributeName: 'username', AttributeType: 'S' }
+			{ AttributeName: 'telegram_id', AttributeType: 'S' },
+			{ AttributeName: 'username', AttributeType: 'S' },
+			{ AttributeName: 'email', AttributeType: 'S' }
 		],
 		KeySchema: [
 			{ AttributeName: 'id', KeyType: 'HASH' }
 		],
 		GlobalSecondaryIndexes: [
 			{
+				IndexName: 'TelegramIdIndex',
+				KeySchema: [
+					{ AttributeName: 'telegram_id', KeyType: 'HASH' }
+				],
+				Projection: { ProjectionType: 'ALL' },
+				ProvisionedThroughput: {
+					ReadCapacityUnits: 5,
+					WriteCapacityUnits: 5
+				}
+			},
+			{
 				IndexName: 'UsernameIndex',
 				KeySchema: [
 					{ AttributeName: 'username', KeyType: 'HASH' }
+				],
+				Projection: { ProjectionType: 'ALL' },
+				ProvisionedThroughput: {
+					ReadCapacityUnits: 5,
+					WriteCapacityUnits: 5
+				}
+			},
+			{
+				IndexName: 'EmailIndex',
+				KeySchema: [
+					{ AttributeName: 'email', KeyType: 'HASH' }
 				],
 				Projection: { ProjectionType: 'ALL' },
 				ProvisionedThroughput: {
@@ -179,6 +203,90 @@ const tables = [
 				KeySchema: [
 					{ AttributeName: 'product_id', KeyType: 'HASH' },
 					{ AttributeName: 'created_at', KeyType: 'RANGE' }
+				],
+				Projection: { ProjectionType: 'ALL' },
+				ProvisionedThroughput: {
+					ReadCapacityUnits: 5,
+					WriteCapacityUnits: 5
+				}
+			}
+		],
+		BillingMode: 'PROVISIONED',
+		ProvisionedThroughput: {
+			ReadCapacityUnits: 5,
+			WriteCapacityUnits: 5
+		}
+	},
+	{
+		TableName: 'Session',
+		AttributeDefinitions: [
+			{ AttributeName: 'session_id', AttributeType: 'S' },
+			{ AttributeName: 'user_id', AttributeType: 'S' }
+		],
+		KeySchema: [
+			{ AttributeName: 'session_id', KeyType: 'HASH' }
+		],
+		GlobalSecondaryIndexes: [
+			{
+				IndexName: 'UserIdIndex',
+				KeySchema: [
+					{ AttributeName: 'user_id', KeyType: 'HASH' }
+				],
+				Projection: { ProjectionType: 'ALL' },
+				ProvisionedThroughput: {
+					ReadCapacityUnits: 5,
+					WriteCapacityUnits: 5
+				}
+			}
+		],
+		BillingMode: 'PROVISIONED',
+		ProvisionedThroughput: {
+			ReadCapacityUnits: 5,
+			WriteCapacityUnits: 5
+		}
+	},
+	{
+		TableName: 'UserPreferences',
+		AttributeDefinitions: [
+			{ AttributeName: 'id', AttributeType: 'S' },
+			{ AttributeName: 'user_id', AttributeType: 'S' }
+		],
+		KeySchema: [
+			{ AttributeName: 'id', KeyType: 'HASH' }
+		],
+		GlobalSecondaryIndexes: [
+			{
+				IndexName: 'UserIdIndex',
+				KeySchema: [
+					{ AttributeName: 'user_id', KeyType: 'HASH' }
+				],
+				Projection: { ProjectionType: 'ALL' },
+				ProvisionedThroughput: {
+					ReadCapacityUnits: 5,
+					WriteCapacityUnits: 5
+				}
+			}
+		],
+		BillingMode: 'PROVISIONED',
+		ProvisionedThroughput: {
+			ReadCapacityUnits: 5,
+			WriteCapacityUnits: 5
+		}
+	},
+	{
+		TableName: 'UserProfile',
+		AttributeDefinitions: [
+			{ AttributeName: 'id', AttributeType: 'S' },
+			{ AttributeName: 'user_id', AttributeType: 'S' }
+		],
+		KeySchema: [
+			{ AttributeName: 'id', KeyType: 'HASH' }
+		],
+		GlobalSecondaryIndexes: [
+			{
+				IndexName: 'UserIdIndex',
+				KeySchema: [
+					{ AttributeName: 'user_id', KeyType: 'HASH' }
 				],
 				Projection: { ProjectionType: 'ALL' },
 				ProvisionedThroughput: {

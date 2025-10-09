@@ -46,6 +46,7 @@ export const createProduct = (asin: string, overrides?: Partial<Product>): Produ
 	image: `http://example.com/${asin}.jpg`,
 	in_stock: true,
 	preorder: false,
+	store: 'Amazon',
 	created_at: new Date().toISOString(),
 	updated_at: new Date().toISOString(),
 	...overrides

@@ -34,6 +34,7 @@ describe('ProductStatsService', () => {
 				url: 'https://amazon.com/test',
 				image: 'https://amazon.com/image.jpg',
 				preorder: false,
+				store: 'Amazon',
 				created_at: '2023-01-01T00:00:00.000Z',
 				updated_at: '2023-01-01T00:00:00.000Z'
 			};
@@ -72,6 +73,7 @@ describe('ProductStatsService', () => {
 				url: 'https://amazon.com/test',
 				image: 'https://amazon.com/image.jpg',
 				preorder: false,
+				store: 'Amazon',
 				created_at: '2023-01-01T00:00:00.000Z',
 				updated_at: '2023-01-01T00:00:00.000Z'
 			};
@@ -107,6 +109,7 @@ describe('ProductStatsService', () => {
 				url: 'https://amazon.com/test',
 				image: 'https://amazon.com/image.jpg',
 				preorder: false,
+				store: 'Amazon',
 				created_at: '2023-01-01T00:00:00.000Z',
 				updated_at: '2023-01-01T00:00:00.000Z'
 			};
@@ -130,6 +133,7 @@ describe('ProductStatsService', () => {
 				url: 'https://amazon.com/test',
 				image: 'https://amazon.com/image.jpg',
 				preorder: false,
+				store: 'Amazon',
 				created_at: '2023-01-01T00:00:00.000Z',
 				updated_at: '2023-01-01T00:00:00.000Z'
 			};
@@ -153,6 +157,7 @@ describe('ProductStatsService', () => {
 				url: 'https://amazon.com/test',
 				image: 'https://amazon.com/image.jpg',
 				preorder: false,
+				store: 'Amazon',
 				created_at: '2023-01-01T00:00:00.000Z',
 				updated_at: '2023-01-01T00:00:00.000Z'
 			};
@@ -176,6 +181,7 @@ describe('ProductStatsService', () => {
 				url: 'https://amazon.com/test',
 				image: 'https://amazon.com/image.jpg',
 				preorder: false,
+				store: 'Amazon',
 				created_at: '2023-01-01T00:00:00.000Z',
 				updated_at: '2023-01-01T00:00:00.000Z'
 			};

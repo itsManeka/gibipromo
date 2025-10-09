@@ -131,6 +131,23 @@ class MockUserRepository implements UserRepository {
 		throw new Error(`User ${id} not found`);
 	}
 
+	async findByTelegramId(telegramId: string): Promise<User | null> {
+		return Array.from(this.users.values()).find(u => u.telegram_id === telegramId) || null;
+	}
+
+	async findByEmail(email: string): Promise<User | null> {
+		return Array.from(this.users.values()).find(u => u.email === email) || null;
+	}
+
+	async updateSessionId(id: string, sessionId: string | null): Promise<User> {
+		const user = this.users.get(id);
+		if (user) {
+			user.session_id = sessionId || undefined;
+			return user;
+		}
+		throw new Error(`User ${id} not found`);
+	}
+
 	async delete(id: string): Promise<void> {
 		this.users.delete(id);
 	}

@@ -46,16 +46,17 @@ describe('TelegramBot', () => {
 		};
 
 		// Mock repositories
-		mockUserRepo = {
-			create: jest.fn(),
-			update: jest.fn(),
-			delete: jest.fn(),
-			findById: jest.fn(),
-			findByUsername: jest.fn(),
-			setEnabled: jest.fn()
-		};
-
-		mockActionRepo = {
+	mockUserRepo = {
+		create: jest.fn(),
+		update: jest.fn(),
+		delete: jest.fn(),
+		findById: jest.fn(),
+		findByUsername: jest.fn(),
+		findByTelegramId: jest.fn(),
+		findByEmail: jest.fn(),
+		updateSessionId: jest.fn(),
+		setEnabled: jest.fn()
+	};		mockActionRepo = {
 			create: jest.fn(),
 			update: jest.fn(),
 			delete: jest.fn(),
@@ -149,14 +150,15 @@ describe('TelegramBot', () => {
 			} as unknown as Context;
 
 			const existingUser: User = {
-				id: '123456789',
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
 				enabled: false
 			};
 
-			mockUserRepo.findById.mockResolvedValue(existingUser);
+			mockUserRepo.findByTelegramId.mockResolvedValue(existingUser);
 
 			// Get the handler function
 			const enableHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'enable')[1];
@@ -165,8 +167,8 @@ describe('TelegramBot', () => {
 			await enableHandler(mockCtx);
 
 			// Assert
-			expect(mockUserRepo.findById).toHaveBeenCalledWith('123456789');
-			expect(mockUserRepo.setEnabled).toHaveBeenCalledWith('123456789', true);
+			expect(mockUserRepo.findByTelegramId).toHaveBeenCalledWith('123456789');
+			expect(mockUserRepo.setEnabled).toHaveBeenCalledWith('user-uuid-123', true);
 			expect(mockCtx.reply).toHaveBeenCalledWith('Monitoria ativada com sucesso! ✅\nAgora você pode usar /addlink para adicionar produtos.');
 		});
 
@@ -182,7 +184,7 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			mockUserRepo.findById.mockResolvedValue(null);
+			mockUserRepo.findByTelegramId.mockResolvedValue(null);
 
 			// Get the handler function
 			const enableHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'enable')[1];
@@ -191,7 +193,7 @@ describe('TelegramBot', () => {
 			await enableHandler(mockCtx);
 
 			// Assert
-			expect(mockUserRepo.findById).toHaveBeenCalledWith('123456789');
+			expect(mockUserRepo.findByTelegramId).toHaveBeenCalledWith('123456789');
 			expect(mockUserRepo.create).not.toHaveBeenCalled();
 			expect(mockCtx.reply).toHaveBeenCalledWith('Por favor, use /start primeiro para começar a usar o bot.');
 		});
@@ -206,14 +208,15 @@ describe('TelegramBot', () => {
 			} as unknown as Context;
 
 			const existingUser: User = {
-				id: '123456789',
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
 				enabled: true
 			};
 
-			mockUserRepo.findById.mockResolvedValue(existingUser);
+			mockUserRepo.findByTelegramId.mockResolvedValue(existingUser);
 
 			// Get the handler function
 			const disableHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'disable')[1];
@@ -222,8 +225,8 @@ describe('TelegramBot', () => {
 			await disableHandler(mockCtx);
 
 			// Assert
-			expect(mockUserRepo.findById).toHaveBeenCalledWith('123456789');
-			expect(mockUserRepo.setEnabled).toHaveBeenCalledWith('123456789', false);
+			expect(mockUserRepo.findByTelegramId).toHaveBeenCalledWith('123456789');
+			expect(mockUserRepo.setEnabled).toHaveBeenCalledWith('user-uuid-123', false);
 			expect(mockCtx.reply).toHaveBeenCalledWith('Monitoria desativada. ❌\nUse /enable para reativar.');
 		});
 
@@ -239,9 +242,10 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			mockUserRepo.findById.mockResolvedValue(null);
+			mockUserRepo.findByTelegramId.mockResolvedValue(null);
 			mockUserRepo.create.mockResolvedValue({
-				id: '123456789',
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
@@ -255,9 +259,9 @@ describe('TelegramBot', () => {
 			await startHandler(mockCtx);
 
 			// Assert
-			expect(mockUserRepo.findById).toHaveBeenCalledWith('123456789');
+			expect(mockUserRepo.findByTelegramId).toHaveBeenCalledWith('123456789');
 			expect(mockUserRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-				id: '123456789',
+				telegram_id: '123456789',
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
@@ -279,14 +283,15 @@ describe('TelegramBot', () => {
 			} as unknown as Context;
 
 			const existingUser: User = {
-				id: '123456789',
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
 				enabled: false
 			};
 
-			mockUserRepo.findById.mockResolvedValue(existingUser);
+			mockUserRepo.findByTelegramId.mockResolvedValue(existingUser);
 
 			// Get the handler function
 			const startHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'start')[1];
@@ -295,7 +300,7 @@ describe('TelegramBot', () => {
 			await startHandler(mockCtx);
 
 			// Assert
-			expect(mockUserRepo.findById).toHaveBeenCalledWith('123456789');
+			expect(mockUserRepo.findByTelegramId).toHaveBeenCalledWith('123456789');
 			expect(mockUserRepo.create).not.toHaveBeenCalled();
 			expect(mockCtx.reply).toHaveBeenCalledWith('Bem-vindo de volta ao GibiPromo! 🎉\nUse /help para ver os comandos disponíveis.');
 		});
@@ -324,14 +329,15 @@ describe('TelegramBot', () => {
 			} as unknown as Context;
 
 			const existingUser: User = {
-				id: '123456789',
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
 				enabled: true
 			};
 
-			mockUserRepo.findById.mockResolvedValue(existingUser);
+			mockUserRepo.findByTelegramId.mockResolvedValue(existingUser);
 
 			// Get the handler function
 			const addlinkHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'addlink')[1];
@@ -340,7 +346,7 @@ describe('TelegramBot', () => {
 			await addlinkHandler(mockCtx);
 
 			// Assert
-			expect(mockUserRepo.findById).toHaveBeenCalledWith('123456789');
+			expect(mockUserRepo.findByTelegramId).toHaveBeenCalledWith('123456789');
 			expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Envie o link ou lista de links da Amazon'));
 		});
 
@@ -351,7 +357,7 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			mockUserRepo.findById.mockResolvedValue(null);
+			mockUserRepo.findByTelegramId.mockResolvedValue(null);
 
 			// Get the handler function
 			const addlinkHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'addlink')[1];
@@ -374,14 +380,15 @@ describe('TelegramBot', () => {
 			} as unknown as Context;
 
 			const disabledUser: User = {
-				id: '123456789',
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
 				enabled: false
 			};
 
-			mockUserRepo.findById.mockResolvedValue(disabledUser);
+			mockUserRepo.findByTelegramId.mockResolvedValue(disabledUser);
 
 			// Get the handler function
 			const addlinkHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'addlink')[1];
@@ -401,14 +408,15 @@ describe('TelegramBot', () => {
 			} as unknown as Context;
 
 			const mockUser: User = {
-				id: '123456789',
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
 				enabled: true
 			};
 
-			mockUserRepo.findById.mockResolvedValue(mockUser);
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 
 			const mockProducts: Product[] = [
 				{
@@ -423,6 +431,7 @@ describe('TelegramBot', () => {
 					in_stock: true,
 					preorder: false,
 					offer_id: 'A1ZZFT5FULY4LN',
+					store: 'Amazon',
 					created_at: new Date().toISOString(),
 					updated_at: new Date().toISOString()
 				},
@@ -438,6 +447,7 @@ describe('TelegramBot', () => {
 					in_stock: true,
 					preorder: false,
 					offer_id: 'A1ZZFT5FULY4LN',
+					store: 'Amazon',
 					created_at: new Date().toISOString(),
 					updated_at: new Date().toISOString()
 				}
@@ -445,17 +455,17 @@ describe('TelegramBot', () => {
 
 			const mockProductUsers: ProductUser[] = [
 				{
-					id: 'B06Y6J6XV1#123456789',
+					id: 'user-uuid-123',
 					product_id: 'B06Y6J6XV1',
-					user_id: '123456789',
+					user_id: 'user-uuid-123',
 					desired_price: undefined,
 					created_at: new Date().toISOString(),
 					updated_at: new Date().toISOString()
 				},
 				{
-					id: 'B087654321#123456789',
+					id: 'user-uuid-123',
 					product_id: 'B087654321',
-					user_id: '123456789',
+					user_id: 'user-uuid-123',
 					desired_price: undefined,
 					created_at: new Date().toISOString(),
 					updated_at: new Date().toISOString()
@@ -476,7 +486,7 @@ describe('TelegramBot', () => {
 			await listHandler(mockCtx);
 
 			// Assert
-			expect(mockProductUserRepo.findByUserId).toHaveBeenCalledWith('123456789', 1, 5);
+			expect(mockProductUserRepo.findByUserId).toHaveBeenCalledWith('user-uuid-123', 1, 5);
 			// A mensagem agora inclui um keyboard, então vamos verificar apenas o primeiro argumento
 			expect(mockCtx.reply).toHaveBeenCalledWith(
 				expect.stringContaining('📋 Seus produtos monitorados'),
@@ -492,14 +502,15 @@ describe('TelegramBot', () => {
 			} as unknown as Context;
 
 			const mockUser: User = {
-				id: '123456789',
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
 				enabled: true
 			};
 
-			mockUserRepo.findById.mockResolvedValue(mockUser);
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 
 			const mockProduct: Product = {
 				id: 'B06Y6J6XV1',
@@ -513,14 +524,15 @@ describe('TelegramBot', () => {
 				in_stock: true,
 				preorder: false,
 				offer_id: 'A1ZZFT5FULY4LN',
+				store: 'Amazon',
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString()
 			};
 
 			const mockProductUser: ProductUser = {
-				id: 'B06Y6J6XV1#123456789',
+				id: 'user-uuid-123',
 				product_id: 'B06Y6J6XV1',
-				user_id: '123456789',
+				user_id: 'user-uuid-123',
 				desired_price: undefined,
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString()
@@ -564,14 +576,15 @@ describe('TelegramBot', () => {
 			} as unknown as Context;
 
 			const mockUser: User = {
-				id: '123456789',
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
 				enabled: true
 			};
 
-			mockUserRepo.findById.mockResolvedValue(mockUser);
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 
 			mockProductUserRepo.findByUserId.mockResolvedValue({ productUsers: [], total: 0 });
 
@@ -582,7 +595,7 @@ describe('TelegramBot', () => {
 			await listHandler(mockCtx);
 
 			// Assert
-			expect(mockProductUserRepo.findByUserId).toHaveBeenCalledWith('123456789', 1, 5);
+			expect(mockProductUserRepo.findByUserId).toHaveBeenCalledWith('user-uuid-123', 1, 5);
 			expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Você ainda não está monitorando nenhum produto. Use /addlink para começar 📦'));
 		});
 
@@ -608,6 +621,7 @@ describe('TelegramBot', () => {
 					in_stock: true,
 					preorder: false,
 					offer_id: 'A1ZZFT5FULY4LN',
+					store: 'Amazon',
 					created_at: new Date().toISOString(),
 					updated_at: new Date().toISOString()
 				}
@@ -615,15 +629,25 @@ describe('TelegramBot', () => {
 
 			const mockProductUsers: ProductUser[] = [
 				{
-					id: 'B06Y6J6XV1#123456789',
+					id: 'B06Y6J6XV1#user-uuid-123',
 					product_id: 'B06Y6J6XV1',
-					user_id: '123456789',
+					user_id: 'user-uuid-123',
 					desired_price: undefined,
 					created_at: new Date().toISOString(),
 					updated_at: new Date().toISOString()
 				}
 			];
 
+			const mockUser: User = {
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				name: 'Test',
+				username: 'testuser',
+				language: 'pt',
+				enabled: true
+			};
+
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 			mockProductUserRepo.findByUserId.mockResolvedValue({ productUsers: mockProductUsers, total: 6 }); // Total > 5 para ter múltiplas páginas
 			mockProductRepo.findById.mockResolvedValue(mockProducts[0]);
 
@@ -634,7 +658,7 @@ describe('TelegramBot', () => {
 			await pageHandler(mockCtx);
 
 			// Assert
-			expect(mockProductUserRepo.findByUserId).toHaveBeenCalledWith('123456789', 2, 5);
+			expect(mockProductUserRepo.findByUserId).toHaveBeenCalledWith('user-uuid-123', 2, 5);
 			expect(mockCtx.editMessageText).toHaveBeenCalledWith(
 				expect.stringContaining('📋 Seus produtos monitorados (Página 2/'),
 				expect.any(Object)
@@ -650,14 +674,15 @@ describe('TelegramBot', () => {
 			} as unknown as Context;
 
 			const existingUser: User = {
-				id: '123456789',
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
 				enabled: true
 			};
 
-			mockUserRepo.findById.mockResolvedValue(existingUser);
+			mockUserRepo.findByTelegramId.mockResolvedValue(existingUser);
 
 			// Get the handler function
 			const deleteHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'delete')[1];
@@ -666,7 +691,7 @@ describe('TelegramBot', () => {
 			await deleteHandler(mockCtx);
 
 			// Assert
-			expect(mockUserRepo.findById).toHaveBeenCalledWith('123456789');
+			expect(mockUserRepo.findByTelegramId).toHaveBeenCalledWith('123456789');
 			expect(mockCtx.reply).toHaveBeenCalledWith(
 				expect.stringContaining('Tem certeza que deseja excluir sua conta'),
 				expect.objectContaining({
@@ -689,7 +714,7 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			mockUserRepo.findById.mockResolvedValue(null);
+			mockUserRepo.findByTelegramId.mockResolvedValue(null);
 
 			// Get the handler function
 			const deleteHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'delete')[1];
@@ -698,7 +723,7 @@ describe('TelegramBot', () => {
 			await deleteHandler(mockCtx);
 
 			// Assert
-			expect(mockUserRepo.findById).toHaveBeenCalledWith('123456789');
+			expect(mockUserRepo.findByTelegramId).toHaveBeenCalledWith('123456789');
 			expect(mockCtx.reply).toHaveBeenCalledWith('Por favor, use /start primeiro para começar a usar o bot.');
 		});
 
@@ -751,7 +776,7 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			mockUserRepo.findById.mockRejectedValue(new Error('Database error'));
+			mockUserRepo.findByTelegramId.mockRejectedValue(new Error('Database error'));
 			const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
 			// Get the handler function
@@ -782,8 +807,18 @@ describe('TelegramBot', () => {
 				url: 'https://amazon.com.br/product',
 				image: 'https://example.com/image.jpg',
 				preorder: false,
+				store: 'Amazon',
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString()
+			};
+
+			const mockUser: User = {
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				name: 'Test',
+				username: 'testuser',
+				language: 'pt',
+				enabled: true
 			};
 
 			const mockCtx = {
@@ -792,11 +827,12 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 			mockProductRepo.findById.mockResolvedValue(mockProduct);
 			mockProductUserRepo.findByProductAndUser.mockResolvedValue({
-				id: 'product-123#123456789',
+				id: 'user-uuid-123',
 				product_id: 'product-123',
-				user_id: '123456789',
+				user_id: 'user-uuid-123',
 				desired_price: undefined,
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString()
@@ -812,8 +848,10 @@ describe('TelegramBot', () => {
 			await actionHandler(mockCtx);
 
 			// Assert
+			expect(mockUserRepo.findByTelegramId).toHaveBeenCalledWith('123456789');
 			expect(mockProductRepo.findById).toHaveBeenCalledWith('product-123');
-			expect(mockProductUserRepo.removeByProductAndUser).toHaveBeenCalledWith('product-123', '123456789');
+			expect(mockProductUserRepo.findByProductAndUser).toHaveBeenCalledWith('product-123', 'user-uuid-123');
+			expect(mockProductUserRepo.removeByProductAndUser).toHaveBeenCalledWith('product-123', 'user-uuid-123');
 			expect(mockCtx.reply).toHaveBeenCalledWith(
 				expect.stringContaining('Você não está mais monitorando este produto'),
 				expect.objectContaining({ parse_mode: 'MarkdownV2' })
@@ -844,12 +882,22 @@ describe('TelegramBot', () => {
 
 		it('deve informar quando produto não é encontrado', async () => {
 			// Arrange
+			const mockUser: User = {
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				name: 'Test',
+				username: 'testuser',
+				language: 'pt',
+				enabled: true
+			};
+
 			const mockCtx = {
 				from: { id: 123456789 },
 				match: ['stop_monitor:product-123:123456789', 'product-123', '123456789'],
 				reply: jest.fn()
 			} as unknown as Context;
 
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 			mockProductRepo.findById.mockResolvedValue(null);
 
 			// Get the handler function
@@ -861,6 +909,7 @@ describe('TelegramBot', () => {
 			await actionHandler(mockCtx);
 
 			// Assert
+			expect(mockUserRepo.findByTelegramId).toHaveBeenCalledWith('123456789');
 			expect(mockProductRepo.findById).toHaveBeenCalledWith('product-123');
 			expect(mockCtx.reply).toHaveBeenCalledWith('❌ Produto não encontrado.');
 			expect(mockProductUserRepo.removeByProductAndUser).not.toHaveBeenCalled();
@@ -879,8 +928,18 @@ describe('TelegramBot', () => {
 				url: 'https://amazon.com.br/product',
 				image: 'https://example.com/image.jpg',
 				preorder: false,
+				store: 'Amazon',
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString()
+			};
+
+			const mockUser: User = {
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				name: 'Test',
+				username: 'testuser',
+				language: 'pt',
+				enabled: true
 			};
 
 			const mockCtx = {
@@ -889,6 +948,7 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 			mockProductRepo.findById.mockResolvedValue(mockProduct);
 			mockProductUserRepo.findByProductAndUser.mockResolvedValue(null);
 
@@ -901,7 +961,9 @@ describe('TelegramBot', () => {
 			await actionHandler(mockCtx);
 
 			// Assert
+			expect(mockUserRepo.findByTelegramId).toHaveBeenCalledWith('123456789');
 			expect(mockProductRepo.findById).toHaveBeenCalledWith('product-123');
+			expect(mockProductUserRepo.findByProductAndUser).toHaveBeenCalledWith('product-123', 'user-uuid-123');
 			expect(mockCtx.reply).toHaveBeenCalledWith('ℹ️ Você não está monitorando este produto.');
 			expect(mockProductUserRepo.removeByProductAndUser).not.toHaveBeenCalled();
 		});
@@ -919,8 +981,18 @@ describe('TelegramBot', () => {
 				url: 'https://amazon.com.br/product',
 				image: 'https://example.com/image.jpg',
 				preorder: false,
+				store: 'Amazon',
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString()
+			};
+
+			const mockUser: User = {
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				name: 'Test',
+				username: 'testuser',
+				language: 'pt',
+				enabled: true
 			};
 
 			const mockCtx = {
@@ -929,11 +1001,12 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 			mockProductRepo.findById.mockResolvedValue(mockProduct);
 			mockProductUserRepo.findByProductAndUser.mockResolvedValue({
-				id: 'product-123#123456789',
+				id: 'user-uuid-123',
 				product_id: 'product-123',
-				user_id: '123456789',
+				user_id: 'user-uuid-123',
 				desired_price: undefined,
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString()
@@ -972,14 +1045,24 @@ describe('TelegramBot', () => {
 				url: 'https://amazon.com.br/echo-dot',
 				image: 'https://example.com/echo-dot.jpg',
 				preorder: false,
+				store: 'Amazon',
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString()
 			};
 
+			const mockUser: User = {
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				name: 'Test',
+				username: 'testuser',
+				language: 'pt',
+				enabled: true
+			};
+
 			const mockProductUser = {
-				id: 'B08PP8QHFQ#123456789',
+				id: 'user-uuid-123',
 				product_id: 'B08PP8QHFQ',
-				user_id: '123456789',
+				user_id: 'user-uuid-123',
 				desired_price: undefined,
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString()
@@ -994,6 +1077,7 @@ describe('TelegramBot', () => {
 				}
 			} as unknown as Context;
 
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 			mockProductRepo.findById.mockResolvedValue(mockProduct);
 			mockProductUserRepo.findByProductAndUser.mockResolvedValue(mockProductUser);
 
@@ -1006,8 +1090,9 @@ describe('TelegramBot', () => {
 			await productHandler(mockCtx);
 
 			// Assert
+			expect(mockUserRepo.findByTelegramId).toHaveBeenCalledWith('123456789');
 			expect(mockProductRepo.findById).toHaveBeenCalledWith('B08PP8QHFQ');
-			expect(mockProductUserRepo.findByProductAndUser).toHaveBeenCalledWith('B08PP8QHFQ', '123456789');
+			expect(mockProductUserRepo.findByProductAndUser).toHaveBeenCalledWith('B08PP8QHFQ', 'user-uuid-123');
 			expect(mockCtx.telegram.sendPhoto).toHaveBeenCalledWith(
 				123456789,
 				'https://example.com/echo-dot.jpg',
@@ -1054,8 +1139,18 @@ describe('TelegramBot', () => {
 				url: 'https://amazon.com.br/echo-dot',
 				image: 'https://example.com/echo-dot.jpg',
 				preorder: false,
+				store: 'Amazon',
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString()
+			};
+
+			const mockUser: User = {
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				name: 'Test',
+				username: 'testuser',
+				language: 'pt',
+				enabled: true
 			};
 
 			const mockCtx = {
@@ -1067,6 +1162,7 @@ describe('TelegramBot', () => {
 				}
 			} as unknown as Context;
 
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 			mockProductRepo.findById.mockResolvedValue(mockProduct);
 			mockProductUserRepo.findByProductAndUser.mockResolvedValue(null);
 
@@ -1102,8 +1198,18 @@ describe('TelegramBot', () => {
 				url: 'https://amazon.com.br/echo-dot',
 				image: '',
 				preorder: false,
+				store: 'Amazon',
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString()
+			};
+
+			const mockUser: User = {
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				name: 'Test',
+				username: 'testuser',
+				language: 'pt',
+				enabled: true
 			};
 
 			const mockCtx = {
@@ -1112,6 +1218,7 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 			mockProductRepo.findById.mockResolvedValue(mockProduct);
 			mockProductUserRepo.findByProductAndUser.mockResolvedValue(null);
 
@@ -1143,12 +1250,22 @@ describe('TelegramBot', () => {
 
 		it('deve tratar erro quando produto não é encontrado', async () => {
 			// Arrange
+			const mockUser: User = {
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				name: 'Test',
+				username: 'testuser',
+				language: 'pt',
+				enabled: true
+			};
+
 			const mockCtx = {
 				from: { id: 123456789 },
 				match: ['product:NOT_FOUND', 'NOT_FOUND'],
 				reply: jest.fn()
 			} as unknown as Context;
 
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 			mockProductRepo.findById.mockResolvedValue(null);
 
 			// Get the handler function
@@ -1160,6 +1277,8 @@ describe('TelegramBot', () => {
 			await productHandler(mockCtx);
 
 			// Assert
+			expect(mockUserRepo.findByTelegramId).toHaveBeenCalledWith('123456789');
+			expect(mockProductRepo.findById).toHaveBeenCalledWith('NOT_FOUND');
 			expect(mockCtx.reply).toHaveBeenCalledWith('Produto não encontrado.');
 		});
 	});
@@ -1173,6 +1292,14 @@ describe('TelegramBot', () => {
 				editMessageText: jest.fn(),
 				reply: jest.fn()
 			} as unknown as Context;
+
+			const mockUser = createTestUser({
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				enabled: true
+			});
+
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 
 			const mockProducts = [
 				createProduct('B01', {
@@ -1190,7 +1317,7 @@ describe('TelegramBot', () => {
 			const mockProductUsers: ProductUser[] = [
 				{
 					id: 'pu1',
-					user_id: '123456789',
+					user_id: 'user-uuid-123',
 					product_id: 'B01',
 					desired_price: 80,
 					created_at: new Date().toISOString(),
@@ -1198,7 +1325,7 @@ describe('TelegramBot', () => {
 				},
 				{
 					id: 'pu2',
-					user_id: '123456789',
+					user_id: 'user-uuid-123',
 					product_id: 'B02',
 					desired_price: 150,
 					created_at: new Date().toISOString(),
@@ -1238,6 +1365,13 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
+			const mockUser = createTestUser({
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				enabled: true
+			});
+
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 			mockProductUserRepo.findByUserId.mockRejectedValue(new Error('Database error'));
 
 			// Get the handler function for page change
@@ -1257,7 +1391,8 @@ describe('TelegramBot', () => {
 		it('deve configurar estado de espera de links para usuário habilitado', async () => {
 			// Arrange
 			const mockUser = createTestUser({
-				id: '123456789',
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
 				username: 'testuser'
 			});
 
@@ -1266,7 +1401,7 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			mockUserRepo.findById.mockResolvedValue(mockUser);
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 
 			// Get the handler function for /addlink
 			const addLinkHandler = mockBot.command.mock.calls.find((call: any) =>
@@ -1289,7 +1424,7 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			mockUserRepo.findById.mockResolvedValue(null);
+			mockUserRepo.findByTelegramId.mockResolvedValue(null);
 
 			// Get the handler function for /addlink
 			const addLinkHandler = mockBot.command.mock.calls.find((call: any) =>
@@ -1306,7 +1441,7 @@ describe('TelegramBot', () => {
 		it('deve informar que monitoria está desativada', async () => {
 			// Arrange
 			const mockUser = createTestUser({
-				id: '123456789',
+				id: 'user-uuid-123',
 				username: 'testuser',
 				enabled: false
 			});
@@ -1316,7 +1451,7 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			mockUserRepo.findById.mockResolvedValue(mockUser);
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 
 			// Get the handler function for /addlink
 			const addLinkHandler = mockBot.command.mock.calls.find((call: any) =>
@@ -1337,7 +1472,7 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			mockUserRepo.findById.mockRejectedValue(new Error('Database error'));
+			mockUserRepo.findByTelegramId.mockRejectedValue(new Error('Database error'));
 
 			// Get the handler function for /addlink
 			const addLinkHandler = mockBot.command.mock.calls.find((call: any) =>
@@ -1356,7 +1491,7 @@ describe('TelegramBot', () => {
 		it('deve processar múltiplos links Amazon corretamente', async () => {
 			// Arrange
 			const mockUser = createTestUser({
-				id: '123456789',
+				id: 'user-uuid-123',
 				username: 'testuser'
 			});
 
@@ -1368,7 +1503,7 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			mockUserRepo.findById.mockResolvedValue(mockUser);
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 			mockActionRepo.create.mockResolvedValue({} as any);
 
 			// Primeiro simular /addlink para configurar estado
@@ -1395,7 +1530,7 @@ describe('TelegramBot', () => {
 		it('deve processar um único link corretamente', async () => {
 			// Arrange
 			const mockUser = createTestUser({
-				id: '123456789',
+				id: 'user-uuid-123',
 				username: 'testuser'
 			});
 
@@ -1407,7 +1542,7 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			mockUserRepo.findById.mockResolvedValue(mockUser);
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 			mockActionRepo.create.mockResolvedValue({} as any);
 
 			// Primeiro simular /addlink para configurar estado
@@ -1434,7 +1569,7 @@ describe('TelegramBot', () => {
 		it('deve ignorar mensagem sem links válidos', async () => {
 			// Arrange
 			const mockUser = createTestUser({
-				id: '123456789',
+				id: 'user-uuid-123',
 				username: 'testuser'
 			});
 
@@ -1446,7 +1581,7 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			mockUserRepo.findById.mockResolvedValue(mockUser);
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 
 			// Primeiro simular /addlink para configurar estado
 			const addLinkHandler = mockBot.command.mock.calls.find((call: any) =>
@@ -1501,9 +1636,18 @@ describe('TelegramBot', () => {
 				url: 'https://amazon.com.br/echo-dot'
 			});
 
+			const mockUser: User = {
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				name: 'Test',
+				username: 'testuser',
+				language: 'pt',
+				enabled: true
+			};
+
 			const mockProductUser: ProductUser = {
 				id: 'pu1',
-				user_id: '123456789',
+				user_id: 'user-uuid-123',
 				product_id: 'B01234567',
 				desired_price: 200,
 				created_at: new Date().toISOString(),
@@ -1516,6 +1660,7 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 			mockProductRepo.findById.mockResolvedValue(mockProduct);
 			mockProductUserRepo.findByProductAndUser.mockResolvedValue(mockProductUser);
 			mockProductUserRepo.removeByProductAndUser.mockResolvedValue();
@@ -1529,7 +1674,10 @@ describe('TelegramBot', () => {
 			await stopHandler(mockCtx);
 
 			// Assert
-			expect(mockProductUserRepo.removeByProductAndUser).toHaveBeenCalledWith('B01234567', '123456789');
+			expect(mockUserRepo.findByTelegramId).toHaveBeenCalledWith('123456789');
+			expect(mockProductRepo.findById).toHaveBeenCalledWith('B01234567');
+			expect(mockProductUserRepo.findByProductAndUser).toHaveBeenCalledWith('B01234567', 'user-uuid-123');
+			expect(mockProductUserRepo.removeByProductAndUser).toHaveBeenCalledWith('B01234567', 'user-uuid-123');
 			expect(mockCtx.reply).toHaveBeenCalledWith(
 				expect.stringContaining('✅ Você não está mais monitorando este produto:'),
 				expect.objectContaining({
@@ -1566,6 +1714,16 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
+			const mockUser: User = {
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				name: 'Test',
+				username: 'testuser',
+				language: 'pt',
+				enabled: true
+			};
+
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 			mockProductRepo.findById.mockResolvedValue(null);
 
 			// Get the handler function for stop monitoring
@@ -1588,12 +1746,22 @@ describe('TelegramBot', () => {
 				url: 'https://amazon.com.br/echo-dot'
 			});
 
+			const mockUser: User = {
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				name: 'Test',
+				username: 'testuser',
+				language: 'pt',
+				enabled: true
+			};
+
 			const mockCtx = {
 				from: { id: 123456789 },
 				match: ['stop_monitor:B01234567:123456789', 'B01234567', '123456789'],
 				reply: jest.fn()
 			} as unknown as Context;
 
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 			mockProductRepo.findById.mockResolvedValue(mockProduct);
 			mockProductUserRepo.findByProductAndUser.mockResolvedValue(null);
 
@@ -1604,6 +1772,184 @@ describe('TelegramBot', () => {
 
 			// Act
 			await stopHandler(mockCtx);
+
+			// Assert
+			expect(mockCtx.reply).toHaveBeenCalledWith('ℹ️ Você não está monitorando este produto.');
+		});
+	});
+
+	describe('Callbacks - Atualizar Preço Desejado', () => {
+		it('deve atualizar preço desejado corretamente', async () => {
+			// Arrange
+			const mockProduct = createProduct('B01234567', {
+				title: 'Echo Dot 5ª Geração',
+				price: 349.99,
+				url: 'https://amazon.com.br/echo-dot'
+			});
+
+			const mockUser: User = {
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				name: 'Test',
+				username: 'testuser',
+				language: 'pt',
+				enabled: true
+			};
+
+			const mockProductUser: ProductUser = {
+				id: 'pu1',
+				user_id: 'user-uuid-123',
+				product_id: 'B01234567',
+				desired_price: 200,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
+			};
+
+			const mockCtx = {
+				from: { id: 123456789 },
+				match: ['update_price:B01234567:123456789:299.99', 'B01234567', '123456789', '299.99'],
+				reply: jest.fn()
+			} as unknown as Context;
+
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
+			mockProductRepo.findById.mockResolvedValue(mockProduct);
+			mockProductUserRepo.findByProductAndUser.mockResolvedValue(mockProductUser);
+			mockProductUserRepo.update.mockResolvedValue(mockProductUser);
+
+			// Get the handler function for update price
+			const updatePriceHandler = mockBot.action.mock.calls.find((call: any) =>
+				call[0].toString() === '/^update_price:(.+):(.+):(.+)$/'
+			)[1];
+
+			// Act
+			await updatePriceHandler(mockCtx);
+
+			// Assert
+			expect(mockUserRepo.findByTelegramId).toHaveBeenCalledWith('123456789');
+			expect(mockProductRepo.findById).toHaveBeenCalledWith('B01234567');
+			expect(mockProductUserRepo.findByProductAndUser).toHaveBeenCalledWith('B01234567', 'user-uuid-123');
+			expect(mockProductUserRepo.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					desired_price: 299.99,
+					updated_at: expect.any(String)
+				})
+			);
+			expect(mockCtx.reply).toHaveBeenCalledWith(
+				expect.stringContaining('✅ Preço desejado atualizado para R$ 299\\.99'),
+				expect.objectContaining({
+					parse_mode: 'MarkdownV2'
+				})
+			);
+		});
+
+		it('deve rejeitar botão quando usuário não corresponde', async () => {
+			// Arrange
+			const mockCtx = {
+				from: { id: 987654321 }, // ID diferente
+				match: ['update_price:B01234567:123456789:299.99', 'B01234567', '123456789', '299.99'],
+				reply: jest.fn()
+			} as unknown as Context;
+
+			// Get the handler function for update price
+			const updatePriceHandler = mockBot.action.mock.calls.find((call: any) =>
+				call[0].toString() === '/^update_price:(.+):(.+):(.+)$/'
+			)[1];
+
+			// Act
+			await updatePriceHandler(mockCtx);
+
+			// Assert
+			expect(mockCtx.reply).toHaveBeenCalledWith('⚠️ Este botão não é para você.');
+		});
+
+		it('deve informar quando usuário não é encontrado', async () => {
+			// Arrange
+			const mockCtx = {
+				from: { id: 123456789 },
+				match: ['update_price:B01234567:123456789:299.99', 'B01234567', '123456789', '299.99'],
+				reply: jest.fn()
+			} as unknown as Context;
+
+			mockUserRepo.findByTelegramId.mockResolvedValue(null);
+
+			// Get the handler function for update price
+			const updatePriceHandler = mockBot.action.mock.calls.find((call: any) =>
+				call[0].toString() === '/^update_price:(.+):(.+):(.+)$/'
+			)[1];
+
+			// Act
+			await updatePriceHandler(mockCtx);
+
+			// Assert
+			expect(mockCtx.reply).toHaveBeenCalledWith('❌ Usuário não encontrado.');
+		});
+
+		it('deve informar quando produto não é encontrado', async () => {
+			// Arrange
+			const mockUser: User = {
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				name: 'Test',
+				username: 'testuser',
+				language: 'pt',
+				enabled: true
+			};
+
+			const mockCtx = {
+				from: { id: 123456789 },
+				match: ['update_price:NOT_FOUND:123456789:299.99', 'NOT_FOUND', '123456789', '299.99'],
+				reply: jest.fn()
+			} as unknown as Context;
+
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
+			mockProductRepo.findById.mockResolvedValue(null);
+
+			// Get the handler function for update price
+			const updatePriceHandler = mockBot.action.mock.calls.find((call: any) =>
+				call[0].toString() === '/^update_price:(.+):(.+):(.+)$/'
+			)[1];
+
+			// Act
+			await updatePriceHandler(mockCtx);
+
+			// Assert
+			expect(mockCtx.reply).toHaveBeenCalledWith('❌ Produto não encontrado.');
+		});
+
+		it('deve informar quando usuário não está monitorando produto', async () => {
+			// Arrange
+			const mockProduct = createProduct('B01234567', {
+				title: 'Echo Dot 5ª Geração',
+				price: 349.99,
+				url: 'https://amazon.com.br/echo-dot'
+			});
+
+			const mockUser: User = {
+				id: 'user-uuid-123',
+				telegram_id: '123456789',
+				name: 'Test',
+				username: 'testuser',
+				language: 'pt',
+				enabled: true
+			};
+
+			const mockCtx = {
+				from: { id: 123456789 },
+				match: ['update_price:B01234567:123456789:299.99', 'B01234567', '123456789', '299.99'],
+				reply: jest.fn()
+			} as unknown as Context;
+
+			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
+			mockProductRepo.findById.mockResolvedValue(mockProduct);
+			mockProductUserRepo.findByProductAndUser.mockResolvedValue(null);
+
+			// Get the handler function for update price
+			const updatePriceHandler = mockBot.action.mock.calls.find((call: any) =>
+				call[0].toString() === '/^update_price:(.+):(.+):(.+)$/'
+			)[1];
+
+			// Act
+			await updatePriceHandler(mockCtx);
 
 			// Assert
 			expect(mockCtx.reply).toHaveBeenCalledWith('ℹ️ Você não está monitorando este produto.');
@@ -1621,3 +1967,8 @@ describe('TelegramBot', () => {
 		});
 	});
 });
+
+
+
+
+

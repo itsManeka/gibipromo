@@ -55,7 +55,12 @@ export class ActionScheduler {
 	/**
 	* Para todos os jobs
 	*/
-	public stop(): void {
-		this.scheduler.stop();
+	public async stop(): Promise<void> {
+		try {
+			this.scheduler.stop();
+			console.log('Scheduler parado com sucesso');
+		} catch (error) {
+			console.error('Erro ao parar scheduler:', error);
+		}
 	}
 }

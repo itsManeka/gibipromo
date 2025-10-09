@@ -9,7 +9,10 @@ export * from './entities/Entity';
 export * from './entities/Product';
 export * from './entities/ProductStats';
 export * from './entities/ProductUser';
+export * from './entities/Session';
 export * from './entities/User';
+export * from './entities/UserPreferences';
+export * from './entities/UserProfile';
 
 // Re-exporta utilitários
 export * from './utils/Logger';

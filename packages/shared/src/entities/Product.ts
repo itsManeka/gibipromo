@@ -14,6 +14,11 @@ export interface Product extends Entity {
 	url: string;
 	image: string;
 	preorder: boolean;
+	category?: string; // Product category (e.g., Mangá, HQ, Livro)
+	format?: string; // Format (e.g., Capa dura, Capa cartão)
+	genre?: string; // Genre (e.g., Fantasia, Aventura)
+	publisher?: string; // Publisher (e.g., Panini, Pipoca & Nanquim)
+	store: string; // Store where product is sold (initially "Amazon")
 	created_at: string;
 	updated_at: string;
 }
@@ -21,10 +26,13 @@ export interface Product extends Entity {
 /**
  * Factory function to create a new Product
  */
-export function createProduct(params: Omit<Product, 'lowest_price' | 'created_at' | 'updated_at'>): Product {
+export function createProduct(params: Omit<Product, 'lowest_price' | 'created_at' | 'updated_at' | 'store'> & {
+	store?: string;
+}): Product {
 	const now = new Date().toISOString();
 	return {
 		...params,
+		store: params.store || 'Amazon', // Default to Amazon
 		lowest_price: params.price,
 		created_at: now,
 		updated_at: now

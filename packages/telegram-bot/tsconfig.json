@@ -26,7 +26,8 @@
 	"include": [
 		"src/**/*",
 		"tests/**/*",
-		"scripts/**/*"
+		"scripts/**/*",
+		"../shared/src/types/**/*"
 	],
 	"exclude": [
 		"node_modules",

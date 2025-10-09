@@ -55,16 +55,17 @@ describe('AddProductActionProcessor', () => {
 			getNextProductsToCheck: jest.fn()
 		};
 
-		mockUserRepo = {
-			create: jest.fn(),
-			update: jest.fn(),
-			delete: jest.fn(),
-			findById: jest.fn(),
-			findByUsername: jest.fn(),
-			setEnabled: jest.fn()
-		};
-
-		mockProductUserRepo = {
+	mockUserRepo = {
+		create: jest.fn(),
+		update: jest.fn(),
+		delete: jest.fn(),
+		findById: jest.fn(),
+		findByUsername: jest.fn(),
+		findByTelegramId: jest.fn(),
+		findByEmail: jest.fn(),
+		updateSessionId: jest.fn(),
+		setEnabled: jest.fn()
+	};		mockProductUserRepo = {
 			create: jest.fn(),
 			update: jest.fn(),
 			delete: jest.fn(),

@@ -4,9 +4,10 @@ import { UserRepository } from '../../../application/ports/UserRepository';
 import { ActionRepository } from '../../../application/ports/ActionRepository';
 import { ProductRepository } from '../../../application/ports/ProductRepository';
 import { ProductUserRepository } from '../../../application/ports/ProductUserRepository';
-import { createUser } from '@gibipromo/shared';
+import { createTelegramUser } from '@gibipromo/shared';
 import { createAddProductAction } from '@gibipromo/shared';
 import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../../../.env') });
 
@@ -52,14 +53,24 @@ export class TelegramBot {
 	}
 
 	/**
+	* Gera um ID único para o usuário
+	*/
+	private generateUserId(): string {
+		return uuidv4();
+	}
+
+	/**
 	* Inicia o bot
 	*/
 	public start(): void {
 		this.bot.launch();
+	}
 
-		// Graceful stop
-		process.once('SIGINT', () => this.bot.stop('SIGINT'));
-		process.once('SIGTERM', () => this.bot.stop('SIGTERM'));
+	/**
+	* Para o bot
+	*/
+	public async stop(): Promise<void> {
+		await this.bot.stop();
 	}
 
 	/**
@@ -68,17 +79,19 @@ export class TelegramBot {
 	private async handleStart(ctx: Context): Promise<void> {
 		try {
 			const { id, first_name, username, language_code } = ctx.from!;
+			const telegramId = id.toString();
 
-			// Verifica se o usuário já existe
-			const existingUser = await this.userRepository.findById(id.toString());
+			// Verifica se o usuário já existe pelo telegram_id
+			const existingUser = await this.userRepository.findByTelegramId(telegramId);
 			if (existingUser) {
 				await ctx.reply('Bem-vindo de volta ao GibiPromo! 🎉\nUse /help para ver os comandos disponíveis.');
 				return;
 			}
 
-			// Cria novo usuário
-			const user = createUser({
-				id: id.toString(),
+			// Cria novo usuário com telegram_id e ID único
+			const user = createTelegramUser({
+				id: this.generateUserId(), // Gera UUID único
+				telegram_id: telegramId,
 				name: first_name || '',
 				username: username || '',
 				language: language_code || 'pt'
@@ -97,17 +110,17 @@ export class TelegramBot {
 	*/
 	private async handleEnable(ctx: Context): Promise<void> {
 		try {
-			const userId = ctx.from!.id.toString();
+			const telegramId = ctx.from!.id.toString();
 
-			// Verifica se o usuário existe
-			const existingUser = await this.userRepository.findById(userId);
+			// Verifica se o usuário existe pelo telegram_id
+			const existingUser = await this.userRepository.findByTelegramId(telegramId);
 			if (!existingUser) {
 				await ctx.reply('Por favor, use /start primeiro para começar a usar o bot.');
 				return;
 			}
 
 			// Ativa a monitoria para o usuário existente
-			await this.userRepository.setEnabled(userId, true);
+			await this.userRepository.setEnabled(existingUser.id, true);
 			await ctx.reply('Monitoria ativada com sucesso! ✅\nAgora você pode usar /addlink para adicionar produtos.');
 		} catch (error) {
 			console.error('Erro ao processar comando /enable:', error);
@@ -120,16 +133,16 @@ export class TelegramBot {
 	*/
 	private async handleDisable(ctx: Context): Promise<void> {
 		try {
-			const userId = ctx.from!.id.toString();
+			const telegramId = ctx.from!.id.toString();
 
-			// Verifica se o usuário existe
-			const existingUser = await this.userRepository.findById(userId);
+			// Verifica se o usuário existe pelo telegram_id
+			const existingUser = await this.userRepository.findByTelegramId(telegramId);
 			if (!existingUser) {
 				await ctx.reply('Por favor, use /start primeiro para começar a usar o bot.');
 				return;
 			}
 
-			await this.userRepository.setEnabled(userId, false);
+			await this.userRepository.setEnabled(existingUser.id, false);
 			await ctx.reply('Monitoria desativada. ❌\nUse /enable para reativar.');
 		} catch (error) {
 			console.error('Erro ao processar comando /disable:', error);
@@ -172,8 +185,8 @@ export class TelegramBot {
 	*/
 	private async handleList(ctx: Context): Promise<void> {
 		try {
-			const userId = ctx.from!.id.toString();
-			const user = await this.userRepository.findById(userId);
+			const telegramId = ctx.from!.id.toString();
+			const user = await this.userRepository.findByTelegramId(telegramId);
 
 			if (!user) {
 				await ctx.reply('Por favor, use /start primeiro para começar a usar o bot.');
@@ -191,11 +204,18 @@ export class TelegramBot {
 	* Exibe a lista de produtos paginada
 	*/
 	private async showProductList(ctx: Context, page: number, editMessage: boolean = false): Promise<void> {
-		const userId = ctx.from!.id.toString();
+		const telegramId = ctx.from!.id.toString();
+		const user = await this.userRepository.findByTelegramId(telegramId);
+		
+		if (!user) {
+			await ctx.reply('Por favor, use /start primeiro para começar a usar o bot.');
+			return;
+		}
+
 		const pageSize = 5;
 
 		// Busca os relacionamentos ProductUser para este usuário
-		const { productUsers, total } = await this.productUserRepository.findByUserId(userId, page, pageSize);
+		const { productUsers, total } = await this.productUserRepository.findByUserId(user.id, page, pageSize);
 
 		if (productUsers.length === 0) {
 			if (editMessage && 'editMessageText' in ctx) {
@@ -273,7 +293,14 @@ export class TelegramBot {
 			if (!('match' in ctx) || !ctx.match || !Array.isArray(ctx.match)) return;
 
 			const productId = ctx.match[1] as string;
-			const userId = ctx.from!.id.toString();
+			const telegramId = ctx.from!.id.toString();
+
+			// Busca o usuário pelo telegram_id para obter o user_id (UUID)
+			const user = await this.userRepository.findByTelegramId(telegramId);
+			if (!user) {
+				await ctx.reply('Por favor, use /start primeiro para começar a usar o bot.');
+				return;
+			}
 
 			const product = await this.productRepository.findById(productId);
 
@@ -282,8 +309,8 @@ export class TelegramBot {
 				return;
 			}
 
-			// Busca informações do relacionamento ProductUser para preço desejado
-			const productUser = await this.productUserRepository.findByProductAndUser(productId, userId);
+			// Busca informações do relacionamento ProductUser para preço desejado (usando user_id UUID)
+			const productUser = await this.productUserRepository.findByProductAndUser(productId, user.id);
 
 			const formattedPrice = this.formatPrice(product.price);
 			const formattedOldPrice = product.old_price ? this.formatPrice(product.old_price) : null;
@@ -337,13 +364,13 @@ _Clique nos botões abaixo para ver o produto ou gerenciar sua monitoria_
 				[
 					{
 						text: '🛑 Parar monitoria',
-						callback_data: `stop_monitor:${product.id}:${userId}`
+						callback_data: `stop_monitor:${product.id}:${telegramId}`
 					}
 				],
 				[
 					{
 						text: `💰 Atualizar preço desejado para R$ ${unescapedSuggestedPrice} (-5%)`,
-						callback_data: `update_price:${product.id}:${userId}:${suggestedPrice}`
+						callback_data: `update_price:${product.id}:${telegramId}:${suggestedPrice}`
 					}
 				]
 			];
@@ -406,8 +433,8 @@ _Clique nos botões abaixo para ver o produto ou gerenciar sua monitoria_
 	*/
 	private async handleAddLink(ctx: Context): Promise<void> {
 		try {
-			const userId = ctx.from!.id.toString();
-			const user = await this.userRepository.findById(userId);
+			const telegramId = ctx.from!.id.toString();
+			const user = await this.userRepository.findByTelegramId(telegramId);
 
 			if (!user) {
 				await ctx.reply('Por favor, use /start primeiro para começar a usar o bot.');
@@ -419,8 +446,8 @@ _Clique nos botões abaixo para ver o produto ou gerenciar sua monitoria_
 				return;
 			}
 
-			// Marca o usuário como esperando links
-			this.userStates.set(userId, { awaitingLinks: true });
+			// Marca o usuário como esperando links (usando telegram_id para estado temporário)
+			this.userStates.set(telegramId, { awaitingLinks: true });
 
 			await ctx.reply('📚 Envie o link ou lista de links da Amazon que deseja monitorar.\nVocê pode enviar vários links de uma vez, separados por espaço ou em linhas diferentes.');
 		} catch (error) {
@@ -434,17 +461,17 @@ _Clique nos botões abaixo para ver o produto ou gerenciar sua monitoria_
 	*/
 	private async handleText(ctx: Context): Promise<void> {
 		try {
-			const userId = ctx.from!.id.toString();
-			const userState = this.userStates.get(userId);
+			const telegramId = ctx.from!.id.toString();
+			const userState = this.userStates.get(telegramId);
 
 			// Se não está esperando links, ignora a mensagem
 			if (!userState?.awaitingLinks) {
 				return;
 			}
 
-			const user = await this.userRepository.findById(userId);
+			const user = await this.userRepository.findByTelegramId(telegramId);
 			if (!user || !user.enabled) {
-				this.userStates.delete(userId);
+				this.userStates.delete(telegramId);
 				return;
 			}
 
@@ -467,12 +494,12 @@ _Clique nos botões abaixo para ver o produto ou gerenciar sua monitoria_
 
 			// Cria ações para cada link
 			for (const link of links) {
-				const action = createAddProductAction(userId, link);
+				const action = createAddProductAction(user.id, link);
 				await this.actionRepository.create(action);
 			}
 
 			// Remove o estado de espera
-			this.userStates.delete(userId);
+			this.userStates.delete(telegramId);
 
 			// Responde com confirmação
 			const replyText = links.length === 1
@@ -492,7 +519,7 @@ _Clique nos botões abaixo para ver o produto ou gerenciar sua monitoria_
 	private async handleDelete(ctx: Context): Promise<void> {
 		try {
 			const userId = ctx.from!.id.toString();
-			const user = await this.userRepository.findById(userId);
+			const user = await this.userRepository.findByTelegramId(userId);
 
 			if (!user) {
 				await ctx.reply('Por favor, use /start primeiro para começar a usar o bot.');
@@ -552,13 +579,20 @@ _Clique nos botões abaixo para ver o produto ou gerenciar sua monitoria_
 			if (!('match' in ctx) || !ctx.match || !Array.isArray(ctx.match)) return;
 
 			const productId = ctx.match[1] as string;
-			const userId = ctx.match[2] as string;
+			const telegramId = ctx.match[2] as string;
 			const desiredPrice = parseFloat(ctx.match[3] as string);
 			const currentUserId = ctx.from!.id.toString();
 
 			// Verifica se o usuário do callback é o mesmo que clicou o botão
-			if (userId !== currentUserId) {
+			if (telegramId !== currentUserId) {
 				await ctx.reply('⚠️ Este botão não é para você.');
+				return;
+			}
+
+			// Busca o usuário pelo telegram_id para obter o user_id (UUID)
+			const user = await this.userRepository.findByTelegramId(telegramId);
+			if (!user) {
+				await ctx.reply('❌ Usuário não encontrado.');
 				return;
 			}
 
@@ -569,8 +603,8 @@ _Clique nos botões abaixo para ver o produto ou gerenciar sua monitoria_
 				return;
 			}
 
-			// Verifica se o usuário está monitorando este produto
-			const productUser = await this.productUserRepository.findByProductAndUser(productId, userId);
+			// Verifica se o usuário está monitorando este produto (usando user_id UUID)
+			const productUser = await this.productUserRepository.findByProductAndUser(productId, user.id);
 			if (!productUser) {
 				await ctx.reply('ℹ️ Você não está monitorando este produto.');
 				return;
@@ -603,12 +637,19 @@ _Clique nos botões abaixo para ver o produto ou gerenciar sua monitoria_
 			if (!('match' in ctx) || !ctx.match || !Array.isArray(ctx.match)) return;
 
 			const productId = ctx.match[1] as string;
-			const userId = ctx.match[2] as string;
+			const telegramId = ctx.match[2] as string;
 			const currentUserId = ctx.from!.id.toString();
 
 			// Verifica se o usuário do callback é o mesmo que clicou o botão
-			if (userId !== currentUserId) {
+			if (telegramId !== currentUserId) {
 				await ctx.reply('⚠️ Este botão não é para você.');
+				return;
+			}
+
+			// Busca o usuário pelo telegram_id para obter o user_id (UUID)
+			const user = await this.userRepository.findByTelegramId(telegramId);
+			if (!user) {
+				await ctx.reply('❌ Usuário não encontrado.');
 				return;
 			}
 
@@ -619,15 +660,15 @@ _Clique nos botões abaixo para ver o produto ou gerenciar sua monitoria_
 				return;
 			}
 
-			// Verifica se o usuário está monitorando este produto
-			const productUser = await this.productUserRepository.findByProductAndUser(productId, userId);
+			// Verifica se o usuário está monitorando este produto (usando user_id UUID)
+			const productUser = await this.productUserRepository.findByProductAndUser(productId, user.id);
 			if (!productUser) {
 				await ctx.reply('ℹ️ Você não está monitorando este produto.');
 				return;
 			}
 
-			// Remove o relacionamento ProductUser
-			await this.productUserRepository.removeByProductAndUser(productId, userId);
+			// Remove o relacionamento ProductUser (usando user_id UUID)
+			await this.productUserRepository.removeByProductAndUser(productId, user.id);
 
 			await ctx.reply(`✅ Você não está mais monitorando este produto:\n*${this.escapeMarkdown(product.title)}*`, {
 				parse_mode: 'MarkdownV2'

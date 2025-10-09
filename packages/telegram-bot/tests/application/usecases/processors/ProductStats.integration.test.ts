@@ -120,6 +120,23 @@ class MockUserRepository implements UserRepository {
 		}
 		throw new Error(`User not found: ${id}`);
 	}
+
+	async findByTelegramId(telegramId: string): Promise<User | null> {
+		return this.users.find(u => u.telegram_id === telegramId) || null;
+	}
+
+	async findByEmail(email: string): Promise<User | null> {
+		return this.users.find(u => u.email === email) || null;
+	}
+
+	async updateSessionId(id: string, sessionId: string | null): Promise<User> {
+		const user = await this.findById(id);
+		if (user) {
+			user.session_id = sessionId || undefined;
+			return this.update(user);
+		}
+		throw new Error(`User not found: ${id}`);
+	}
 }
 
 class MockProductRepository implements ProductRepository {

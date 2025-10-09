@@ -26,6 +26,7 @@ describe('TelegramNotifier', () => {
 		url: 'https://amazon.com.br/dp/B08PP8QHFQ',
 		image: 'https://example.com/image.jpg',
 		preorder: false,
+		store: 'Amazon',
 		created_at: new Date().toISOString(),
 		updated_at: new Date().toISOString()
 	};

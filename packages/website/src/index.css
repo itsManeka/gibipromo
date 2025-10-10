@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Estilos globais */
+@layer base {
+	html {
+		scroll-behavior: smooth;
+	}
+
+	body {
+		font-feature-settings: 'rlig' 1, 'calt' 1;
+	}
+
+	/* Scrollbar personalizada */
+	::-webkit-scrollbar {
+		width: 8px;
+	}
+
+	::-webkit-scrollbar-track {
+		@apply bg-dark-900;
+	}
+
+	::-webkit-scrollbar-thumb {
+		@apply bg-purple-600 rounded-full;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		@apply bg-purple-500;
+	}
+}
+
+@layer components {
+
+	/* Botões */
+	.btn-primary {
+		@apply bg-primary-yellow text-dark-950 px-6 py-3 rounded-xl font-medium hover:bg-yellow-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-50 active:transform active:scale-95;
+	}
+
+	.btn-secondary {
+		@apply bg-purple-600 text-primary-white px-6 py-3 rounded-xl font-medium hover:bg-purple-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 active:transform active:scale-95;
+	}
+
+	.btn-ghost {
+		@apply text-primary-light px-4 py-2 rounded-lg font-medium hover:bg-dark-800 hover:text-primary-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50;
+	}
+
+	/* Cards */
+	.card {
+		@apply bg-dark-900 border border-dark-700 rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300;
+	}
+
+	.card-product {
+		@apply card hover:border-purple-500 hover:-translate-y-1 cursor-pointer overflow-hidden;
+	}
+
+	/* Inputs */
+	.input {
+		@apply bg-dark-800 border border-dark-600 rounded-xl px-4 py-3 text-primary-white placeholder-dark-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors duration-200;
+	}
+
+	/* Navigation */
+	.nav-link {
+		@apply text-primary-light hover:text-primary-yellow transition-colors duration-200 font-medium;
+	}
+
+	.nav-link-active {
+		@apply text-primary-yellow;
+	}
+}
+
+@layer utilities {
+
+	/* Animações personalizadas */
+	.animate-float {
+		animation: float 3s ease-in-out infinite;
+	}
+
+	@keyframes float {
+
+		0%,
+		100% {
+			transform: translateY(0px);
+		}
+
+		50% {
+			transform: translateY(-10px);
+		}
+	}
+
+	/* Gradientes */
+	.gradient-hero {
+		background: linear-gradient(135deg, #1E1E2A 0%, #2A1050 50%, #1E1E2A 100%);
+	}
+
+	.gradient-card {
+		background: linear-gradient(145deg, #2A1050 0%, #1E1E2A 100%);
+	}
+
+	/* Texturas */
+	.texture-subtle {
+		background-image:
+			radial-gradient(circle at 1px 1px, rgba(108, 43, 217, 0.1) 1px, transparent 0);
+		background-size: 20px 20px;
+	}
+
+	/* Filtros */
+	.filter-drop-shadow {
+		filter: drop-shadow(0 4px 8px rgba(108, 43, 217, 0.2));
+	}
+}

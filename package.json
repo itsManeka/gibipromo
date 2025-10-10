@@ -16,7 +16,9 @@
 		"init:dynamo": "node scripts/init-dynamo.js",
 		"dev:bot": "npm run dev --workspace=packages/telegram-bot",
 		"test:bot": "npm run test --workspace=packages/telegram-bot -- --maxWorkers=1",
-		"build:shared": "npm run build --workspace=packages/shared"
+		"build:shared": "npm run build --workspace=packages/shared",
+		"dev:api": "npm run dev --workspace=packages/web-api",
+		"test:api": "npm run test --workspace=packages/web-api -- --maxWorkers=1"
 	},
 	"dependencies": {
 		"aws-sdk": "^2.1480.0",

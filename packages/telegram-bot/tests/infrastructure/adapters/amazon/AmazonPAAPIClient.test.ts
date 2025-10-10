@@ -558,6 +558,7 @@ describe('AmazonPAAPIClient', () => {
 					'ItemInfo.Title',
 					'ItemInfo.Classifications',
 					'ItemInfo.ByLineInfo',
+					'BrowseNodeInfo.BrowseNodes',
 					'Offers.Listings.MerchantInfo',
 					'Offers.Listings.Availability.Type',
 					'Offers.Listings.Price',
@@ -587,6 +588,201 @@ describe('AmazonPAAPIClient', () => {
 			// Testa a lógica de parsing de preço (método privado)
 			// Como é método privado, testamos através do comportamento público
 			expect(() => new AmazonPAAPIClient()).not.toThrow();
+		});
+	});
+
+	describe('new product fields extraction', () => {
+		let client: AmazonPAAPIClient;
+		const { DefaultApi, GetItemsRequest, GetItemsResponse } = require('paapi5-nodejs-sdk');
+
+		beforeEach(() => {
+			client = new AmazonPAAPIClient();
+		});
+
+		it('should extract category, format, genre, and publisher from API response', async () => {
+			const mockResponse = {
+				ItemsResult: {
+					Items: [
+						{
+							ASIN: '8545707223',
+							ItemInfo: {
+								Title: {
+									DisplayValue: 'Akira - Vol. 3'
+								},
+								Classifications: {
+									Bindings: {
+										DisplayValue: 'Capa comum'
+									}
+								},
+								ByLineInfo: {
+									Brand: {
+										DisplayValue: 'Editora JBC'
+									},
+									Manufacturer: {
+										DisplayValue: 'Editora JBC'
+									}
+								}
+							},
+							BrowseNodeInfo: {
+								BrowseNodes: [
+									{
+										DisplayName: 'Fantasia',
+										Id: '7842717011',
+										Ancestor: {
+											DisplayName: 'Mangá',
+											Id: '7842714011',
+											Ancestor: {
+												DisplayName: 'HQs, Mangás e Graphic Novels',
+												Id: '7842710011'
+											}
+										}
+									}
+								]
+							},
+							Offers: {
+								Listings: [
+									{
+										MerchantInfo: {
+											Id: 'AMAZON'
+										},
+										Price: {
+											Amount: 6412
+										},
+										SavingBasis: {
+											Amount: 9490
+										},
+										Availability: {
+											Type: 'Now'
+										}
+									}
+								]
+							},
+							Images: {
+								Primary: {
+									Large: {
+										URL: 'https://m.media-amazon.com/images/I/51V8roKvg-S._SL500_.jpg'
+									}
+								}
+							},
+							DetailPageURL: 'https://www.amazon.com.br/dp/8545707223?tag=itsmaneka-20&linkCode=ogi&th=1&psc=1'
+						}
+					]
+				}
+			};
+			
+			const mockGetItems = jest.fn((request, callback) => {
+				callback(null, mockResponse);
+			});
+			
+			(DefaultApi as jest.Mock).mockImplementation(() => ({
+				getItems: mockGetItems
+			}));
+
+			(GetItemsResponse.constructFromObject as jest.Mock).mockReturnValue(mockResponse);
+
+			client = new AmazonPAAPIClient();
+			const result = await client.getProducts(['8545707223']);
+			
+			expect(result.size).toBe(1);
+			const product = result.get('8545707223');
+			expect(product).toEqual({
+				offerId: 'AMAZON',
+				title: 'Akira - Vol. 3',
+				fullPrice: 9490,
+				currentPrice: 6412,
+				inStock: true,
+				imageUrl: 'https://m.media-amazon.com/images/I/51V8roKvg-S._SL500_.jpg',
+				isPreOrder: false,
+				url: 'https://www.amazon.com.br/dp/8545707223?tag=itsmaneka-20&linkCode=ogi&th=1&psc=1',
+				category: 'Mangá',
+				format: 'Capa comum',
+				genre: 'Fantasia',
+				publisher: 'Editora JBC'
+			});
+		});
+
+		it('should handle missing optional fields gracefully', async () => {
+			const mockResponse = {
+				ItemsResult: {
+					Items: [
+						{
+							ASIN: 'B001234567',
+							ItemInfo: {
+								Title: {
+									DisplayValue: 'Product Without Metadata'
+								}
+							},
+							Offers: {
+								Listings: [
+									{
+										MerchantInfo: {
+											Id: 'AMAZON'
+										},
+										Price: {
+											Amount: 2999
+										},
+										Availability: {
+											Type: 'Now'
+										}
+									}
+								]
+							},
+							DetailPageURL: 'https://amazon.com.br/dp/B001234567'
+						}
+					]
+				}
+			};
+			
+			const mockGetItems = jest.fn((request, callback) => {
+				callback(null, mockResponse);
+			});
+			
+			(DefaultApi as jest.Mock).mockImplementation(() => ({
+				getItems: mockGetItems
+			}));
+
+			(GetItemsResponse.constructFromObject as jest.Mock).mockReturnValue(mockResponse);
+
+			client = new AmazonPAAPIClient();
+			const result = await client.getProducts(['B001234567']);
+			
+			expect(result.size).toBe(1);
+			const product = result.get('B001234567');
+			expect(product?.category).toBeUndefined();
+			expect(product?.format).toBeUndefined();
+			expect(product?.genre).toBeUndefined();
+			expect(product?.publisher).toBeUndefined();
+		});
+
+		it('should verify new Resources are included in request', async () => {
+			const mockRequest = {
+				ItemIds: ['B001234567'],
+				Resources: [],
+				PartnerTag: '',
+				PartnerType: '',
+				Marketplace: '',
+				Merchant: ''
+			};
+			
+			(GetItemsRequest as jest.Mock).mockImplementation(() => mockRequest);
+			
+			const mockGetItems = jest.fn((request, callback) => {
+				// Verifica se os novos Resources foram incluídos
+				expect(request.Resources).toContain('BrowseNodeInfo.BrowseNodes');
+				expect(request.Resources).toContain('ItemInfo.ByLineInfo');
+				expect(request.Resources).toContain('ItemInfo.Classifications');
+				
+				callback(new Error('Expected error for test'), null);
+			});
+			
+			(DefaultApi as jest.Mock).mockImplementation(() => ({
+				getItems: mockGetItems
+			}));
+
+			client = new AmazonPAAPIClient();
+			await client.getProducts(['B001234567']);
+			
+			expect(mockGetItems).toHaveBeenCalled();
 		});
 	});
 });

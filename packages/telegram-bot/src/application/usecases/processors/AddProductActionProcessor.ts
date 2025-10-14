@@ -145,7 +145,13 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 				in_stock: amazonProduct.inStock,
 				url: amazonProduct.url,
 				image: amazonProduct.imageUrl,
-				preorder: amazonProduct.isPreOrder
+				preorder: amazonProduct.isPreOrder,
+				category: amazonProduct.category,
+				format: amazonProduct.format,
+				genre: amazonProduct.genre,
+				publisher: amazonProduct.publisher,
+				contributors: amazonProduct.contributors,
+				store: 'Amazon'
 			});
 
 			await this.productRepository.create(product);

@@ -278,13 +278,6 @@ export function Promotions() {
 										<p className="text-primary-light text-xs">{promo.category} • {promo.publisher}</p>
 									</div>
 
-									<div className="flex items-center space-x-1">
-										<Star className="h-4 w-4 text-yellow-400 fill-current" />
-										<span className="text-sm text-primary-light">
-											{promo.rating} ({promo.reviews})
-										</span>
-									</div>
-
 									<div className="flex items-baseline space-x-2">
 										<span className="text-xl font-bold text-primary-yellow">
 											R$ {promo.currentPrice.toFixed(2)}
@@ -298,9 +291,6 @@ export function Promotions() {
 										<button className="flex-1 btn-primary text-sm py-2 inline-flex items-center justify-center space-x-1">
 											<ExternalLink className="h-4 w-4" />
 											<span>Amazon</span>
-										</button>
-										<button className="btn-ghost px-3 py-2 text-sm" title="Adicionar aos favoritos">
-											⭐
 										</button>
 									</div>
 								</div>

@@ -168,7 +168,7 @@ export function Profile() {
 							</h3>
 							<div className="space-y-3">
 								<button className="w-full btn-secondary text-sm py-2">
-									Conectar Telegram
+									Vincular Telegram
 								</button>
 								<button className="w-full btn-ghost text-sm py-2 text-red-400 hover:text-red-300">
 									Excluir Conta

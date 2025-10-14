@@ -50,6 +50,26 @@ export function Header() {
 							)
 						})}
 
+						{/* Auth Links */}
+						<div className="flex items-center space-x-4 border-l border-purple-500 pl-4">
+							<Link
+								to="/login"
+								className={`nav-link px-3 py-2 rounded-lg transition-all duration-200 ${
+									isActive('/login') 
+										? 'nav-link-active bg-purple-700' 
+										: 'hover:bg-purple-700'
+								}`}
+							>
+								Entrar
+							</Link>
+							<Link
+								to="/registro"
+								className="btn-primary text-sm py-2 px-4"
+							>
+								Cadastrar
+							</Link>
+						</div>
+
 						{/* Theme Toggle */}
 						<button
 							onClick={toggleTheme}
@@ -97,6 +117,30 @@ export function Header() {
 								</Link>
 							)
 						})}
+
+						{/* Mobile Auth Links */}
+						<div className="border-t border-purple-500 pt-3 mt-3 space-y-1">
+							<Link
+								to="/login"
+								onClick={() => setIsMenuOpen(false)}
+								className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 ${
+									isActive('/login') 
+										? 'bg-purple-800 text-primary-yellow' 
+										: 'text-white hover:bg-purple-600'
+								}`}
+							>
+								<User className="h-5 w-5" />
+								<span className="font-medium">Entrar</span>
+							</Link>
+							<Link
+								to="/registro"
+								onClick={() => setIsMenuOpen(false)}
+								className="flex items-center space-x-3 px-3 py-2 rounded-lg bg-primary-yellow text-dark-950 hover:bg-yellow-400 transition-colors font-medium"
+							>
+								<User className="h-5 w-5" />
+								<span>Cadastrar</span>
+							</Link>
+						</div>
 
 						{/* Mobile Theme Toggle */}
 						<button

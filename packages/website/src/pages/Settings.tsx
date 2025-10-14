@@ -125,10 +125,9 @@ export function Settings() {
 								</button>
 							</div>
 						</div>
-					</div>
-
-					{/* Botão de Salvar */}
-					<div className="card">
+						{/* Divisor */}
+						<hr className="my-6 border-dark-700" />
+						{/* Botão Salvar */}
 						<div className="flex justify-end">
 							<button
 								onClick={handleSave}
@@ -136,6 +135,24 @@ export function Settings() {
 							>
 								<Save className="h-5 w-5" />
 								<span>Salvar Preferências</span>
+							</button>
+						</div>
+					</div>
+
+					{/* Conta */}
+					<div className="card">
+						<h2 className="text-xl font-semibold text-white mb-6">
+							🔒 Conta
+						</h2>
+
+						<div className="space-y-4">
+							<div className="flex items-center justify-between">
+								<button className="w-full btn-secondary text-sm py-2">
+									Vincular Telegram
+								</button>
+							</div>
+							<button className="w-full btn-ghost text-sm py-2 text-red-400 hover:text-red-300">
+								Excluir Conta
 							</button>
 						</div>
 					</div>

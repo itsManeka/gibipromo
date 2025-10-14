@@ -17,10 +17,10 @@ Criar um bot de Telegram em **TypeScript** para monitoramento de preços da Amaz
 ## Banco de Dados (DynamoDB)
 - Sempre use **snake_case** para nomes de colunas  
 - Tabelas principais:
-  - `Users`
-  - `Products`
-  - `Actions`
-  - `ActionConfigs` (configuração de agendamentos)
+	- `Users`
+	- `Products`
+	- `Actions`
+	- `ActionConfigs` (configuração de agendamentos)
 - Flags booleanas devem ser sempre `true`/`false`, nunca strings
 - Sempre filtre ações por `is_processed = 0 (false)` antes de executá-las
 - Após processar com sucesso, atualizar `is_processed = 1 (true)`
@@ -44,9 +44,9 @@ Criar um bot de Telegram em **TypeScript** para monitoramento de preços da Amaz
 - Nunca use valores hardcoded para intervalos
 - Leia os intervalos da tabela `ActionConfigs`
 - Campos da `ActionConfigs`:
-  - `action_type` (string)
-  - `interval_minutes` (number)
-  - `enabled` (boolean)
+	- `action_type` (string)
+	- `interval_minutes` (number)
+	- `enabled` (boolean)
 
 ---
 
@@ -62,7 +62,11 @@ Criar um bot de Telegram em **TypeScript** para monitoramento de preços da Amaz
 - Sempre escreva código desacoplado e testável
 - Prefira **funções puras** onde possível
 - Sempre logue ações críticas para debug
-- **Antes de enviar alterações, rode `npm run dev` e valide os fluxos principais no Telegram**
+- Sempre use o logger ao invés de `console.log`
+- **Antes de enviar alterações, rode `npm run dev` e valide os fluxos principais**
+	- `npm run dev:bot` → Inicia o bot em modo desenvolvimento
+	- `npm run dev:api` → Inicia a API em modo desenvolvimento
+	- `npm run dev:web` → Inicia o website em modo desenvolvimento
 
 ---
 
@@ -70,10 +74,10 @@ Criar um bot de Telegram em **TypeScript** para monitoramento de preços da Amaz
 
 ### Casos de Teste e Interações
 - Criar casos de teste para:
-  - Erros já reportados
-  - Problemas existentes
-  - Novas funcionalidades
-  - Melhorias aplicadas
+	- Erros já reportados
+	- Problemas existentes
+	- Novas funcionalidades
+	- Melhorias aplicadas
 
 ### Padrão de Qualidade
 - Todos os testes devem ter **100% de sucesso**

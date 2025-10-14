@@ -13,8 +13,7 @@ describe('UserPreferences Entity', () => {
 			id: 'pref-123',
 			user_id: 'user-456',
 			monitor_preorders: true,
-			monitor_coupons: true,
-			theme: 'light'
+			monitor_coupons: true
 		});
 	});
 
@@ -23,8 +22,7 @@ describe('UserPreferences Entity', () => {
 			id: 'pref-123',
 			user_id: 'user-456',
 			monitor_preorders: false,
-			monitor_coupons: false,
-			theme: 'dark' as const
+			monitor_coupons: false
 		};
 
 		const preferences = createUserPreferences(preferencesData);
@@ -33,8 +31,7 @@ describe('UserPreferences Entity', () => {
 			id: 'pref-123',
 			user_id: 'user-456',
 			monitor_preorders: false,
-			monitor_coupons: false,
-			theme: 'dark'
+			monitor_coupons: false
 		});
 	});
 
@@ -48,6 +45,5 @@ describe('UserPreferences Entity', () => {
 		expect(preferences).toHaveProperty('user_id');
 		expect(preferences).toHaveProperty('monitor_preorders');
 		expect(preferences).toHaveProperty('monitor_coupons');
-		expect(preferences).toHaveProperty('theme');
 	});
 });

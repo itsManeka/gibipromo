@@ -4,7 +4,7 @@ import {
 	DynamoDBActionRepository,
 	DynamoDBProductRepository,
 	DynamoDBProductUserRepository
-} from '../adapters/dynamodb';
+} from '@gibipromo/shared';
 
 export function createTelegramBot(): TelegramBot {
 	const userRepository = new DynamoDBUserRepository();

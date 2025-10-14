@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, TrendingDown, Bell, Star, BookOpen, Sparkles } from 'lucide-react'
+import { ArrowRight, TrendingDown, Bell, User, Star, BookOpen, Sparkles } from 'lucide-react'
 
 // Mock data para as promoções
 const mockPromotions = [
@@ -193,13 +193,6 @@ export function Home() {
 									</h3>
 									<p className="text-primary-light text-sm">{promo.author}</p>
 
-									<div className="flex items-center space-x-1 mb-2">
-										<Star className="h-4 w-4 text-yellow-400 fill-current" />
-										<span className="text-sm text-primary-light">
-											{promo.rating} ({promo.reviews})
-										</span>
-									</div>
-
 									<div className="flex items-baseline space-x-2">
 										<span className="text-xl font-bold text-primary-yellow">
 											R$ {promo.currentPrice.toFixed(2)}
@@ -228,6 +221,15 @@ export function Home() {
 					<p className="text-primary-light text-lg mb-8">
 						Junte-se a milhares de leitores que já economizam com a nossa gatinha!
 					</p>
+					
+					{/* Fazer Login */}
+					<Link to="/login" className="btn-primary inline-flex items-center space-x-2 mr-4">
+						<User className="h-5 w-5" />
+						<span>Fazer Login</span>
+						<ArrowRight className="h-5 w-5" />
+					</Link>
+
+					{/*Começar no Telegram*/}
 					<a
 						href="https://t.me/gibipromo_bot"
 						target="_blank"

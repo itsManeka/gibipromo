@@ -1,7 +1,7 @@
 import { AmazonPAAPIClient } from '../../../../src/infrastructure/adapters/amazon/AmazonPAAPIClient';
 
-// Mock do paapi5-nodejs-sdk
-jest.mock('paapi5-nodejs-sdk', () => ({
+// Mock do @itsmaneka/paapi5-nodejs-sdk
+jest.mock('@itsmaneka/paapi5-nodejs-sdk', () => ({
 	ApiClient: {
 		instance: {
 			accessKey: '',
@@ -160,7 +160,7 @@ describe('AmazonPAAPIClient', () => {
 
 	describe('getProducts', () => {
 		let client: AmazonPAAPIClient;
-		const { DefaultApi, GetItemsRequest, GetItemsResponse } = require('paapi5-nodejs-sdk');
+		const { DefaultApi, GetItemsRequest, GetItemsResponse } = require('@itsmaneka/paapi5-nodejs-sdk');
 
 		beforeEach(() => {
 			client = new AmazonPAAPIClient();
@@ -593,7 +593,7 @@ describe('AmazonPAAPIClient', () => {
 
 	describe('new product fields extraction', () => {
 		let client: AmazonPAAPIClient;
-		const { DefaultApi, GetItemsRequest, GetItemsResponse } = require('paapi5-nodejs-sdk');
+		const { DefaultApi, GetItemsRequest, GetItemsResponse } = require('@itsmaneka/paapi5-nodejs-sdk');
 
 		beforeEach(() => {
 			client = new AmazonPAAPIClient();
@@ -618,9 +618,15 @@ describe('AmazonPAAPIClient', () => {
 									Brand: {
 										DisplayValue: 'Editora JBC'
 									},
+									Contributors: [
+										{
+											Name: 'Katsuhiro Otomo',
+											Role: 'Autor'
+										}
+									],
 									Manufacturer: {
 										DisplayValue: 'Editora JBC'
-									}
+									},
 								}
 							},
 							BrowseNodeInfo: {
@@ -697,7 +703,8 @@ describe('AmazonPAAPIClient', () => {
 				category: 'Mangá',
 				format: 'Capa comum',
 				genre: 'Fantasia',
-				publisher: 'Editora JBC'
+				publisher: 'Editora JBC',
+				contributors: ['Katsuhiro Otomo']
 			});
 		});
 
@@ -752,6 +759,7 @@ describe('AmazonPAAPIClient', () => {
 			expect(product?.format).toBeUndefined();
 			expect(product?.genre).toBeUndefined();
 			expect(product?.publisher).toBeUndefined();
+			expect(product?.contributors).toBeUndefined();
 		});
 
 		it('should verify new Resources are included in request', async () => {

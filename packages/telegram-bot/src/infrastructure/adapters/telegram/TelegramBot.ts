@@ -4,10 +4,9 @@ import { UserRepository } from '../../../application/ports/UserRepository';
 import { ActionRepository } from '../../../application/ports/ActionRepository';
 import { ProductRepository } from '../../../application/ports/ProductRepository';
 import { ProductUserRepository } from '../../../application/ports/ProductUserRepository';
-import { createTelegramUser } from '@gibipromo/shared';
+import { UserFactory } from '@gibipromo/shared';
 import { createAddProductAction } from '@gibipromo/shared';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../../../.env') });
 
@@ -53,13 +52,6 @@ export class TelegramBot {
 	}
 
 	/**
-	* Gera um ID único para o usuário
-	*/
-	private generateUserId(): string {
-		return uuidv4();
-	}
-
-	/**
 	* Inicia o bot
 	*/
 	public start(): void {
@@ -88,14 +80,13 @@ export class TelegramBot {
 				return;
 			}
 
-			// Cria novo usuário com telegram_id e ID único
-			const user = createTelegramUser({
-				id: this.generateUserId(), // Gera UUID único
-				telegram_id: telegramId,
-				name: first_name || '',
-				username: username || '',
-				language: language_code || 'pt'
-			});
+			// Cria novo usuário usando UserFactory (UUID v4)
+			const user = UserFactory.createTelegramUser(
+				telegramId,
+				username || '',
+				first_name || '',
+				language_code || 'pt'
+			);
 
 			await this.userRepository.create(user);
 			await ctx.reply('Bem-vindo ao GibiPromo! 🎉\nAgora use /enable para ativar o monitoramento de preços e depois /help para ver os comandos disponíveis.');

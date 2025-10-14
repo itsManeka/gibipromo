@@ -10,7 +10,7 @@ import {
 	DynamoDBUserRepository,
 	DynamoDBActionConfigRepository,
 	DynamoDBProductStatsRepository
-} from '../../infrastructure/adapters/dynamodb';
+} from '@gibipromo/shared';
 import { AmazonProductAPI } from '../ports/AmazonProductAPI';
 import { TelegramNotifier } from '../../infrastructure/adapters/telegram';
 
@@ -51,6 +51,7 @@ export function createActionScheduler(
 			actionRepository,
 			productRepository,
 			productUserRepository,
+			userRepository,
 			notifier
 		)
 	];

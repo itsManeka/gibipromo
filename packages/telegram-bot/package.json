@@ -18,7 +18,7 @@
 		"aws-sdk": "^2.1480.0",
 		"croner": "^9.1.0",
 		"dotenv": "^16.3.1",
-		"paapi5-nodejs-sdk": "^1.1.0",
+		"@itsmaneka/paapi5-nodejs-sdk": "^1.2.5",
 		"telegraf": "^4.15.6",
 		"toad-scheduler": "^1.6.0"
 	},

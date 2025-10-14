@@ -1,4 +1,5 @@
 import { Entity } from './Entity';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Represents a user in the system
@@ -15,28 +16,54 @@ export interface User extends Entity {
 }
 
 /**
- * Factory function to create a new User from Telegram
+ * User factory methods
+ * Centralized user creation logic for consistency
  */
-export function createTelegramUser(params: Omit<User, 'enabled' | 'email' | 'password_hash' | 'session_id'>): User {
-	return {
-		...params,
-		enabled: false // Users start with monitoring disabled
-	};
-}
+export class UserFactory {
+	/**
+	 * Generate a unique user ID
+	 * Uses UUID v4 for consistency across bot and web
+	 */
+	static generateId(): string {
+		return uuidv4();
+	}
 
-/**
- * Factory function to create a new User from website
- */
-export function createWebsiteUser(params: {
-	id: string;
-	username: string;
-	name: string;
-	language: string;
-	email: string;
-	password_hash: string;
-}): User {
-	return {
-		...params,
-		enabled: false // Users start with monitoring disabled
-	};
+	/**
+	 * Create a new Telegram user
+	 */
+	static createTelegramUser(
+		telegramId: string,
+		username?: string,
+		name?: string,
+		language: string = 'en'
+	): User {
+		return {
+			id: this.generateId(),
+			email: '', // Telegram users don't have email initially
+			telegram_id: telegramId,
+			username: username || '',
+			name: name || '',
+			language,
+			enabled: false // Users start with monitoring disabled
+		};
+	}
+
+	/**
+	 * Create a new website user
+	 */
+	static createWebsiteUser(
+		email: string,
+		passwordHash: string,
+		username?: string
+	): User {
+		return {
+			id: this.generateId(),
+			email,
+			password_hash: passwordHash,
+			username: username || '',
+			name: '',
+			language: 'en',
+			enabled: true // Web users start enabled
+		};
+	}
 }

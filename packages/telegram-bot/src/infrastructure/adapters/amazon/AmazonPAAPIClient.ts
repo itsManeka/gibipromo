@@ -1,4 +1,4 @@
-import { ApiClient, DefaultApi, GetItemsRequest, GetItemsResponse } from 'paapi5-nodejs-sdk';
+import { ApiClient, DefaultApi, GetItemsRequest, GetItemsResponse } from '@itsmaneka/paapi5-nodejs-sdk';
 import dotenv from 'dotenv';
 import { AmazonProduct, AmazonProductAPI } from '../../../application/ports/AmazonProductAPI';
 import path from 'path';
@@ -55,10 +55,8 @@ export class AmazonPAAPIClient implements AmazonProductAPI {
 				'ItemInfo.Classifications',
 				'ItemInfo.ByLineInfo',
 				'BrowseNodeInfo.BrowseNodes',
-				'Offers.Listings.MerchantInfo',
-				'Offers.Listings.Availability.Type',
-				'Offers.Listings.Price',
-				'Offers.Listings.SavingBasis'
+				'OffersV2.Listings.MerchantInfo',
+				'OffersV2.Listings.Price',
 			];
 			request.PartnerTag = this.partnerTag;
 			request.PartnerType = 'Associates';
@@ -67,7 +65,7 @@ export class AmazonPAAPIClient implements AmazonProductAPI {
 
 			// Forçar uso de callback puro sem promises para evitar chamada dupla
 			const response: GetItemsResponse = await new Promise((resolve, reject) => {
-				// @ts-expect-error - O SDK declara incorretamente o tipo do callback - https://github.com/amzn/paapi5-nodejs-sdk/issues/24
+				// O SDK declara incorretamente o tipo do callback - https://github.com/amzn/paapi5-nodejs-sdk/issues/24
 				this.client.getItems(request, function callback(error, data) {
 					if (error) {
 						console.error('Erro na chamada da Amazon PA-API:', error);
@@ -77,13 +75,13 @@ export class AmazonPAAPIClient implements AmazonProductAPI {
 
 					if (!data) {
 						console.error('Resposta vazia da Amazon PA-API');
-						resolve(new GetItemsResponse());
+						resolve({} as GetItemsResponse);
 						return;
 					}
 
 					try {
-						const response = GetItemsResponse.constructFromObject(data);
-						resolve(response);
+						// GetItemsResponse is only a type, so use the raw data object directly
+						resolve(data as GetItemsResponse);
 					} catch (error) {
 						console.error('Erro ao construir resposta da Amazon PA-API:', error);
 						console.error('Dados recebidos:', data);
@@ -105,19 +103,20 @@ export class AmazonPAAPIClient implements AmazonProductAPI {
 			}
 
 			for (const item of response.ItemsResult.Items) {
-				const listing = item.Offers?.Listings?.[0];
+				const listing = item.OffersV2?.Listings?.[0];
 				if (!listing) continue;
 
 				const title = item.ItemInfo?.Title?.DisplayValue || '';
 				const price = listing.Price;
-				const savingBasis = listing.SavingBasis;
 
-				const currentPrice = Number(price?.Amount) || 0;
+				const savingBasis = listing.Price?.SavingBasis;
+
+				const currentPrice = Number(price?.Money?.Amount) || 0;
 				const fullPrice = Number(savingBasis?.Amount) || currentPrice;
 
 				const offerId = listing.MerchantInfo?.Id || '';
-				const inStock = offerId !== '';
-				const isPreOrder = listing.Availability?.Type === 'Preorderable';
+				const inStock = offerId !== '' && listing.Availability?.Type !== 'OUT_OF_STOCK';
+				const isPreOrder = listing.Availability?.Type === 'PREORDER';
 
 				// Extract new fields
 				const category = this.extractCategory(item);
@@ -126,6 +125,10 @@ export class AmazonPAAPIClient implements AmazonProductAPI {
 				const publisher = item.ItemInfo?.ByLineInfo?.Brand?.DisplayValue || 
 					item.ItemInfo?.ByLineInfo?.Manufacturer?.DisplayValue || undefined;
 
+				// Extract contributor names to string array
+				const contributors = (item.ItemInfo?.ByLineInfo?.Contributors?.map(contributor => contributor.Name).filter((name): name is string => typeof name === 'string') || []);
+
+				// Create product object
 				const product: AmazonProduct = {
 					offerId,
 					title,
@@ -139,6 +142,7 @@ export class AmazonPAAPIClient implements AmazonProductAPI {
 					format,
 					genre,
 					publisher,
+					contributors
 				};
 
 				result.set(item.ASIN!, product);

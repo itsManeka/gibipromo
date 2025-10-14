@@ -2,6 +2,7 @@ import { NotifyPriceActionProcessor } from '../../../../src/application/usecases
 import { ActionRepository } from '../../../../src/application/ports/ActionRepository';
 import { ProductRepository } from '../../../../src/application/ports/ProductRepository';
 import { ProductUserRepository } from '../../../../src/application/ports/ProductUserRepository';
+import { UserRepository } from '../../../../src/application/ports/UserRepository';
 import { TelegramNotifier } from '../../../../src/infrastructure/adapters/telegram';
 import { ActionType, NotifyPriceAction } from '@gibipromo/shared/dist/entities/Action';
 import { Product } from '@gibipromo/shared/dist/entities/Product';
@@ -11,6 +12,7 @@ import { createProduct } from '../../../test-helpers/factories';
 jest.mock('../../../../src/application/ports/ActionRepository');
 jest.mock('../../../../src/application/ports/ProductRepository');
 jest.mock('../../../../src/application/ports/ProductUserRepository');
+jest.mock('../../../../src/application/ports/UserRepository');
 jest.mock('../../../../src/infrastructure/adapters/telegram');
 
 describe('NotifyPriceActionProcessor', () => {
@@ -18,6 +20,7 @@ describe('NotifyPriceActionProcessor', () => {
 	let mockActionRepo: jest.Mocked<ActionRepository>;
 	let mockProductRepo: jest.Mocked<ProductRepository>;
 	let mockProductUserRepo: jest.Mocked<ProductUserRepository>;
+	let mockUserRepo: jest.Mocked<UserRepository>;
 	let mockNotifier: jest.Mocked<TelegramNotifier>;
 
 	const mockNotifyAction: NotifyPriceAction = {
@@ -85,6 +88,18 @@ describe('NotifyPriceActionProcessor', () => {
 			removeByProductAndUser: jest.fn()
 		};
 
+		mockUserRepo = {
+			create: jest.fn(),
+			update: jest.fn(),
+			delete: jest.fn(),
+			findById: jest.fn(),
+			findByUsername: jest.fn(),
+			findByTelegramId: jest.fn(),
+			findByEmail: jest.fn(),
+			setEnabled: jest.fn(),
+			updateSessionId: jest.fn()
+		};
+
 		mockNotifier = {
 			notifyPriceChange: jest.fn()
 		} as any;
@@ -93,6 +108,7 @@ describe('NotifyPriceActionProcessor', () => {
 			mockActionRepo,
 			mockProductRepo,
 			mockProductUserRepo,
+			mockUserRepo,
 			mockNotifier
 		);
 
@@ -105,6 +121,30 @@ describe('NotifyPriceActionProcessor', () => {
 			// Arrange
 			mockProductRepo.findById.mockResolvedValue(mockProduct);
 			mockProductUserRepo.findByProductId.mockResolvedValue(mockProductUsers);
+			
+			// Mock users with telegram_id
+			const mockUser1 = { 
+				id: 'user1', 
+				telegram_id: '123456789', 
+				username: 'testuser1',
+				name: 'Test User 1',
+				language: 'pt-BR',
+				enabled: true 
+			};
+			const mockUser2 = { 
+				id: 'user2', 
+				telegram_id: '987654321', 
+				username: 'testuser2',
+				name: 'Test User 2',
+				language: 'pt-BR',
+				enabled: true 
+			};
+			mockUserRepo.findById.mockImplementation((userId: string) => {
+				if (userId === 'user1') return Promise.resolve(mockUser1);
+				if (userId === 'user2') return Promise.resolve(mockUser2);
+				return Promise.resolve(null);
+			});
+			
 			mockNotifier.notifyPriceChange.mockResolvedValue();
 
 			// Act
@@ -113,15 +153,17 @@ describe('NotifyPriceActionProcessor', () => {
 			// Assert
 			expect(mockProductRepo.findById).toHaveBeenCalledWith('B01234567');
 			expect(mockProductUserRepo.findByProductId).toHaveBeenCalledWith('B01234567');
+			expect(mockUserRepo.findById).toHaveBeenCalledWith('user1');
+			expect(mockUserRepo.findById).toHaveBeenCalledWith('user2');
 			expect(mockNotifier.notifyPriceChange).toHaveBeenCalledTimes(2);
 			expect(mockNotifier.notifyPriceChange).toHaveBeenCalledWith(
-				'user1',
+				'123456789',
 				mockProduct,
 				100,
 				80
 			);
 			expect(mockNotifier.notifyPriceChange).toHaveBeenCalledWith(
-				'user2',
+				'987654321',
 				mockProduct,
 				100,
 				80
@@ -178,6 +220,30 @@ describe('NotifyPriceActionProcessor', () => {
 			// Arrange
 			mockProductRepo.findById.mockResolvedValue(mockProduct);
 			mockProductUserRepo.findByProductId.mockResolvedValue(mockProductUsers);
+			
+			// Mock users with telegram_id
+			const mockUser1 = { 
+				id: 'user1', 
+				telegram_id: '123456789', 
+				username: 'testuser1',
+				name: 'Test User 1',
+				language: 'pt-BR',
+				enabled: true 
+			};
+			const mockUser2 = { 
+				id: 'user2', 
+				telegram_id: '987654321', 
+				username: 'testuser2',
+				name: 'Test User 2',
+				language: 'pt-BR',
+				enabled: true 
+			};
+			mockUserRepo.findById.mockImplementation((userId: string) => {
+				if (userId === 'user1') return Promise.resolve(mockUser1);
+				if (userId === 'user2') return Promise.resolve(mockUser2);
+				return Promise.resolve(null);
+			});
+			
 			mockNotifier.notifyPriceChange.mockRejectedValue(new Error('Network error'));
 
 			// Act
@@ -186,6 +252,7 @@ describe('NotifyPriceActionProcessor', () => {
 			// Assert
 			expect(mockProductRepo.findById).toHaveBeenCalledWith('B01234567');
 			expect(mockProductUserRepo.findByProductId).toHaveBeenCalledWith('B01234567');
+			expect(mockUserRepo.findById).toHaveBeenCalled();
 			expect(mockNotifier.notifyPriceChange).toHaveBeenCalled();
 			expect(mockActionRepo.markProcessed).not.toHaveBeenCalled();
 		});
@@ -214,6 +281,30 @@ describe('NotifyPriceActionProcessor', () => {
 			mockActionRepo.findPendingByType.mockResolvedValue(actions);
 			mockProductRepo.findById.mockResolvedValue(mockProduct);
 			mockProductUserRepo.findByProductId.mockResolvedValue(mockProductUsers);
+			
+			// Mock users with telegram_id
+			const mockUser1 = { 
+				id: 'user1', 
+				telegram_id: '123456789', 
+				username: 'testuser1',
+				name: 'Test User 1',
+				language: 'pt-BR',
+				enabled: true 
+			};
+			const mockUser2 = { 
+				id: 'user2', 
+				telegram_id: '987654321', 
+				username: 'testuser2',
+				name: 'Test User 2',
+				language: 'pt-BR',
+				enabled: true 
+			};
+			mockUserRepo.findById.mockImplementation((userId: string) => {
+				if (userId === 'user1') return Promise.resolve(mockUser1);
+				if (userId === 'user2') return Promise.resolve(mockUser2);
+				return Promise.resolve(null);
+			});
+			
 			mockNotifier.notifyPriceChange.mockResolvedValue();
 
 			// Act

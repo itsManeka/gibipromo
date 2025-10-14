@@ -17,6 +17,22 @@ export * from './entities/UserProfile';
 // Re-exporta utilitários
 export * from './utils/Logger';
 
+// Re-exporta interfaces de repositórios
+export * from './repositories/Repository';
+export * from './repositories/ActionRepository';
+export * from './repositories/ActionConfigRepository';
+export * from './repositories/ProductRepository';
+export * from './repositories/ProductStatsRepository';
+export * from './repositories/ProductUserRepository';
+export * from './repositories/SessionRepository';
+export * from './repositories/UserRepository';
+export * from './repositories/UserPreferencesRepository';
+export * from './repositories/UserProfileRepository';
+
+// Re-exporta implementações DynamoDB
+export * from './infrastructure/dynamodb';
+export * from './infrastructure/config/dynamodb';
+
 // Tipos específicos da API
 export interface ApiResponse<T> {
 	success: boolean;
@@ -73,7 +89,6 @@ export const ACTION_TYPES = {
 	ADD_PRODUCT: 'ADD_PRODUCT',
 	CHECK_PRODUCT: 'CHECK_PRODUCT',
 	NOTIFY_PRICE: 'NOTIFY_PRICE',
-	TELEGRAM_LINKED: 'TELEGRAM_LINKED'
 } as const;
 
 export type ActionType = typeof ACTION_TYPES[keyof typeof ACTION_TYPES];

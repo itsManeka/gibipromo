@@ -3,8 +3,10 @@ import { ActionType, NotifyPriceAction } from '@gibipromo/shared/dist/entities/A
 import { ActionRepository } from '../../ports/ActionRepository';
 import { ProductRepository } from '../../ports/ProductRepository';
 import { ProductUserRepository } from '../../ports/ProductUserRepository';
+import { UserRepository } from '../../ports/UserRepository';
 import { TelegramNotifier } from '../../../infrastructure/adapters/telegram';
 import { shouldNotifyForPrice } from '@gibipromo/shared/dist/entities/ProductUser';
+import { User } from '@gibipromo/shared';
 
 /**
  * Processador de ações de notificação de preço
@@ -16,6 +18,7 @@ export class NotifyPriceActionProcessor implements ActionProcessor<NotifyPriceAc
 		private readonly actionRepository: ActionRepository,
 		private readonly productRepository: ProductRepository,
 		private readonly productUserRepository: ProductUserRepository,
+		private readonly userRepository: UserRepository,
 		private readonly notifier: TelegramNotifier
 	) { }
 
@@ -52,18 +55,42 @@ export class NotifyPriceActionProcessor implements ActionProcessor<NotifyPriceAc
 				return;
 			}
 
-			// Notifica todos os usuários filtrados
+			// Busca os dados completos dos usuários para obter telegram_id
+			const userPromises = usersToNotify.map(productUser =>
+				this.userRepository.findById(productUser.user_id)
+			);
+			const users = await Promise.all(userPromises);
+
+			// Filtra apenas usuários que têm telegram_id (usuários do Telegram)
+			const telegramUsers = users.filter((user: User | null, index: number) => {
+				if (!user) {
+					console.warn(`Usuário não encontrado: ${usersToNotify[index].user_id}`);
+					return false;
+				}
+				if (!user.telegram_id) {
+					console.log(`Usuário ${user.id} não tem telegram_id, pulando notificação`);
+					return false;
+				}
+				return true;
+			}) as User[]; // Safe cast porque já filtramos nulls e users sem telegram_id
+
+			if (telegramUsers.length === 0) {
+				console.log(`Nenhum usuário do Telegram deve ser notificado para o produto ${product.id}`);
+				await this.actionRepository.markProcessed(action.id);
+				return;
+			}
+
+			// Notifica todos os usuários do Telegram
 			await Promise.all(
-				usersToNotify.map((productUser) =>
+				telegramUsers.map((user: User) =>
 					this.notifier.notifyPriceChange(
-						productUser.user_id,
+						user.telegram_id!,
 						product,
 						oldPrice,
 						currentPrice
 					)
 				)
 			);
-
 			await this.actionRepository.markProcessed(action.id);
 		} catch (error) {
 			console.error('Erro ao processar ação de notificação:', error);

@@ -1,4 +1,4 @@
-import { DynamoDBProductRepository } from '../../../../src/infrastructure/adapters/dynamodb/DynamoDBProductRepository';
+import { DynamoDBProductRepository } from '@gibipromo/shared';
 import { MockAmazonPAAPIClient } from '../../../../src/infrastructure/adapters/amazon/MockAmazonPAAPIClient';
 import { User } from '@gibipromo/shared/dist/entities/User';
 import { Product } from '@gibipromo/shared/dist/entities/Product';

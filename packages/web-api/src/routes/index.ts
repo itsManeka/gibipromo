@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { healthRouter } from './health';
 import authRouter from './auth';
+import productsRouter from './products';
 
 /**
  * Main router for the GibiPromo Web API
@@ -14,8 +15,10 @@ router.use('/health', healthRouter);
 // Authentication endpoints
 router.use('/auth', authRouter);
 
+// Products endpoints
+router.use('/products', productsRouter);
+
 // Future routes will be added here:
-// router.use('/products', productRouter);
 // router.use('/users', userRouter);
 // router.use('/stats', statsRouter);
 

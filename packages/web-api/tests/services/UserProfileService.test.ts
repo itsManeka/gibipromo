@@ -48,10 +48,13 @@ class MockUserProfileRepository implements UserProfileRepository {
 
 // Helper para criar perfis de teste
 function createTestUserProfile(overrides: Partial<UserProfile> = {}): UserProfile {
+	const now = new Date().toISOString();
 	return {
 		id: `profile-${Date.now()}-${Math.random()}`,
 		user_id: 'user-123',
 		nick: 'TestUser',
+		created_at: now,
+		updated_at: now,
 		...overrides
 	};
 }

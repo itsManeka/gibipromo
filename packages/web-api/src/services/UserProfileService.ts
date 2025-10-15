@@ -75,7 +75,8 @@ export class UserProfileService extends BaseService {
 			// Atualizar perfil
 			const updatedProfile: UserProfile = {
 				...existingProfile,
-				nick: data.nick.trim()
+				nick: data.nick.trim(),
+				updated_at: new Date().toISOString()
 			};
 
 			const result = await this.userProfileRepository.update(updatedProfile);

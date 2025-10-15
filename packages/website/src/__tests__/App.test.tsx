@@ -19,6 +19,12 @@ jest.mock('../contexts/ThemeContext', () => ({
 	)
 }))
 
+jest.mock('../contexts/AuthContext', () => ({
+	AuthProvider: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="auth-provider">{children}</div>
+	)
+}))
+
 describe('App', () => {
 	it('deve renderizar sem erros', () => {
 		render(<App />)

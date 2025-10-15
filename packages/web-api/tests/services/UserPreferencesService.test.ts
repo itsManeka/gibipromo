@@ -23,11 +23,14 @@ describe('UserPreferencesService', () => {
 
 	// Helper para criar preferências de teste
 	function createTestPreferences(overrides: Partial<UserPreferences> = {}): UserPreferences {
+		const now = new Date().toISOString();
 		return {
 			id: `pref-${Date.now()}`,
 			user_id: 'user-123',
 			monitor_preorders: true,
 			monitor_coupons: true,
+			created_at: now,
+			updated_at: now,
 			...overrides
 		};
 	}
@@ -134,10 +137,13 @@ describe('UserPreferencesService', () => {
 			// Assert
 			expect(result).toEqual(updatedPreferences);
 			expect(mockRepository.findByUserId).toHaveBeenCalledWith(userId);
-			expect(mockRepository.update).toHaveBeenCalledWith({
-				...existingPreferences,
-				...updateData
-			});
+			expect(mockRepository.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					...existingPreferences,
+					...updateData,
+					updated_at: expect.any(String)
+				})
+			);
 		});
 
 		it('should return null when preferences not found', async () => {

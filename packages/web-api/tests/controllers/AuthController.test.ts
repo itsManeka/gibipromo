@@ -89,10 +89,11 @@ describe('AuthController', () => {
 			user: {
 				id: 'user-123',
 				email: 'test@example.com',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			}
 		};
-
 		it('should register a new user successfully', async () => {
 			mockAuthService.register.mockResolvedValue(mockAuthResponse);
 
@@ -191,10 +192,11 @@ describe('AuthController', () => {
 			user: {
 				id: 'user-123',
 				email: 'test@example.com',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			}
 		};
-
 		it('should login user successfully', async () => {
 			mockAuthService.login.mockResolvedValue(mockAuthResponse);
 
@@ -314,9 +316,11 @@ describe('AuthController', () => {
 			username: '',
 			name: '',
 			language: 'en',
-			enabled: true
+			enabled: true,
+			created_at: new Date().toISOString(),
+			updated_at: new Date().toISOString()
 		};
-
+		
 		it('should validate token successfully', async () => {
 			mockAuthService.validateToken.mockResolvedValue(mockUser);
 

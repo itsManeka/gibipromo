@@ -10,6 +10,8 @@ export const createTestUser = (overrides?: Partial<User>): User => ({
 	name: 'Test User',
 	enabled: true,
 	language: 'pt-BR',
+	created_at: new Date().toISOString(),
+	updated_at: new Date().toISOString(),
 	...overrides
 });
 

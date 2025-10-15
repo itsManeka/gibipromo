@@ -33,6 +33,8 @@ export interface AuthResponse {
 		id: string;
 		email: string;
 		enabled: boolean;
+		created_at: string;
+		updated_at: string;
 	};
 }
 
@@ -271,7 +273,9 @@ export class AuthService extends BaseService {
 			user: {
 				id: user.id,
 				email: user.email!,
-				enabled: user.enabled
+				enabled: user.enabled,
+				created_at: user.created_at,
+				updated_at: user.updated_at
 			}
 		};
 	}

@@ -15,6 +15,8 @@ export interface User extends Entity {
 	email?: string; // Email for website authentication
 	password_hash?: string; // Password hash for website authentication
 	session_id?: string; // Current active session ID
+	created_at: string; // ISO 8601 timestamp
+	updated_at: string; // ISO 8601 timestamp
 }
 
 /**
@@ -36,9 +38,7 @@ export class UserFactory {
 	static createDefaultPreferences(userId: string): UserPreferences {
 		return createUserPreferences({
 			id: this.generateId(),
-			user_id: userId,
-			monitor_preorders: false,
-			monitor_coupons: false
+			user_id: userId
 		});
 	}
 
@@ -62,14 +62,17 @@ export class UserFactory {
 		name?: string,
 		language: string = 'en'
 	): User {
+		const now = new Date().toISOString();
 		return {
 			id: this.generateId(),
-			email: '', // Telegram users don't have email initially
+			// email is omitted (undefined) for Telegram users - DynamoDB GSI doesn't allow empty strings
 			telegram_id: telegramId,
 			username: username || '',
 			name: name || '',
 			language,
-			enabled: false // Users start with monitoring disabled
+			enabled: false, // Users start with monitoring disabled
+			created_at: now,
+			updated_at: now
 		};
 	}
 
@@ -81,6 +84,7 @@ export class UserFactory {
 		passwordHash: string,
 		username?: string
 	): User {
+		const now = new Date().toISOString();
 		return {
 			id: this.generateId(),
 			email,
@@ -88,7 +92,9 @@ export class UserFactory {
 			username: username || '',
 			name: '',
 			language: 'en',
-			enabled: true // Web users start enabled
+			enabled: true, // Web users start enabled
+			created_at: now,
+			updated_at: now
 		};
 	}
 }

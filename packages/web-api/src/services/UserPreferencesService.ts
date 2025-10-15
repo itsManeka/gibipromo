@@ -75,7 +75,8 @@ export class UserPreferencesService extends BaseService {
 			// Atualizar apenas os campos fornecidos
 			const updatedPreferences: UserPreferences = {
 				...existingPreferences,
-				...data
+				...data,
+				updated_at: new Date().toISOString()
 			};
 
 			// Salvar no repositório

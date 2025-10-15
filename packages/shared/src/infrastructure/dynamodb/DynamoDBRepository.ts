@@ -11,10 +11,25 @@ export abstract class DynamoDBRepository<T extends Entity> implements Repository
 		protected readonly tableName: string
 	) { }
 
+	/**
+	 * Remove empty string values from entity to prevent DynamoDB GSI errors
+	 * DynamoDB GSI doesn't allow empty strings in indexed attributes
+	 */
+	protected sanitizeEntity(entity: T): T {
+		const sanitized = { ...entity };
+		Object.keys(sanitized).forEach(key => {
+			if (sanitized[key as keyof T] === '') {
+				delete sanitized[key as keyof T];
+			}
+		});
+		return sanitized;
+	}
+
 	async create(entity: T): Promise<T> {
+		const sanitizedEntity = this.sanitizeEntity(entity);
 		const params: DocumentClient.PutItemInput = {
 			TableName: this.tableName,
-			Item: entity
+			Item: sanitizedEntity
 		};
 
 		await documentClient.put(params).promise();
@@ -32,9 +47,10 @@ export abstract class DynamoDBRepository<T extends Entity> implements Repository
 	}
 
 	async update(entity: T): Promise<T> {
+		const sanitizedEntity = this.sanitizeEntity(entity);
 		const params: DocumentClient.PutItemInput = {
 			TableName: this.tableName,
-			Item: entity
+			Item: sanitizedEntity
 		};
 
 		await documentClient.put(params).promise();

@@ -165,7 +165,9 @@ describe('AuthService', () => {
 			expect(mockUserPreferencesRepository.create).toHaveBeenCalledWith(expect.objectContaining({
 				user_id: 'user-uuid-123',
 				monitor_preorders: true,
-				monitor_coupons: true
+				monitor_coupons: true,
+				created_at: expect.any(String),
+				updated_at: expect.any(String)
 			}));
 		});
 

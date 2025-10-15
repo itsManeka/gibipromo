@@ -59,9 +59,11 @@ describe('Auth Middleware', () => {
 			enabled: true,
 			username: '',
 			name: '',
-			language: 'en'
+			language: 'en',
+			created_at: new Date().toISOString(),
+			updated_at: new Date().toISOString()
 		};
-
+		
 		it('should authenticate valid Bearer token', async () => {
 			mockRequest.headers = {
 				authorization: 'Bearer valid-token'
@@ -242,7 +244,9 @@ describe('Auth Middleware', () => {
 			enabled: true,
 			username: '',
 			name: '',
-			language: 'en'
+			language: 'en',
+			created_at: new Date().toISOString(),
+			updated_at: new Date().toISOString()
 		};
 
 		it('should authenticate valid Bearer token', async () => {

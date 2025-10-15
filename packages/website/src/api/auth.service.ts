@@ -23,6 +23,8 @@ export interface AuthResponse {
 		id: string;
 		email: string;
 		enabled: boolean;
+		created_at: string;
+		updated_at: string;
 	};
 }
 

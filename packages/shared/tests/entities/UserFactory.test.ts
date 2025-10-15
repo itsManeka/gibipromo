@@ -4,7 +4,7 @@ describe('UserFactory', () => {
 	describe('generateId', () => {
 		it('should generate a valid UUID v4', () => {
 			const id = UserFactory.generateId();
-			
+
 			// UUID v4 pattern: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
 			const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 			expect(id).toMatch(uuidV4Regex);
@@ -47,14 +47,14 @@ describe('UserFactory', () => {
 			expect(user.name).toBe('');
 			expect(user.language).toBe('en');
 			expect(user.enabled).toBe(false);
-			expect(user.email).toBe('');
+			expect(user.email).toBeUndefined();
 		});
-
+		
 		it('should create a telegram user with optional username and name', () => {
 			const telegramId = '123456789';
 			const username = 'john_doe';
 			const name = 'John Doe';
-			
+
 			const user = UserFactory.createTelegramUser(telegramId, username, name);
 
 			expect(user.telegram_id).toBe(telegramId);
@@ -65,7 +65,7 @@ describe('UserFactory', () => {
 		it('should create a telegram user with custom language', () => {
 			const telegramId = '123456789';
 			const language = 'pt-BR';
-			
+
 			const user = UserFactory.createTelegramUser(telegramId, undefined, undefined, language);
 
 			expect(user.telegram_id).toBe(telegramId);
@@ -77,7 +77,7 @@ describe('UserFactory', () => {
 			const user2 = UserFactory.createTelegramUser('456');
 
 			expect(user1.id).not.toBe(user2.id);
-			
+
 			const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 			expect(user1.id).toMatch(uuidV4Regex);
 			expect(user2.id).toMatch(uuidV4Regex);
@@ -93,7 +93,7 @@ describe('UserFactory', () => {
 		it('should create a website user with required fields', () => {
 			const email = 'test@example.com';
 			const passwordHash = 'hashed_password';
-			
+
 			const user = UserFactory.createWebsiteUser(email, passwordHash);
 
 			expect(user).toBeDefined();
@@ -110,7 +110,7 @@ describe('UserFactory', () => {
 			const email = 'test@example.com';
 			const passwordHash = 'hashed_password';
 			const username = 'web_test_123';
-			
+
 			const user = UserFactory.createWebsiteUser(email, passwordHash, username);
 
 			expect(user.email).toBe(email);
@@ -123,7 +123,7 @@ describe('UserFactory', () => {
 			const user2 = UserFactory.createWebsiteUser('user2@example.com', 'hash2');
 
 			expect(user1.id).not.toBe(user2.id);
-			
+
 			const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 			expect(user1.id).toMatch(uuidV4Regex);
 			expect(user2.id).toMatch(uuidV4Regex);
@@ -198,7 +198,7 @@ describe('UserFactory', () => {
 
 		it('should handle different nick types', () => {
 			const userId = UserFactory.generateId();
-			
+
 			const profile1 = UserFactory.createDefaultProfile(userId, 'username123');
 			const profile2 = UserFactory.createDefaultProfile(userId, 'João Silva');
 			const profile3 = UserFactory.createDefaultProfile(userId, 'web_user_xyz');

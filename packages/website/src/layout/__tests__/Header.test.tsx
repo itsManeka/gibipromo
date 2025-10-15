@@ -13,6 +13,8 @@ jest.mock('lucide-react', () => ({
 	User: () => <div data-testid="user-icon" />,
 	Home: () => <div data-testid="home-icon" />,
 	Tag: () => <div data-testid="tag-icon" />,
+	LogOut: () => <div data-testid="logout-icon" />,
+	ChevronDown: () => <div data-testid="chevron-down-icon" />,
 }))
 
 const HeaderWithProviders = () => (

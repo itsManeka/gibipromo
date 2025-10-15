@@ -236,7 +236,300 @@ npm test -- --maxWorkers=1
 NODE_ENV=development npm test
 ```
 
-## 📚 Recursos Adicionais
+## � API Endpoints
+
+### Authentication
+
+#### POST `/api/v1/auth/register`
+Criar nova conta de usuário.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "securePassword123",
+}
+```
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "message": "User registered successfully",
+  "data": {
+    "userId": "uuid-v4",
+    "token": "jwt-token"
+  }
+}
+```
+
+#### POST `/api/v1/auth/login`
+Autenticar usuário e obter token JWT.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "securePassword123"
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "token": "jwt-token",
+    "userId": "uuid-v4"
+  }
+}
+```
+
+### User Profile (Protected)
+
+#### GET `/api/v1/users/profile`
+Obter perfil do usuário autenticado.
+
+**Headers:**
+```
+Authorization: Bearer <jwt-token>
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Profile retrieved successfully",
+  "data": {
+    "id": "profile-uuid",
+    "user_id": "user-uuid",
+    "nick": "MyNickname",
+    "created_at": "2025-10-15T19:59:30.842Z",
+    "updated_at": "2025-10-15T19:59:30.842Z"
+  }
+}
+```
+
+#### PUT `/api/v1/users/profile`
+Atualizar perfil do usuário autenticado.
+
+**Headers:**
+```
+Authorization: Bearer <jwt-token>
+```
+
+**Request Body:**
+```json
+{
+  "nick": "NewNickname"
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Profile updated successfully",
+  "data": {
+    "id": "profile-uuid",
+    "user_id": "user-uuid",
+    "nick": "NewNickname",
+    "created_at": "2025-10-15T19:59:30.842Z",
+    "updated_at": "2025-10-15T20:15:45.123Z"
+  }
+}
+```
+
+### User Preferences (Protected)
+
+#### GET `/api/v1/users/preferences`
+Obter preferências do usuário autenticado.
+
+**Headers:**
+```
+Authorization: Bearer <jwt-token>
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Preferences retrieved successfully",
+  "data": {
+    "id": "preferences-uuid",
+    "user_id": "user-uuid",
+    "monitor_preorders": true,
+    "monitor_coupons": true,
+    "created_at": "2025-10-15T19:59:30.842Z",
+    "updated_at": "2025-10-15T19:59:30.842Z"
+  }
+}
+```
+
+#### PUT `/api/v1/users/preferences`
+Atualizar preferências do usuário autenticado.
+
+**Headers:**
+```
+Authorization: Bearer <jwt-token>
+```
+
+**Request Body:**
+```json
+{
+  "monitor_preorders": false,
+  "monitor_coupons": true
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Preferences updated successfully",
+  "data": {
+    "id": "preferences-uuid",
+    "user_id": "user-uuid",
+    "monitor_preorders": false,
+    "monitor_coupons": true,
+    "created_at": "2025-10-15T19:59:30.842Z",
+    "updated_at": "2025-10-15T20:15:45.123Z"
+  }
+}
+```
+
+### Products (Protected)
+
+#### GET `/api/v1/products`
+Listar produtos monitorados pelo usuário autenticado.
+
+**Headers:**
+```
+Authorization: Bearer <jwt-token>
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Products retrieved successfully",
+  "data": [
+    {
+      "id": "ASIN123",
+      "title": "Product Title",
+      "price": 29.99,
+      "old_price": 39.99,
+      "url": "https://amazon.com/...",
+      "image": "https://...",
+      "in_stock": true,
+      "preorder": false,
+      "created_at": "2025-10-15T19:59:30.842Z",
+      "updated_at": "2025-10-15T19:59:30.842Z"
+    }
+  ]
+}
+```
+
+#### POST `/api/v1/products`
+Adicionar novo produto para monitoramento.
+
+**Headers:**
+```
+Authorization: Bearer <jwt-token>
+```
+
+**Request Body:**
+```json
+{
+  "url": "https://amazon.com/dp/ASIN123"
+}
+```
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "message": "Product added successfully",
+  "data": {
+    "productId": "ASIN123",
+    "userId": "user-uuid"
+  }
+}
+```
+
+### Health Check
+
+#### GET `/api/v1/health`
+Verificar status básico da API.
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "API is healthy",
+  "data": {
+    "status": "ok",
+    "timestamp": "2025-10-15T20:00:00.000Z"
+  }
+}
+```
+
+#### GET `/api/v1/health/detailed`
+Verificar status detalhado incluindo DynamoDB.
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Detailed health check",
+  "data": {
+    "status": "ok",
+    "timestamp": "2025-10-15T20:00:00.000Z",
+    "database": {
+      "dynamodb": "connected"
+    }
+  }
+}
+```
+
+### Error Responses
+
+Todas as rotas podem retornar os seguintes erros:
+
+**400 Bad Request:**
+```json
+{
+  "success": false,
+  "error": "Validation error message"
+}
+```
+
+**401 Unauthorized:**
+```json
+{
+  "success": false,
+  "error": "Authentication required"
+}
+```
+
+**404 Not Found:**
+```json
+{
+  "success": false,
+  "error": "Resource not found"
+}
+```
+
+**500 Internal Server Error:**
+```json
+{
+  "success": false,
+  "error": "Internal server error"
+}
+```
+
+## �📚 Recursos Adicionais
 
 - [AWS SDK DynamoDB Documentation](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/dynamodb-examples.html)
 - [DynamoDB Local Guide](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html)

@@ -19,11 +19,14 @@ jest.mock('@gibipromo/shared', () => ({
 
 // Helper para criar preferências de teste
 function createTestUserPreferences(overrides: Partial<UserPreferences> = {}): UserPreferences {
+	const now = new Date().toISOString();
 	return {
 		id: `pref-${Date.now()}`,
 		user_id: 'user-123',
 		monitor_preorders: true,
 		monitor_coupons: true,
+		created_at: now,
+		updated_at: now,
 		...overrides
 	};
 }
@@ -163,6 +166,8 @@ describe('UserPreferencesController', () => {
 			expect(response.body.data).toHaveProperty('user_id');
 			expect(response.body.data).toHaveProperty('monitor_preorders');
 			expect(response.body.data).toHaveProperty('monitor_coupons');
+			expect(response.body.data).toHaveProperty('created_at');
+			expect(response.body.data).toHaveProperty('updated_at');
 		});
 	});
 

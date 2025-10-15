@@ -8,6 +8,7 @@ jest.mock('lucide-react', () => ({
 	ArrowRight: () => <div data-testid="arrow-right-icon" />,
 	TrendingDown: () => <div data-testid="trending-down-icon" />,
 	Bell: () => <div data-testid="bell-icon" />,
+	User: () => <div data-testid="user-icon" />,
 	Star: () => <div data-testid="star-icon" />,
 	BookOpen: () => <div data-testid="book-icon" />,
 	Sparkles: () => <div data-testid="sparkles-icon" />,

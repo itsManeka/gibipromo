@@ -19,10 +19,13 @@ jest.mock('@gibipromo/shared', () => ({
 
 // Helper para criar perfis de teste
 function createTestUserProfile(overrides: Partial<UserProfile> = {}): UserProfile {
+	const now = new Date().toISOString();
 	return {
 		id: `profile-${Date.now()}`,
 		user_id: 'user-123',
 		nick: 'TestUser',
+		created_at: now,
+		updated_at: now,
 		...overrides
 	};
 }
@@ -210,6 +213,8 @@ describe('UserProfileController', () => {
 			expect(response.body.data).toHaveProperty('id');
 			expect(response.body.data).toHaveProperty('user_id');
 			expect(response.body.data).toHaveProperty('nick');
+			expect(response.body.data).toHaveProperty('created_at');
+			expect(response.body.data).toHaveProperty('updated_at');
 		});
 	});
 

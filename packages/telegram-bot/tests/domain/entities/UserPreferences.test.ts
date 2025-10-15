@@ -12,8 +12,8 @@ describe('UserPreferences Entity', () => {
 		expect(preferences).toEqual({
 			id: 'pref-123',
 			user_id: 'user-456',
-			monitor_preorders: true,
-			monitor_coupons: true
+			monitor_preorders: false,
+			monitor_coupons: false
 		});
 	});
 

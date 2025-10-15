@@ -57,6 +57,8 @@ export interface LoginData {
  */
 export class AuthService extends BaseService {
 	private readonly userRepository = createRepository('users');
+	private readonly userPreferencesRepository = createRepository('userPreferences');
+	private readonly userProfileRepository = createRepository('userProfile');
 	private readonly jwtSecret: string;
 	private readonly jwtExpiresIn: string;
 	private readonly saltRounds = 10;
@@ -119,8 +121,16 @@ export class AuthService extends BaseService {
 		);
 
 		const createdUser = await this.userRepository.create(newUser);
-		logger.info(`User registered: ${createdUser.email}`);
 
+		// Cria UserPreferences com valores padrão
+		const userPreferences = UserFactory.createDefaultPreferences(createdUser.id);
+		await this.userPreferencesRepository.create(userPreferences);
+
+		// Cria UserProfile com valores padrão (usa parte do email como nick)
+		const userProfile = UserFactory.createDefaultProfile(createdUser.id, username);
+		await this.userProfileRepository.create(userProfile);
+
+		logger.info(`User registered: ${createdUser.email}`);
 		// Gera token
 		return this.generateAuthResponse(createdUser);
 	}

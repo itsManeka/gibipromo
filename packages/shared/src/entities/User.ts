@@ -1,5 +1,7 @@
 import { Entity } from './Entity';
 import { v4 as uuidv4 } from 'uuid';
+import { UserPreferences, createUserPreferences } from './UserPreferences';
+import { UserProfile, createUserProfile } from './UserProfile';
 
 /**
  * Represents a user in the system
@@ -26,6 +28,29 @@ export class UserFactory {
 	 */
 	static generateId(): string {
 		return uuidv4();
+	}
+
+	/**
+	 * Create default UserPreferences for a new user
+	 */
+	static createDefaultPreferences(userId: string): UserPreferences {
+		return createUserPreferences({
+			id: this.generateId(),
+			user_id: userId,
+			monitor_preorders: false,
+			monitor_coupons: false
+		});
+	}
+
+	/**
+	 * Create default UserProfile for a new user
+	 */
+	static createDefaultProfile(userId: string, nick: string): UserProfile {
+		return createUserProfile({
+			id: this.generateId(),
+			user_id: userId,
+			nick: nick || 'Usuario'
+		});
 	}
 
 	/**

@@ -17,6 +17,8 @@ jest.mock('../../src/infrastructure/factories/repositories');
 describe('AuthService', () => {
 	let authService: AuthService;
 	let mockUserRepository: any;
+	let mockUserPreferencesRepository: any;
+	let mockUserProfileRepository: any;
 	const JWT_SECRET = 'test-secret-key';
 
 	beforeAll(() => {
@@ -47,8 +49,29 @@ describe('AuthService', () => {
 			delete: jest.fn()
 		};
 
-		// Mock createRepository to return our mock
-		(createRepository as jest.Mock).mockReturnValue(mockUserRepository);
+		mockUserPreferencesRepository = {
+			create: jest.fn(),
+			findById: jest.fn(),
+			findByUserId: jest.fn(),
+			update: jest.fn(),
+			delete: jest.fn()
+		};
+
+		mockUserProfileRepository = {
+			create: jest.fn(),
+			findById: jest.fn(),
+			findByUserId: jest.fn(),
+			update: jest.fn(),
+			delete: jest.fn()
+		};
+
+		// Mock createRepository to return our mocks based on repository type
+		(createRepository as jest.Mock).mockImplementation((type: string) => {
+			if (type === 'users') return mockUserRepository;
+			if (type === 'userPreferences') return mockUserPreferencesRepository;
+			if (type === 'userProfile') return mockUserProfileRepository;
+			return mockUserRepository; // default
+		});
 
 		// Create service instance
 		authService = new AuthService();
@@ -62,7 +85,10 @@ describe('AuthService', () => {
 
 		it('should register a new user successfully', async () => {
 			mockUserRepository.findByEmail.mockResolvedValue(null);
-			mockUserRepository.create.mockImplementation((user: any) => Promise.resolve(user));
+			const mockUser = { id: 'user-uuid-123', email: validRegisterData.email, username: 'web_test_abc123', enabled: true };
+			mockUserRepository.create.mockResolvedValue(mockUser);
+			mockUserPreferencesRepository.create.mockImplementation((prefs: any) => Promise.resolve(prefs));
+			mockUserProfileRepository.create.mockImplementation((profile: any) => Promise.resolve(profile));
 
 			const result = await authService.register(validRegisterData);
 
@@ -71,6 +97,8 @@ describe('AuthService', () => {
 			expect(result).toHaveProperty('user');
 			expect(result.user.email).toBe(validRegisterData.email);
 			expect(mockUserRepository.create).toHaveBeenCalledTimes(1);
+			expect(mockUserPreferencesRepository.create).toHaveBeenCalledTimes(1);
+			expect(mockUserProfileRepository.create).toHaveBeenCalledTimes(1);
 		});
 
 		it('should hash password before storing', async () => {
@@ -116,11 +144,48 @@ describe('AuthService', () => {
 		it('should set enabled to true for new users', async () => {
 			mockUserRepository.findByEmail.mockResolvedValue(null);
 			mockUserRepository.create.mockImplementation((user: any) => Promise.resolve(user));
+			mockUserPreferencesRepository.create.mockImplementation((prefs: any) => Promise.resolve(prefs));
+			mockUserProfileRepository.create.mockImplementation((profile: any) => Promise.resolve(profile));
 
 			await authService.register(validRegisterData);
 
 			const createCall = mockUserRepository.create.mock.calls[0][0];
 			expect(createCall.enabled).toBe(true);
+		});
+
+		it('should create user preferences with default values', async () => {
+			mockUserRepository.findByEmail.mockResolvedValue(null);
+			const mockUser = { id: 'user-uuid-123', email: validRegisterData.email, enabled: true };
+			mockUserRepository.create.mockResolvedValue(mockUser);
+			mockUserPreferencesRepository.create.mockImplementation((prefs: any) => Promise.resolve(prefs));
+			mockUserProfileRepository.create.mockImplementation((profile: any) => Promise.resolve(profile));
+
+			await authService.register(validRegisterData);
+
+			expect(mockUserPreferencesRepository.create).toHaveBeenCalledWith(expect.objectContaining({
+				user_id: 'user-uuid-123',
+				monitor_preorders: true,
+				monitor_coupons: true
+			}));
+		});
+
+		it('should create user profile with username as nick', async () => {
+			mockUserRepository.findByEmail.mockResolvedValue(null);
+			const mockUser = { id: 'user-uuid-123', email: validRegisterData.email, username: 'web_test_abc123', enabled: true };
+			mockUserRepository.create.mockResolvedValue(mockUser);
+			mockUserPreferencesRepository.create.mockImplementation((prefs: any) => Promise.resolve(prefs));
+			mockUserProfileRepository.create.mockImplementation((profile: any) => Promise.resolve(profile));
+
+			await authService.register(validRegisterData);
+
+			expect(mockUserProfileRepository.create).toHaveBeenCalledWith(expect.objectContaining({
+				user_id: 'user-uuid-123'
+			}));
+			
+			// Verify that nick was set (it will be the generated username)
+			const profileCall = mockUserProfileRepository.create.mock.calls[0][0];
+			expect(profileCall.nick).toBeDefined();
+			expect(profileCall.nick).toContain('web_');
 		});
 	});
 

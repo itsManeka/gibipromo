@@ -4,6 +4,8 @@ import { UserRepository } from '../../../application/ports/UserRepository';
 import { ActionRepository } from '../../../application/ports/ActionRepository';
 import { ProductRepository } from '../../../application/ports/ProductRepository';
 import { ProductUserRepository } from '../../../application/ports/ProductUserRepository';
+import { UserPreferencesRepository } from '../../../application/ports/UserPreferencesRepository';
+import { UserProfileRepository } from '../../../application/ports/UserProfileRepository';
 import { UserFactory } from '@gibipromo/shared';
 import { createAddProductAction } from '@gibipromo/shared';
 import path from 'path';
@@ -17,7 +19,9 @@ export class TelegramBot {
 		private readonly userRepository: UserRepository,
 		private readonly actionRepository: ActionRepository,
 		private readonly productRepository: ProductRepository,
-		private readonly productUserRepository: ProductUserRepository
+		private readonly productUserRepository: ProductUserRepository,
+		private readonly userPreferencesRepository: UserPreferencesRepository,
+		private readonly userProfileRepository: UserProfileRepository
 	) {
 		const token = process.env.TELEGRAM_BOT_TOKEN;
 		if (!token) {
@@ -89,6 +93,15 @@ export class TelegramBot {
 			);
 
 			await this.userRepository.create(user);
+
+			// Cria UserPreferences com valores padrão
+			const userPreferences = UserFactory.createDefaultPreferences(user.id);
+			await this.userPreferencesRepository.create(userPreferences);
+
+			// Cria UserProfile com valores padrão (usa first_name como nick)
+			const userProfile = UserFactory.createDefaultProfile(user.id, first_name || username || 'Usuario');
+			await this.userProfileRepository.create(userProfile);
+
 			await ctx.reply('Bem-vindo ao GibiPromo! 🎉\nAgora use /enable para ativar o monitoramento de preços e depois /help para ver os comandos disponíveis.');
 		} catch (error) {
 			console.error('Erro ao processar comando /start:', error);

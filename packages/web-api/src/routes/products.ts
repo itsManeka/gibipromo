@@ -16,23 +16,23 @@ const productsController = new ProductsController();
 /**
  * GET /products
  * List products with pagination
- * Requires authentication
+ * Public endpoint - no authentication required
  */
-router.get('/', authMiddleware, productsController.listProducts);
+router.get('/', productsController.listProducts);
 
 /**
  * GET /products/search
  * Search products with filters
- * Requires authentication
+ * Public endpoint - no authentication required
  */
-router.get('/search', authMiddleware, productsController.searchProducts);
+router.get('/search', productsController.searchProducts);
 
 /**
  * GET /products/:id
  * Get product by ID
- * Requires authentication
+ * Public endpoint - no authentication required
  */
-router.get('/:id', authMiddleware, productsController.getProductById);
+router.get('/:id', productsController.getProductById);
 
 /**
  * DELETE /products/cache
@@ -49,3 +49,4 @@ router.delete('/cache', authMiddleware, productsController.clearCache);
 router.get('/cache/stats', authMiddleware, productsController.getCacheStats);
 
 export default router;
+

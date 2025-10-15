@@ -3,6 +3,8 @@ import { UserRepository } from '../../../../src/application/ports/UserRepository
 import { ActionRepository } from '../../../../src/application/ports/ActionRepository';
 import { ProductRepository } from '../../../../src/application/ports/ProductRepository';
 import { ProductUserRepository } from '../../../../src/application/ports/ProductUserRepository';
+import { UserPreferencesRepository } from '../../../../src/application/ports/UserPreferencesRepository';
+import { UserProfileRepository } from '../../../../src/application/ports/UserProfileRepository';
 import { User } from '@gibipromo/shared/dist/entities/User';
 import { Product } from '@gibipromo/shared/dist/entities/Product';
 import { ProductUser } from '@gibipromo/shared/dist/entities/ProductUser';
@@ -32,6 +34,8 @@ describe('TelegramBot', () => {
 	let mockActionRepo: jest.Mocked<ActionRepository>;
 	let mockProductRepo: jest.Mocked<ProductRepository>;
 	let mockProductUserRepo: jest.Mocked<ProductUserRepository>;
+	let mockUserPreferencesRepo: jest.Mocked<UserPreferencesRepository>;
+	let mockUserProfileRepo: jest.Mocked<UserProfileRepository>;
 	let mockBot: any;
 
 	const originalEnv = process.env;
@@ -46,17 +50,19 @@ describe('TelegramBot', () => {
 		};
 
 		// Mock repositories
-	mockUserRepo = {
-		create: jest.fn(),
-		update: jest.fn(),
-		delete: jest.fn(),
-		findById: jest.fn(),
-		findByUsername: jest.fn(),
-		findByTelegramId: jest.fn(),
-		findByEmail: jest.fn(),
-		updateSessionId: jest.fn(),
-		setEnabled: jest.fn()
-	};		mockActionRepo = {
+		mockUserRepo = {
+			create: jest.fn(),
+			update: jest.fn(),
+			delete: jest.fn(),
+			findById: jest.fn(),
+			findByUsername: jest.fn(),
+			findByTelegramId: jest.fn(),
+			findByEmail: jest.fn(),
+			updateSessionId: jest.fn(),
+			setEnabled: jest.fn()
+		};
+
+		mockActionRepo = {
 			create: jest.fn(),
 			update: jest.fn(),
 			delete: jest.fn(),
@@ -88,6 +94,22 @@ describe('TelegramBot', () => {
 			removeByProductAndUser: jest.fn()
 		};
 
+		mockUserPreferencesRepo = {
+			create: jest.fn(),
+			update: jest.fn(),
+			delete: jest.fn(),
+			findById: jest.fn(),
+			findByUserId: jest.fn()
+		};
+
+		mockUserProfileRepo = {
+			create: jest.fn(),
+			update: jest.fn(),
+			delete: jest.fn(),
+			findById: jest.fn(),
+			findByUserId: jest.fn()
+		};
+
 		// Get the mocked bot instance
 		mockBot = {
 			command: jest.fn(),
@@ -98,7 +120,14 @@ describe('TelegramBot', () => {
 		};
 		(Telegraf as jest.MockedClass<typeof Telegraf>).mockImplementation(() => mockBot);
 
-		telegramBot = new TelegramBot(mockUserRepo, mockActionRepo, mockProductRepo, mockProductUserRepo);
+		telegramBot = new TelegramBot(
+			mockUserRepo,
+			mockActionRepo,
+			mockProductRepo,
+			mockProductUserRepo,
+			mockUserPreferencesRepo,
+			mockUserProfileRepo
+		);
 	});
 
 	afterEach(() => {
@@ -121,7 +150,14 @@ describe('TelegramBot', () => {
 			delete process.env.TELEGRAM_BOT_TOKEN;
 
 			expect(() => {
-				new TelegramBot(mockUserRepo, mockActionRepo, mockProductRepo, mockProductUserRepo);
+				new TelegramBot(
+					mockUserRepo,
+					mockActionRepo,
+					mockProductRepo,
+					mockProductUserRepo,
+					mockUserPreferencesRepo,
+					mockUserProfileRepo
+				);
 			}).toThrow('TELEGRAM_BOT_TOKEN não configurado');
 		});
 	});
@@ -251,6 +287,17 @@ describe('TelegramBot', () => {
 				language: 'pt',
 				enabled: false
 			});
+			mockUserPreferencesRepo.create.mockResolvedValue({
+				id: 'prefs-uuid-123',
+				user_id: 'user-uuid-123',
+				monitor_preorders: true,
+				monitor_coupons: true
+			});
+			mockUserProfileRepo.create.mockResolvedValue({
+				id: 'profile-uuid-123',
+				user_id: 'user-uuid-123',
+				nick: 'Test'
+			});
 
 			// Get the handler function
 			const startHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'start')[1];
@@ -266,6 +313,18 @@ describe('TelegramBot', () => {
 				username: 'testuser',
 				language: 'pt',
 				enabled: false
+			}));
+
+			// Verify preferences and profile were created with the actual user ID from the created user
+			const createdUser = mockUserRepo.create.mock.calls[0][0];
+			expect(mockUserPreferencesRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+				user_id: createdUser.id,
+				monitor_preorders: true,
+				monitor_coupons: true
+			}));
+			expect(mockUserProfileRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+				user_id: createdUser.id,
+				nick: 'Test'
 			}));
 			expect(mockCtx.reply).toHaveBeenCalledWith('Bem-vindo ao GibiPromo! 🎉\nAgora use /enable para ativar o monitoramento de preços e depois /help para ver os comandos disponíveis.');
 		});
@@ -1308,7 +1367,7 @@ describe('TelegramBot', () => {
 					url: 'https://amazon.com.br/produto1'
 				}),
 				createProduct('B02', {
-					title: 'Produto 2', 
+					title: 'Produto 2',
 					price: 200,
 					url: 'https://amazon.com.br/produto2'
 				})
@@ -1341,7 +1400,7 @@ describe('TelegramBot', () => {
 			const productMap = new Map();
 			productMap.set('B01', mockProducts[0]);
 			productMap.set('B02', mockProducts[1]);
-			mockProductRepo.findById.mockImplementation((id: string) => 
+			mockProductRepo.findById.mockImplementation((id: string) =>
 				Promise.resolve(productMap.get(id) || null)
 			);
 
@@ -1960,7 +2019,7 @@ describe('TelegramBot', () => {
 		it('deve escapar caracteres especiais do Markdown corretamente', () => {
 			// Como escapeMarkdown é um método privado, vamos testar indiretamente
 			// através de um método que o usa publicamente (através de formatPrice)
-			
+
 			// Este teste verifica se os métodos utilitários são chamados nos contextos corretos
 			// A funcionalidade real já é testada nos outros cenários
 			expect(telegramBot).toBeDefined();

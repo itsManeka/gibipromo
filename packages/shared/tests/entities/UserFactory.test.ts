@@ -139,4 +139,73 @@ describe('UserFactory', () => {
 			expect(user.telegram_id).toBeUndefined();
 		});
 	});
+
+	describe('createDefaultPreferences', () => {
+		it('should create default preferences with all fields', () => {
+			const userId = UserFactory.generateId();
+			const preferences = UserFactory.createDefaultPreferences(userId);
+
+			expect(preferences).toBeDefined();
+			expect(preferences.id).toBeDefined();
+			expect(preferences.user_id).toBe(userId);
+			expect(preferences.monitor_preorders).toBe(false);
+			expect(preferences.monitor_coupons).toBe(false);
+		});
+
+		it('should generate unique IDs for preferences', () => {
+			const userId = UserFactory.generateId();
+			const prefs1 = UserFactory.createDefaultPreferences(userId);
+			const prefs2 = UserFactory.createDefaultPreferences(userId);
+
+			expect(prefs1.id).not.toBe(prefs2.id);
+		});
+
+		it('should have default values as false', () => {
+			const userId = UserFactory.generateId();
+			const preferences = UserFactory.createDefaultPreferences(userId);
+
+			expect(preferences.monitor_preorders).toBe(false);
+			expect(preferences.monitor_coupons).toBe(false);
+		});
+	});
+
+	describe('createDefaultProfile', () => {
+		it('should create default profile with provided nick', () => {
+			const userId = UserFactory.generateId();
+			const nick = 'TestUser';
+			const profile = UserFactory.createDefaultProfile(userId, nick);
+
+			expect(profile).toBeDefined();
+			expect(profile.id).toBeDefined();
+			expect(profile.user_id).toBe(userId);
+			expect(profile.nick).toBe(nick);
+		});
+
+		it('should use fallback nick when empty string provided', () => {
+			const userId = UserFactory.generateId();
+			const profile = UserFactory.createDefaultProfile(userId, '');
+
+			expect(profile.nick).toBe('Usuario');
+		});
+
+		it('should generate unique IDs for profiles', () => {
+			const userId = UserFactory.generateId();
+			const profile1 = UserFactory.createDefaultProfile(userId, 'User1');
+			const profile2 = UserFactory.createDefaultProfile(userId, 'User2');
+
+			expect(profile1.id).not.toBe(profile2.id);
+		});
+
+		it('should handle different nick types', () => {
+			const userId = UserFactory.generateId();
+			
+			const profile1 = UserFactory.createDefaultProfile(userId, 'username123');
+			const profile2 = UserFactory.createDefaultProfile(userId, 'João Silva');
+			const profile3 = UserFactory.createDefaultProfile(userId, 'web_user_xyz');
+
+			expect(profile1.nick).toBe('username123');
+			expect(profile2.nick).toBe('João Silva');
+			expect(profile3.nick).toBe('web_user_xyz');
+		});
+	});
 });

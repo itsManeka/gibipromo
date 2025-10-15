@@ -31,7 +31,7 @@ export interface Repositories {
 	users: DynamoDBUserRepository;
 	sessions: DynamoDBSessionRepository;
 	userPreferences: DynamoDBUserPreferencesRepository;
-	userProfiles: DynamoDBUserProfileRepository;
+	userProfile: DynamoDBUserProfileRepository;
 }
 
 /**
@@ -56,7 +56,7 @@ export function createRepositories(): Repositories {
 		users: new DynamoDBUserRepository(),
 		sessions: new DynamoDBSessionRepository(),
 		userPreferences: new DynamoDBUserPreferencesRepository(),
-		userProfiles: new DynamoDBUserProfileRepository()
+		userProfile: new DynamoDBUserProfileRepository()
 	};
 }
 

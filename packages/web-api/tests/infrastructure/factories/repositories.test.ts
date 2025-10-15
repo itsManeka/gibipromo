@@ -35,7 +35,7 @@ describe('Repository Factory', () => {
 			expect(repos.users).toBeDefined();
 			expect(repos.sessions).toBeDefined();
 			expect(repos.userPreferences).toBeDefined();
-			expect(repos.userProfiles).toBeDefined();
+			expect(repos.userProfile).toBeDefined();
 		});
 
 		it('should create repositories with correct methods', () => {

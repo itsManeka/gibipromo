@@ -3,7 +3,9 @@ import {
 	DynamoDBUserRepository, 
 	DynamoDBActionRepository,
 	DynamoDBProductRepository,
-	DynamoDBProductUserRepository
+	DynamoDBProductUserRepository,
+	DynamoDBUserPreferencesRepository,
+	DynamoDBUserProfileRepository
 } from '@gibipromo/shared';
 
 export function createTelegramBot(): TelegramBot {
@@ -11,6 +13,15 @@ export function createTelegramBot(): TelegramBot {
 	const actionRepository = new DynamoDBActionRepository();
 	const productRepository = new DynamoDBProductRepository();
 	const productUserRepository = new DynamoDBProductUserRepository();
+	const userPreferencesRepository = new DynamoDBUserPreferencesRepository();
+	const userProfileRepository = new DynamoDBUserProfileRepository();
 
-	return new TelegramBot(userRepository, actionRepository, productRepository, productUserRepository);
+	return new TelegramBot(
+		userRepository, 
+		actionRepository, 
+		productRepository, 
+		productUserRepository,
+		userPreferencesRepository,
+		userProfileRepository
+	);
 }

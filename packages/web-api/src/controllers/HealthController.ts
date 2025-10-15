@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { BaseController } from './BaseController';
+import { ApiResponse } from '@gibipromo/shared';
 
 /**
  * Health controller for monitoring endpoints
@@ -19,7 +20,13 @@ export class HealthController extends BaseController {
 			version: '1.0.0'
 		};
 
-		this.sendSuccess(res, healthData, 'API is healthy');
+		const response: ApiResponse<typeof healthData> = {
+			success: true,
+			data: healthData,
+			message: 'API is healthy'
+		};
+
+		this.sendSuccess(res, response);
 	});
 
 	/**
@@ -51,6 +58,12 @@ export class HealthController extends BaseController {
 			}
 		};
 
-		this.sendSuccess(res, detailedHealthData, 'Detailed API health information');
+		const response: ApiResponse<typeof detailedHealthData> = {
+			success: true,
+			data: detailedHealthData,
+			message: 'Detailed API health information'
+		};
+
+		this.sendSuccess(res, response);
 	});
 }

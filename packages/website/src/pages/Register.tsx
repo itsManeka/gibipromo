@@ -1,12 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Mail, Lock, User, Eye, EyeOff, BookOpen, ArrowRight, MessageCircle, CheckCircle } from 'lucide-react'
-
-// Mock data para demonstração
-const mockRegistration = {
-	success: true,
-	message: 'Conta criada com sucesso!'
-}
+import { Mail, Lock, Eye, EyeOff, ArrowRight, MessageCircle, CheckCircle, AlertCircle } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 
 export function Register() {
 	const [formData, setFormData] = useState({
@@ -17,23 +12,25 @@ export function Register() {
 	const [showPassword, setShowPassword] = useState(false)
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 	const [errors, setErrors] = useState<Record<string, string>>({})
-	const [isLoading, setIsLoading] = useState(false)
 	const [success, setSuccess] = useState(false)
 	const navigate = useNavigate()
+	const { register, isLoading, isAuthenticated } = useAuth()
+
+	// Redirecionar se já estiver autenticado
+	useEffect(() => {
+		if (isAuthenticated && success) {
+			setTimeout(() => {
+				navigate('/perfil', { replace: true })
+			}, 2000)
+		}
+	}, [isAuthenticated, success, navigate])
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target
-		setFormData(prev => ({
-			...prev,
-			[name]: value
-		}))
+		setFormData(prev => ({ ...prev, [name]: value }))
 
-		// Limpar erro quando usuário digita
 		if (errors[name]) {
-			setErrors(prev => ({
-				...prev,
-				[name]: ''
-			}))
+			setErrors(prev => ({ ...prev, [name]: '' }))
 		}
 	}
 
@@ -67,39 +64,25 @@ export function Register() {
 
 		if (!validateForm()) return
 
-		setIsLoading(true)
 		setErrors({})
 
 		try {
-			// Simular chamada de API
-			await new Promise(resolve => setTimeout(resolve, 2000))
+			await register(formData.email, formData.password)
+			
+			// Sucesso - mostrar mensagem e depois redirecionar
+			setSuccess(true)
+			// O useEffect vai redirecionar após 2 segundos
+		} catch (error: any) {
+			const errorMessage = error.response?.data?.error || error.message || 'Erro ao criar conta'
 
-			// Mock de registro bem-sucedido
-			if (mockRegistration.success) {
-				setSuccess(true)
-
-				// Simular criação de conta
-				const newUser = {
-					id: Date.now().toString(),
-					email: formData.email,
-					created_at: new Date().toISOString()
-				}
-
-				console.log('Conta criada com sucesso:', newUser)
-
-				// Após 2 segundos, redirecionar para login
-				setTimeout(() => {
-					navigate('/login', {
-						state: { message: 'Conta criada com sucesso! Faça login para continuar.' }
-					})
-				}, 2000)
+			// Mapear erros específicos
+			if (errorMessage.includes('already exists') || errorMessage.includes('já existe')) {
+				setErrors({ general: 'Este email já está cadastrado' })
+			} else if (errorMessage.includes('invalid email') || errorMessage.includes('email inválido')) {
+				setErrors({ general: 'Email inválido' })
 			} else {
-				setErrors({ general: 'Erro ao criar conta. Tente novamente.' })
+				setErrors({ general: errorMessage })
 			}
-		} catch (error) {
-			setErrors({ general: 'Erro ao criar conta. Tente novamente.' })
-		} finally {
-			setIsLoading(false)
 		}
 	}
 
@@ -114,7 +97,7 @@ export function Register() {
 						Conta criada com sucesso!
 					</h1>
 					<p className="text-primary-light mb-6">
-						Redirecionando você para o login...
+						Redirecionando você para o seu perfil...
 					</p>
 					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-yellow mx-auto"></div>
 				</div>
@@ -143,7 +126,8 @@ export function Register() {
 					<form onSubmit={handleSubmit} className="space-y-6">
 						{/* Erro geral */}
 						{errors.general && (
-							<div className="bg-red-500 bg-opacity-10 border border-red-500 rounded-lg p-3">
+							<div className="bg-red-500 bg-opacity-10 border border-red-500 rounded-lg p-3 flex items-start space-x-2">
+								<AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
 								<p className="text-red-400 text-sm">{errors.general}</p>
 							</div>
 						)}
@@ -164,6 +148,7 @@ export function Register() {
 									className={`input pl-10 w-full ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
 									value={formData.email}
 									onChange={handleInputChange}
+									disabled={isLoading}
 								/>
 							</div>
 							{errors.email && (
@@ -187,11 +172,13 @@ export function Register() {
 									className={`input pl-10 pr-10 w-full ${errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
 									value={formData.password}
 									onChange={handleInputChange}
+									disabled={isLoading}
 								/>
 								<button
 									type="button"
 									className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-400 hover:text-primary-light"
 									onClick={() => setShowPassword(!showPassword)}
+									disabled={isLoading}
 								>
 									{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
 								</button>
@@ -217,11 +204,13 @@ export function Register() {
 									className={`input pl-10 pr-10 w-full ${errors.confirmPassword ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
 									value={formData.confirmPassword}
 									onChange={handleInputChange}
+									disabled={isLoading}
 								/>
 								<button
 									type="button"
 									className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-400 hover:text-primary-light"
 									onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+									disabled={isLoading}
 								>
 									{showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
 								</button>

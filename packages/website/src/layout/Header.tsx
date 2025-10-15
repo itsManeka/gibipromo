@@ -1,21 +1,36 @@
 import React, { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { Menu, X, BookOpen, Settings, User, Home, Tag } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Menu, X, Settings, User, Home, Tag, LogOut, ChevronDown } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
+import { useAuth } from '../contexts/AuthContext'
 
 export function Header() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false)
+	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 	const location = useLocation()
+	const navigate = useNavigate()
 	const { theme, toggleTheme } = useTheme()
+	const { user, isAuthenticated, logout } = useAuth()
 
 	const navigation = [
-		{ name: 'Início', href: '/', icon: Home },
-		{ name: 'Promoções', href: '/promocoes', icon: Tag },
-		{ name: 'Perfil', href: '/perfil', icon: User },
-		{ name: 'Configurações', href: '/configuracoes', icon: Settings },
+		{ name: 'Início', href: '/', icon: Home, public: true },
+		{ name: 'Promoções', href: '/promocoes', icon: Tag, public: false }
+	]
+
+	const mobileNavigation = [
+		...navigation,
+		{ name: 'Perfil', href: '/perfil', icon: User, public: false },
+		{ name: 'Configurações', href: '/configuracoes', icon: Settings, public: false },
 	]
 
 	const isActive = (path: string) => location.pathname === path
+
+	const handleLogout = () => {
+		logout()
+		setIsUserMenuOpen(false)
+		setIsMenuOpen(false)
+		navigate('/')
+	}
 
 	return (
 		<header className="bg-purple-600 text-white shadow-lg sticky top-0 z-50">
@@ -33,41 +48,89 @@ export function Header() {
 
 					{/* Desktop Navigation */}
 					<nav className="hidden md:flex items-center space-x-8">
-						{navigation.map((item) => {
-							const Icon = item.icon
-							return (
-								<Link
-									key={item.name}
-									to={item.href}
-									className={`nav-link flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${isActive(item.href)
-											? 'nav-link-active bg-purple-700'
-											: 'hover:bg-purple-700'
-										}`}
-								>
-									<Icon className="h-4 w-4" />
-									<span>{item.name}</span>
-								</Link>
-							)
-						})}
+						{navigation
+							.filter(item => item.public || isAuthenticated)
+							.map((item) => {
+								const Icon = item.icon
+								return (
+									<Link
+										key={item.name}
+										to={item.href}
+										className={`nav-link flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${isActive(item.href)
+												? 'nav-link-active bg-purple-700'
+												: 'hover:bg-purple-700'
+											}`}
+									>
+										<Icon className="h-4 w-4" />
+										<span>{item.name}</span>
+									</Link>
+								)
+							})}
 
-						{/* Auth Links */}
+						{/* Auth Section */}
 						<div className="flex items-center space-x-4 border-l border-purple-500 pl-4">
-							<Link
-								to="/login"
-								className={`nav-link px-3 py-2 rounded-lg transition-all duration-200 ${
-									isActive('/login') 
-										? 'nav-link-active bg-purple-700' 
-										: 'hover:bg-purple-700'
-								}`}
-							>
-								Entrar
-							</Link>
-							<Link
-								to="/registro"
-								className="btn-primary text-sm py-2 px-4"
-							>
-								Cadastrar
-							</Link>
+							{isAuthenticated ? (
+								/* User Menu Dropdown */
+								<div className="relative">
+									<button
+										onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+										className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+									>
+										<User className="h-4 w-4" />
+										<span className="max-w-[150px] truncate text-sm">{user?.email}</span>
+										<ChevronDown className={`h-4 w-4 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+									</button>
+
+									{isUserMenuOpen && (
+										<div className="absolute right-0 mt-2 w-48 bg-dark-800 border border-dark-700 rounded-lg shadow-lg py-1 z-50">
+											<Link
+												to="/perfil"
+												onClick={() => setIsUserMenuOpen(false)}
+												className="flex items-center space-x-2 px-4 py-2 text-sm text-primary-light hover:bg-dark-700 transition-colors"
+											>
+												<User className="h-4 w-4" />
+												<span>Meu Perfil</span>
+											</Link>
+											<Link
+												to="/configuracoes"
+												onClick={() => setIsUserMenuOpen(false)}
+												className="flex items-center space-x-2 px-4 py-2 text-sm text-primary-light hover:bg-dark-700 transition-colors"
+											>
+												<Settings className="h-4 w-4" />
+												<span>Configurações</span>
+											</Link>
+											<hr className="my-1 border-dark-700" />
+											<button
+												onClick={handleLogout}
+												className="flex items-center space-x-2 px-4 py-2 text-sm text-red-400 hover:bg-dark-700 transition-colors w-full text-left"
+											>
+												<LogOut className="h-4 w-4" />
+												<span>Sair</span>
+											</button>
+										</div>
+									)}
+								</div>
+							) : (
+								/* Login/Register Links */
+								<>
+									<Link
+										to="/login"
+										className={`nav-link px-3 py-2 rounded-lg transition-all duration-200 ${
+											isActive('/login') 
+												? 'nav-link-active bg-purple-700' 
+												: 'hover:bg-purple-700'
+										}`}
+									>
+										Entrar
+									</Link>
+									<Link
+										to="/registro"
+										className="btn-primary text-sm py-2 px-4"
+									>
+										Cadastrar
+									</Link>
+								</>
+							)}
 						</div>
 
 						{/* Theme Toggle */}
@@ -100,46 +163,69 @@ export function Header() {
 			{isMenuOpen && (
 				<div className="md:hidden bg-purple-700 border-t border-purple-500">
 					<div className="px-2 pt-2 pb-3 space-y-1">
-						{navigation.map((item) => {
-							const Icon = item.icon
-							return (
-								<Link
-									key={item.name}
-									to={item.href}
-									onClick={() => setIsMenuOpen(false)}
-									className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 ${isActive(item.href)
-											? 'bg-purple-800 text-primary-yellow'
-											: 'text-white hover:bg-purple-600'
-										}`}
-								>
-									<Icon className="h-5 w-5" />
-									<span className="font-medium">{item.name}</span>
-								</Link>
-							)
-						})}
+						{mobileNavigation
+							.filter(item => item.public || isAuthenticated)
+							.map((item) => {
+								const Icon = item.icon
+								return (
+									<Link
+										key={item.name}
+										to={item.href}
+										onClick={() => setIsMenuOpen(false)}
+										className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 ${isActive(item.href)
+												? 'bg-purple-800 text-primary-yellow'
+												: 'text-white hover:bg-purple-600'
+											}`}
+									>
+										<Icon className="h-5 w-5" />
+										<span className="font-medium">{item.name}</span>
+									</Link>
+								)
+							})}
 
-						{/* Mobile Auth Links */}
+						{/* Mobile Auth Section */}
 						<div className="border-t border-purple-500 pt-3 mt-3 space-y-1">
-							<Link
-								to="/login"
-								onClick={() => setIsMenuOpen(false)}
-								className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 ${
-									isActive('/login') 
-										? 'bg-purple-800 text-primary-yellow' 
-										: 'text-white hover:bg-purple-600'
-								}`}
-							>
-								<User className="h-5 w-5" />
-								<span className="font-medium">Entrar</span>
-							</Link>
-							<Link
-								to="/registro"
-								onClick={() => setIsMenuOpen(false)}
-								className="flex items-center space-x-3 px-3 py-2 rounded-lg bg-primary-yellow text-dark-950 hover:bg-yellow-400 transition-colors font-medium"
-							>
-								<User className="h-5 w-5" />
-								<span>Cadastrar</span>
-							</Link>
+							{isAuthenticated ? (
+								<>
+									{/* User Info */}
+									<div className="px-3 py-2 text-primary-light">
+										<div className="text-xs text-primary-light/70">Conectado como</div>
+										<div className="text-sm font-medium truncate">{user?.email}</div>
+									</div>
+									
+									{/* Logout Button */}
+									<button
+										onClick={handleLogout}
+										className="flex items-center space-x-3 px-3 py-2 rounded-lg text-red-400 hover:bg-purple-600 transition-colors w-full"
+									>
+										<LogOut className="h-5 w-5" />
+										<span className="font-medium">Sair</span>
+									</button>
+								</>
+							) : (
+								<>
+									<Link
+										to="/login"
+										onClick={() => setIsMenuOpen(false)}
+										className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 ${
+											isActive('/login') 
+												? 'bg-purple-800 text-primary-yellow' 
+												: 'text-white hover:bg-purple-600'
+										}`}
+									>
+										<User className="h-5 w-5" />
+										<span className="font-medium">Entrar</span>
+									</Link>
+									<Link
+										to="/registro"
+										onClick={() => setIsMenuOpen(false)}
+										className="flex items-center space-x-3 px-3 py-2 rounded-lg bg-primary-yellow text-dark-950 hover:bg-yellow-400 transition-colors font-medium"
+									>
+										<User className="h-5 w-5" />
+										<span>Cadastrar</span>
+									</Link>
+								</>
+							)}
 						</div>
 
 						{/* Mobile Theme Toggle */}

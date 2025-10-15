@@ -1,5 +1,6 @@
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
+import { ProtectedRoute } from './ProtectedRoute'
 import { Home } from '../pages/Home'
 import { Promotions } from '../pages/Promotions'
 import { Profile } from '../pages/Profile'
@@ -11,12 +12,38 @@ import { NotFound } from '../pages/NotFound'
 export function AppRoutes() {
 	return (
 		<Routes>
+			{/* Rotas públicas */}
 			<Route path="/" element={<Home />} />
-			<Route path="/promocoes" element={<Promotions />} />
 			<Route path="/login" element={<Login />} />
 			<Route path="/registro" element={<Register />} />
-			<Route path="/perfil" element={<Profile />} />
-			<Route path="/configuracoes" element={<Settings />} />
+
+			{/* Rotas protegidas */}
+			<Route
+				path="/promocoes"
+				element={
+					<ProtectedRoute>
+						<Promotions />
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/perfil"
+				element={
+					<ProtectedRoute>
+						<Profile />
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/configuracoes"
+				element={
+					<ProtectedRoute>
+						<Settings />
+					</ProtectedRoute>
+				}
+			/>
+
+			{/* 404 */}
 			<Route path="*" element={<NotFound />} />
 		</Routes>
 	)

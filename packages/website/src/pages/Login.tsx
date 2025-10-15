@@ -1,12 +1,7 @@
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Mail, Lock, Eye, EyeOff, BookOpen, ArrowRight, MessageCircle } from 'lucide-react'
-
-// Mock data para demonstração
-const mockUser = {
-	email: 'usuario@exemplo.com',
-	password: '123456',
-}
+import React, { useState, useEffect } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, MessageCircle } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 
 export function Login() {
 	const [formData, setFormData] = useState({
@@ -15,22 +10,24 @@ export function Login() {
 	})
 	const [showPassword, setShowPassword] = useState(false)
 	const [errors, setErrors] = useState<Record<string, string>>({})
-	const [isLoading, setIsLoading] = useState(false)
 	const navigate = useNavigate()
+	const location = useLocation()
+	const { login, isLoading, isAuthenticated } = useAuth()
+
+	// Redirecionar se já estiver autenticado
+	useEffect(() => {
+		if (isAuthenticated) {
+			const from = (location.state as any)?.from?.pathname || '/perfil'
+			navigate(from, { replace: true })
+		}
+	}, [isAuthenticated, navigate, location])
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target
-		setFormData(prev => ({
-			...prev,
-			[name]: value
-		}))
+		setFormData(prev => ({ ...prev, [name]: value }))
 
-		// Limpar erro quando usuário digita
 		if (errors[name]) {
-			setErrors(prev => ({
-				...prev,
-				[name]: ''
-			}))
+			setErrors(prev => ({ ...prev, [name]: '' }))
 		}
 	}
 
@@ -58,31 +55,24 @@ export function Login() {
 
 		if (!validateForm()) return
 
-		setIsLoading(true)
 		setErrors({})
 
 		try {
-			// Simular chamada de API
-			await new Promise(resolve => setTimeout(resolve, 1500))
+			await login(formData.email, formData.password)
+			// Sucesso - o useEffect acima vai redirecionar automaticamente
+		} catch (error: any) {
+			const errorMessage = error.response?.data?.error || error.message || 'Erro ao fazer login'
 
-			// Mock de validação
-			if (formData.email === mockUser.email && formData.password === mockUser.password) {
-				// Login bem-sucedido
-				console.log('Login realizado com sucesso:', { email: formData.email })
-
-				// Simular armazenamento do token
-				localStorage.setItem('gibipromo_token', 'mock_jwt_token_12345')
-				localStorage.setItem('gibipromo_user', JSON.stringify(mockUser))
-
-				// Redirecionar para o perfil
-				navigate('/perfil')
-			} else {
+			// Mapear erros específicos
+			if (errorMessage.includes('Invalid credentials') || errorMessage.includes('incorretos')) {
 				setErrors({ general: 'Email ou senha incorretos' })
+			} else if (errorMessage.includes('disabled') || errorMessage.includes('desabilitada')) {
+				setErrors({ general: 'Conta desabilitada. Entre em contato com o suporte.' })
+			} else if (errorMessage.includes('not found') || errorMessage.includes('não encontrado')) {
+				setErrors({ general: 'Usuário não encontrado' })
+			} else {
+				setErrors({ general: errorMessage })
 			}
-		} catch (error) {
-			setErrors({ general: 'Erro ao fazer login. Tente novamente.' })
-		} finally {
-			setIsLoading(false)
 		}
 	}
 
@@ -107,7 +97,8 @@ export function Login() {
 					<form onSubmit={handleSubmit} className="space-y-6">
 						{/* Erro geral */}
 						{errors.general && (
-							<div className="bg-red-500 bg-opacity-10 border border-red-500 rounded-lg p-3">
+							<div className="bg-red-500 bg-opacity-10 border border-red-500 rounded-lg p-3 flex items-start space-x-2">
+								<AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
 								<p className="text-red-400 text-sm">{errors.general}</p>
 							</div>
 						)}
@@ -128,6 +119,7 @@ export function Login() {
 									className={`input pl-10 w-full ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
 									value={formData.email}
 									onChange={handleInputChange}
+									disabled={isLoading}
 								/>
 							</div>
 							{errors.email && (
@@ -151,11 +143,13 @@ export function Login() {
 									className={`input pl-10 pr-10 w-full ${errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
 									value={formData.password}
 									onChange={handleInputChange}
+									disabled={isLoading}
 								/>
 								<button
 									type="button"
 									className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-400 hover:text-primary-light"
 									onClick={() => setShowPassword(!showPassword)}
+									disabled={isLoading}
 								>
 									{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
 								</button>
@@ -212,18 +206,6 @@ export function Login() {
 							>
 								Cadastre-se grátis
 							</Link>
-						</p>
-					</div>
-				</div>
-
-				{/* Informações sobre o Mock */}
-				<div className="mt-8 p-4 bg-blue-500 bg-opacity-10 border border-blue-500 rounded-lg">
-					<h3 className="text-blue-400 font-medium mb-2">💡 Demo - Dados para Teste</h3>
-					<div className="text-blue-300 text-sm space-y-1">
-						<p><strong>Email:</strong> usuario@exemplo.com</p>
-						<p><strong>Senha:</strong> 123456</p>
-						<p className="text-xs text-blue-400 mt-2">
-							Use estes dados para testar o login na demonstração
 						</p>
 					</div>
 				</div>

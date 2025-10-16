@@ -129,7 +129,9 @@ describe('NotifyPriceActionProcessor', () => {
 				username: 'testuser1',
 				name: 'Test User 1',
 				language: 'pt-BR',
-				enabled: true 
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 			const mockUser2 = { 
 				id: 'user2', 
@@ -137,7 +139,9 @@ describe('NotifyPriceActionProcessor', () => {
 				username: 'testuser2',
 				name: 'Test User 2',
 				language: 'pt-BR',
-				enabled: true 
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 			mockUserRepo.findById.mockImplementation((userId: string) => {
 				if (userId === 'user1') return Promise.resolve(mockUser1);
@@ -228,7 +232,9 @@ describe('NotifyPriceActionProcessor', () => {
 				username: 'testuser1',
 				name: 'Test User 1',
 				language: 'pt-BR',
-				enabled: true 
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 			const mockUser2 = { 
 				id: 'user2', 
@@ -236,7 +242,9 @@ describe('NotifyPriceActionProcessor', () => {
 				username: 'testuser2',
 				name: 'Test User 2',
 				language: 'pt-BR',
-				enabled: true 
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 			mockUserRepo.findById.mockImplementation((userId: string) => {
 				if (userId === 'user1') return Promise.resolve(mockUser1);
@@ -289,7 +297,9 @@ describe('NotifyPriceActionProcessor', () => {
 				username: 'testuser1',
 				name: 'Test User 1',
 				language: 'pt-BR',
-				enabled: true 
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 			const mockUser2 = { 
 				id: 'user2', 
@@ -297,7 +307,9 @@ describe('NotifyPriceActionProcessor', () => {
 				username: 'testuser2',
 				name: 'Test User 2',
 				language: 'pt-BR',
-				enabled: true 
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 			mockUserRepo.findById.mockImplementation((userId: string) => {
 				if (userId === 'user1') return Promise.resolve(mockUser1);

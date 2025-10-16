@@ -16,16 +16,9 @@ export function AppRoutes() {
 			<Route path="/" element={<Home />} />
 			<Route path="/login" element={<Login />} />
 			<Route path="/registro" element={<Register />} />
+			<Route path="/promocoes" element={<Promotions />} />
 
 			{/* Rotas protegidas */}
-			<Route
-				path="/promocoes"
-				element={
-					<ProtectedRoute>
-						<Promotions />
-					</ProtectedRoute>
-				}
-			/>
 			<Route
 				path="/perfil"
 				element={

@@ -318,7 +318,8 @@ describe('AmazonPAAPIClient', () => {
 				format: undefined,
 				genre: undefined,
 				publisher: undefined,
-				contributors: []
+				contributors: [],
+				productGroup: undefined
 			});
 		});
 
@@ -458,7 +459,8 @@ describe('AmazonPAAPIClient', () => {
 				format: undefined,
 				genre: undefined,
 				publisher: undefined,
-				contributors: []
+				contributors: [],
+				productGroup: undefined
 			});
 		});
 
@@ -720,7 +722,8 @@ describe('AmazonPAAPIClient', () => {
 				format: 'Capa comum',
 				genre: 'Fantasia',
 				publisher: 'Editora JBC',
-				contributors: ['Katsuhiro Otomo']
+				contributors: ['Katsuhiro Otomo'],
+				productGroup: undefined
 			});
 		});
 
@@ -778,6 +781,7 @@ describe('AmazonPAAPIClient', () => {
 			expect(product?.genre).toBeUndefined();
 			expect(product?.publisher).toBeUndefined();
 			expect(product?.contributors).toEqual([]);
+			expect(product?.productGroup).toBeUndefined();
 		});
 
 		it('should verify new Resources are included in request', async () => {

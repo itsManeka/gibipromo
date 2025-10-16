@@ -1,5 +1,5 @@
 import { Product } from '@gibipromo/shared/dist/entities/Product';
-import { ProductRepository } from '@gibipromo/shared';
+import { ProductRepository, ProductUserRepository, PromotionFilters, FilterOptions } from '@gibipromo/shared';
 import { BaseService } from './BaseService';
 
 /**
@@ -9,6 +9,11 @@ export interface PaginationOptions {
 	page: number;
 	limit: number;
 }
+
+/**
+ * Tipos de ordenação para promoções
+ */
+export type PromotionSortType = 'discount' | 'price-low' | 'price-high' | 'name';
 
 /**
  * Interface para resultado paginado
@@ -54,8 +59,12 @@ interface CacheEntry<T> {
 export class ProductsService extends BaseService {
 	private cache: Map<string, CacheEntry<any>>;
 	private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutos em ms
+	private readonly PROMOTIONS_CACHE_TTL = 3 * 60 * 1000; // 3 minutos para promoções (mais dinâmico)
 
-	constructor(private readonly productRepository: ProductRepository) {
+	constructor(
+		private readonly productRepository: ProductRepository,
+		private readonly productUserRepository?: ProductUserRepository
+	) {
 		super('ProductsService');
 		this.cache = new Map();
 	}
@@ -191,6 +200,99 @@ export class ProductsService extends BaseService {
 			size: this.cache.size,
 			keys: Array.from(this.cache.keys())
 		};
+	}
+
+	/**
+	 * Get promotions with advanced filters
+	 * Busca produtos em promoção (price < full_price and product_group = "Book") com filtros e ordenação
+	 */
+	async getPromotions(
+		filters: PromotionFilters,
+		options: PaginationOptions,
+		sortBy: PromotionSortType = 'discount',
+		userId?: string
+	): Promise<PaginatedResult<Product>> {
+		const cacheKey = `promotions:${JSON.stringify(filters)}:${options.page}:${options.limit}:${sortBy}:${userId || 'anon'}`;
+
+		// Verificar cache
+		const cached = this.getFromCache<PaginatedResult<Product>>(cacheKey, this.PROMOTIONS_CACHE_TTL);
+		if (cached) {
+			this.logAction('Cache hit for promotions', { cacheKey });
+			return cached;
+		}
+
+		this.logAction('Getting promotions', { filters, options, sortBy, userId });
+
+		try {
+			let products: Product[];
+
+			// Se filtro "Meus Produtos" estiver ativado e userId fornecido
+			if (filters.onlyMyProducts && userId && this.productUserRepository) {
+				// 1. Buscar produtos do usuário via ProductUser
+				const { productUsers } = await this.productUserRepository.findByUserId(userId, 1, 1000);
+				const productIds = productUsers.map(pu => pu.product_id);
+
+				if (productIds.length === 0) {
+					// Usuário não tem produtos monitorados
+					return this.createEmptyPaginatedResult(options);
+				}
+
+				// 2. Buscar produtos por IDs
+				products = await this.productRepository.findByIds(productIds);
+
+				// 3. Filtrar apenas promoções (price < full_price e product_group = "Book")
+				products = products.filter(p => p.price < p.full_price && p.product_group === "Book");
+
+				// 4. Aplicar filtros adicionais manualmente (query, contributors, etc)
+				products = this.applyPromotionFilters(products, filters);
+			} else {
+				// Buscar todas as promoções com filtros
+				products = await this.productRepository.findPromotions(filters, 1000);
+			}
+
+			// Ordenar produtos
+			products = this.sortPromotions(products, sortBy);
+
+			// Aplicar paginação
+			const result = this.paginate<Product>(products, options);
+
+			// Armazenar no cache com TTL específico para promoções
+			this.setCache(cacheKey, result);
+
+			return result;
+		} catch (error) {
+			this.logError(error as Error, 'getPromotions');
+			throw error;
+		}
+	}
+
+	/**
+	 * Get unique filter values for promotions
+	 * Retorna valores únicos para popular dropdowns de filtros
+	 */
+	async getFilterOptions(): Promise<FilterOptions> {
+		const cacheKey = 'filter-options';
+
+		// Verificar cache (TTL maior pois muda menos)
+		const cached = this.getFromCache<FilterOptions>(cacheKey, this.CACHE_TTL);
+		if (cached) {
+			this.logAction('Cache hit for filter options');
+			return cached;
+		}
+
+		this.logAction('Getting filter options');
+
+		try {
+			const options = await this.productRepository.getUniqueFilterValues();
+
+			// Armazenar no cache
+			this.setCache(cacheKey, options);
+
+			return options;
+		} catch (error) {
+			this.logError(error as Error, 'getFilterOptions');
+			throw error;
+		}
 	}
 
 	// ===== Private Helper Methods =====
@@ -334,7 +436,7 @@ export class ProductsService extends BaseService {
 	/**
 	 * Get item from cache if not expired
 	 */
-	private getFromCache<T>(key: string): T | undefined {
+	private getFromCache<T>(key: string, ttl: number = this.CACHE_TTL): T | undefined {
 		const entry = this.cache.get(key);
 
 		if (!entry) {
@@ -343,7 +445,7 @@ export class ProductsService extends BaseService {
 
 		// Verificar se expirou
 		const now = Date.now();
-		if (now - entry.timestamp > this.CACHE_TTL) {
+		if (now - entry.timestamp > ttl) {
 			this.cache.delete(key);
 			return undefined;
 		}
@@ -359,5 +461,113 @@ export class ProductsService extends BaseService {
 			data,
 			timestamp: Date.now()
 		});
+	}
+
+	/**
+	 * Create empty paginated result
+	 */
+	private createEmptyPaginatedResult<T>(options: PaginationOptions): PaginatedResult<T> {
+		return {
+			data: [],
+			pagination: {
+				page: options.page,
+				limit: options.limit,
+				total: 0,
+				totalPages: 0,
+				hasNextPage: false,
+				hasPreviousPage: false
+			}
+		};
+	}
+
+	/**
+	 * Apply additional filters to promotions (for "Meus Produtos" flow)
+	 */
+	private applyPromotionFilters(products: Product[], filters: PromotionFilters): Product[] {
+		let filtered = products;
+
+		// Filtros simples
+		if (filters.category) {
+			filtered = filtered.filter(p => p.category === filters.category);
+		}
+
+		if (filters.publisher) {
+			filtered = filtered.filter(p => p.publisher === filters.publisher);
+		}
+
+		if (filters.genre) {
+			filtered = filtered.filter(p => p.genre === filters.genre);
+		}
+
+		if (filters.format) {
+			filtered = filtered.filter(p => p.format === filters.format);
+		}
+
+		if (filters.inStock !== undefined) {
+			filtered = filtered.filter(p => p.in_stock === filters.inStock);
+		}
+
+		if (filters.preorder !== undefined) {
+			filtered = filtered.filter(p => p.preorder === filters.preorder);
+		}
+
+		// Busca textual (title + contributors)
+		if (filters.query) {
+			const query = filters.query.toLowerCase();
+			filtered = filtered.filter(p => {
+				const titleMatch = p.title.toLowerCase().includes(query);
+				const contributorsMatch = p.contributors?.some(c => c.toLowerCase().includes(query));
+				return titleMatch || contributorsMatch;
+			});
+		}
+
+		// Filtro por contributors específicos
+		if (filters.contributors && filters.contributors.length > 0) {
+			filtered = filtered.filter(p => {
+				if (!p.contributors) return false;
+				return filters.contributors!.some(fc =>
+					p.contributors!.some(pc => pc.toLowerCase() === fc.toLowerCase())
+				);
+			});
+		}
+
+		return filtered;
+	}
+
+	/**
+	 * Sort promotions by different criteria
+	 */
+	private sortPromotions(products: Product[], sortBy: PromotionSortType): Product[] {
+		const sorted = [...products];
+
+		switch (sortBy) {
+			case 'discount':
+				// Ordenar por percentual de desconto (maior primeiro)
+				return sorted.sort((a, b) => {
+					const discountA = ((a.full_price - a.price) / a.full_price) * 100;
+					const discountB = ((b.full_price - b.price) / b.full_price) * 100;
+					return discountB - discountA;
+				});
+
+			case 'price-low':
+				// Ordenar por preço (menor primeiro)
+				return sorted.sort((a, b) => a.price - b.price);
+
+			case 'price-high':
+				// Ordenar por preço (maior primeiro)
+				return sorted.sort((a, b) => b.price - a.price);
+
+			case 'name':
+				// Ordenar por título (A-Z)
+				return sorted.sort((a, b) => a.title.localeCompare(b.title));
+
+			default:
+				// Padrão: desconto
+				return sorted.sort((a, b) => {
+					const discountA = ((a.full_price - a.price) / a.full_price) * 100;
+					const discountB = ((b.full_price - b.price) / b.full_price) * 100;
+					return discountB - discountA;
+				});
+		}
 	}
 }

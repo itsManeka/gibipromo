@@ -76,7 +76,7 @@ describe('AddProductActionProcessor - New Fields', () => {
 		);
 	});
 
-	it('should create product with all new fields (category, format, genre, publisher, contributors, store)', async () => {
+	it('should create product with all new fields (category, format, genre, publisher, contributors, productGroup)', async () => {
 		// Arrange
 		const amazonProduct = {
 			offerId: 'AMAZON',
@@ -91,7 +91,8 @@ describe('AddProductActionProcessor - New Fields', () => {
 			format: 'Capa comum',
 			genre: 'Aventura',
 			publisher: 'Panini',
-			contributors: ['Eiichiro Oda']
+			contributors: ['Eiichiro Oda'],
+			productGroup: 'Book'
 		};
 
 		const action: AddProductAction = createTestAction('B012345678', {
@@ -135,6 +136,7 @@ describe('AddProductActionProcessor - New Fields', () => {
 		expect(createdProduct.genre).toBe('Aventura');
 		expect(createdProduct.publisher).toBe('Panini');
 		expect(createdProduct.contributors).toEqual(['Eiichiro Oda']);
+		expect(createdProduct.product_group).toBe('Book');
 		expect(createdProduct.store).toBe('Amazon');
 		
 		// Verify timestamps
@@ -154,7 +156,7 @@ describe('AddProductActionProcessor - New Fields', () => {
 			imageUrl: 'https://example.com/image.jpg',
 			isPreOrder: false,
 			url: 'https://amazon.com.br/dp/B012345679',
-			// No category, format, genre, publisher, contributors
+			// No category, format, genre, publisher, contributors, productGroup
 		};
 
 		const action: AddProductAction = createTestAction('B012345679', {
@@ -191,6 +193,7 @@ describe('AddProductActionProcessor - New Fields', () => {
 		expect(createdProduct.genre).toBeUndefined();
 		expect(createdProduct.publisher).toBeUndefined();
 		expect(createdProduct.contributors).toBeUndefined();
+		expect(createdProduct.product_group).toBeUndefined();
 		expect(createdProduct.store).toBe('Amazon'); // Default value
 	});
 });

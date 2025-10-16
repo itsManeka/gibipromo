@@ -16,7 +16,7 @@ export function Header() {
 
 	const navigation = [
 		{ name: 'Início', href: '/', icon: Home, public: true },
-		{ name: 'Promoções', href: '/promocoes', icon: Tag, public: false }
+		{ name: 'Promoções', href: '/promocoes', icon: Tag, public: true }
 	]
 
 	const mobileNavigation = [

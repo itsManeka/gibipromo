@@ -45,6 +45,25 @@ class MockProductRepository implements ProductRepository {
 		return this.products.slice(0, limit);
 	}
 
+	async findPromotions(filters: any, limit: number): Promise<Product[]> {
+		// Mock simples - retorna todos os produtos até o limite
+		return this.products.slice(0, limit);
+	}
+
+	async findByIds(ids: string[]): Promise<Product[]> {
+		return this.products.filter(p => ids.includes(p.id));
+	}
+
+	async getUniqueFilterValues(): Promise<any> {
+		return {
+			categories: [],
+			publishers: [],
+			genres: [],
+			formats: [],
+			contributors: []
+		};
+	}
+
 	// Método auxiliar para testes
 	setProducts(products: Product[]): void {
 		this.products = products;
@@ -358,7 +377,7 @@ describe('ProductsService', () => {
 			const options: PaginationOptions = { page: 1, limit: 10 };
 
 			// Primeira chamada
-			const result1 = await service.searchProducts(filters, options);
+			await service.searchProducts(filters, options);
 
 			// Limpar produtos
 			mockRepository.setProducts([]);
@@ -506,6 +525,125 @@ describe('ProductsService', () => {
 			const result = await service.searchProducts(filters, { page: 1, limit: 10 });
 
 			expect(result.data).toHaveLength(2);
+		});
+	});
+
+	describe('getPromotions', () => {
+		it('should call repository.findPromotions with correct parameters', async () => {
+			const mockProducts = [
+				createTestProduct({ id: 'promo1', full_price: 100, price: 50 }),
+				createTestProduct({ id: 'promo2', full_price: 80, price: 64 })
+			];
+			
+			// Mock findPromotions to return products
+			jest.spyOn(mockRepository, 'findPromotions').mockResolvedValue(mockProducts);
+
+			const filters = { category: 'HQs' };
+			await service.getPromotions(filters, { page: 1, limit: 10 });
+
+			expect(mockRepository.findPromotions).toHaveBeenCalledWith(filters, 1000);
+		});
+
+		it('should return paginated results', async () => {
+			const mockProducts = [
+				createTestProduct({ id: 'promo1', full_price: 100, price: 50 }),
+				createTestProduct({ id: 'promo2', full_price: 80, price: 64 }),
+				createTestProduct({ id: 'promo3', full_price: 120, price: 36 })
+			];
+			
+			jest.spyOn(mockRepository, 'findPromotions').mockResolvedValue(mockProducts);
+
+			const result = await service.getPromotions({}, { page: 1, limit: 2 });
+
+			expect(result.data).toHaveLength(2);
+			expect(result.pagination.total).toBe(3);
+			expect(result.pagination.totalPages).toBe(2);
+		});
+
+		it('should sort by discount (default)', async () => {
+			const mockProducts = [
+				createTestProduct({ id: 'promo1', full_price: 100, price: 50 }), // 50% off
+				createTestProduct({ id: 'promo2', full_price: 100, price: 70 }), // 30% off
+				createTestProduct({ id: 'promo3', full_price: 100, price: 20 })  // 80% off
+			];
+			
+			jest.spyOn(mockRepository, 'findPromotions').mockResolvedValue(mockProducts);
+
+			const result = await service.getPromotions({}, { page: 1, limit: 10 }, 'discount');
+
+			// Should be sorted by discount descending: promo3, promo1, promo2
+			expect(result.data[0].id).toBe('promo3');
+			expect(result.data[1].id).toBe('promo1');
+			expect(result.data[2].id).toBe('promo2');
+		});
+
+		it('should cache promotions results', async () => {
+			const mockProducts = [
+				createTestProduct({ id: 'promo1', full_price: 100, price: 50 })
+			];
+			
+			const findPromotionsSpy = jest.spyOn(mockRepository, 'findPromotions')
+				.mockResolvedValue(mockProducts);
+
+			// First call
+			const result1 = await service.getPromotions({ category: 'HQs' }, { page: 1, limit: 10 });
+			
+			// Second call with same params - should use cache
+			const result2 = await service.getPromotions({ category: 'HQs' }, { page: 1, limit: 10 });
+
+			// Repository should only be called once due to cache
+			expect(findPromotionsSpy).toHaveBeenCalledTimes(1);
+			expect(result2.data).toEqual(result1.data);
+		});
+
+		it('should handle empty results', async () => {
+			jest.spyOn(mockRepository, 'findPromotions').mockResolvedValue([]);
+
+			const result = await service.getPromotions({ category: 'Non-Existent' }, { page: 1, limit: 10 });
+
+			expect(result.data).toHaveLength(0);
+			expect(result.pagination.total).toBe(0);
+		});
+	});
+
+	describe('getFilterOptions', () => {
+		it('should call repository.getUniqueFilterValues', async () => {
+			const mockOptions = {
+				categories: ['HQs', 'Mangás'],
+				publishers: ['Panini', 'DC Comics'],
+				genres: ['Superheroes', 'Aventura'],
+				formats: ['Capa Dura', 'Brochura'],
+				contributors: ['Stan Lee', 'Frank Miller']
+			};
+			
+			jest.spyOn(mockRepository, 'getUniqueFilterValues').mockResolvedValue(mockOptions);
+
+			const result = await service.getFilterOptions();
+
+			expect(mockRepository.getUniqueFilterValues).toHaveBeenCalled();
+			expect(result).toEqual(mockOptions);
+		});
+
+		it('should cache filter options', async () => {
+			const mockOptions = {
+				categories: ['HQs'],
+				publishers: ['Panini'],
+				genres: ['Superheroes'],
+				formats: ['Capa Dura'],
+				contributors: ['Stan Lee']
+			};
+			
+			const getUniqueValuesSpy = jest.spyOn(mockRepository, 'getUniqueFilterValues')
+				.mockResolvedValue(mockOptions);
+
+			// First call
+			await service.getFilterOptions();
+			
+			// Second call - should use cache
+			await service.getFilterOptions();
+
+			// Repository should only be called once due to cache
+			expect(getUniqueValuesSpy).toHaveBeenCalledTimes(1);
 		});
 	});
 });

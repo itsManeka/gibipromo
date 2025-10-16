@@ -458,6 +458,138 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
+### Promotions (Public/Protected)
+
+#### GET `/api/v1/products/promotions`
+Listar produtos em promoção com filtros avançados. Suporta acesso público (todos os produtos) ou autenticado (com filtro "Meus Produtos").
+
+**Query Parameters:**
+
+| Parâmetro | Tipo | Obrigatório | Descrição | Exemplo |
+|-----------|------|-------------|-----------|---------|
+| `page` | number | Não | Número da página (padrão: 1) | `page=2` |
+| `limit` | number | Não | Itens por página (1-100, padrão: 20) | `limit=50` |
+| `sortBy` | string | Não | Ordenação: `discount`, `price_asc`, `price_desc`, `newest`, `oldest` (padrão: `discount`) | `sortBy=price_asc` |
+| `q` | string | Não | Busca por título ou contributors | `q=spider-man` |
+| `category` | string | Não | Filtrar por categoria | `category=HQs` |
+| `publisher` | string | Não | Filtrar por editora | `publisher=Panini` |
+| `genre` | string | Não | Filtrar por gênero | `genre=Superheroes` |
+| `format` | string | Não | Filtrar por formato | `format=Capa%20Dura` |
+| `contributors` | string | Não | Filtrar por autores/ilustradores (separados por `\|`) | `contributors=Stan%20Lee\|Jack%20Kirby` |
+| `preorder` | boolean | Não | Filtrar pré-vendas (padrão: false) | `preorder=true` |
+| `inStock` | boolean | Não | Apenas em estoque (padrão: true) | `inStock=false` |
+| `onlyMyProducts` | boolean | Não | Apenas produtos do usuário autenticado (padrão: false) | `onlyMyProducts=true` |
+
+**Headers (Opcionais):**
+```
+Authorization: Bearer <jwt-token>  # Apenas para onlyMyProducts=true
+```
+
+**Exemplo de Request:**
+```bash
+# Buscar HQs do Stan Lee com mais de 30% de desconto
+GET /api/v1/products/promotions?category=HQs&contributors=Stan%20Lee&sortBy=discount&limit=10
+
+# Buscar apenas produtos em estoque do usuário autenticado
+GET /api/v1/products/promotions?onlyMyProducts=true&inStock=true
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Promotions retrieved successfully",
+  "data": {
+    "products": [
+      {
+        "id": "B09876543",
+        "title": "Homem-Aranha: Coleção Definitiva Vol. 1",
+        "price": 49.90,
+        "full_price": 99.90,
+        "old_price": 89.90,
+        "lowest_price": 45.00,
+        "discount_percentage": 50.05,
+        "url": "https://amazon.com.br/dp/B09876543",
+        "image": "https://m.media-amazon.com/images/I/81xyz.jpg",
+        "in_stock": true,
+        "preorder": false,
+        "offer_id": "AMAZON",
+        "store": "Amazon",
+        "category": "HQs",
+        "publisher": "Panini",
+        "genre": "Superheroes",
+        "format": "Capa Dura",
+        "contributors": ["Stan Lee", "Steve Ditko"],
+        "created_at": "2025-10-10T10:00:00.000Z",
+        "updated_at": "2025-10-16T14:30:00.000Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 143,
+      "totalPages": 8
+    },
+    "appliedFilters": {
+      "category": "HQs",
+      "contributors": ["Stan Lee"],
+      "sortBy": "discount"
+    }
+  }
+}
+```
+
+**Notas:**
+- Cache de 3 minutos para consultas públicas
+- Produtos com `price >= full_price` são excluídos automaticamente
+- Filtro `contributors` usa delimitador `|` para suportar nomes com vírgula (ex: "Lee, Stan")
+- Ordenação `discount` mostra maior desconto percentual primeiro
+- `onlyMyProducts=true` requer autenticação JWT
+
+#### GET `/api/v1/products/filter-options`
+Obter valores únicos disponíveis para filtros (categorias, editoras, gêneros, formatos, contributors).
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Filter options retrieved successfully",
+  "data": {
+    "categories": ["HQs", "Mangás", "Graphic Novels"],
+    "publishers": ["Panini", "DC Comics", "Marvel", "JBC", "NewPOP"],
+    "genres": ["Superheroes", "Ação", "Fantasia", "Terror", "Drama"],
+    "formats": ["Capa Dura", "Brochura"],
+    "contributors": [
+      "Stan Lee",
+      "Jack Kirby",
+      "Alan Moore",
+      "Frank Miller",
+      "Akira Toriyama"
+    ]
+  }
+}
+```
+
+**Notas:**
+- Cache de 5 minutos
+- Retorna apenas valores de produtos cadastrados no sistema
+- Contributors ordenados alfabeticamente
+- Acesso público (sem autenticação necessária)
+
+**Exemplo curl:**
+```bash
+# Obter opções de filtro
+curl -X GET http://localhost:3000/api/v1/products/filter-options
+
+# Buscar promoções com múltiplos filtros
+curl -X GET "http://localhost:3000/api/v1/products/promotions?category=HQs&publisher=Panini&contributors=Millar%2C%20Mark|Buckingham%2C%20Mark&inStock=true&sortBy=discount&page=1&limit=20"
+
+# Buscar produtos do usuário autenticado
+curl -X GET "http://localhost:3000/api/v1/products/promotions?onlyMyProducts=true" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
 ### Health Check
 
 #### GET `/api/v1/health`

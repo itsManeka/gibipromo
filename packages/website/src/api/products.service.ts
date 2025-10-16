@@ -16,17 +16,69 @@ export interface Product {
 	id: string; // ASIN
 	title: string;
 	price: number;
-	full_price?: number;
+	full_price: number;
 	old_price?: number;
-	lowest_price?: number;
+	lowest_price: number;
 	url: string;
 	image: string;
 	in_stock: boolean;
 	preorder: boolean;
-	offer_id?: string;
-	store?: string;
+	offer_id: string;
+	store: string;
+	category?: string;
+	format?: string;
+	genre?: string;
+	publisher?: string;
+	contributors?: string[];
+	product_group?: string;
 	created_at: string;
 	updated_at: string;
+}
+
+/**
+ * Filtros para busca de promoções
+ */
+export interface PromotionFilters {
+	query?: string;
+	category?: string;
+	publisher?: string;
+	genre?: string;
+	format?: string;
+	contributors?: string[];
+	preorder?: boolean;
+	inStock?: boolean;
+	onlyMyProducts?: boolean;
+}
+
+/**
+ * Opções de ordenação para promoções
+ */
+export type PromotionSortType = 'discount' | 'price-low' | 'price-high' | 'name';
+
+/**
+ * Opções de filtros disponíveis
+ */
+export interface FilterOptions {
+	categories: string[];
+	publishers: string[];
+	genres: string[];
+	formats: string[];
+	contributors: string[];
+}
+
+/**
+ * Resultado paginado
+ */
+export interface PaginatedResult<T> {
+	data: T[];
+	pagination: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+		hasNextPage: boolean;
+		hasPreviousPage: boolean;
+	};
 }
 
 /**
@@ -126,6 +178,75 @@ export const productsService = {
 
 		if (!response.data.success || !response.data.data) {
 			throw new Error(response.data.error || 'Falha ao buscar produto');
+		}
+
+		return response.data.data;
+	},
+
+	/**
+	 * Busca promoções com filtros avançados
+	 * @param filters - Filtros a serem aplicados
+	 * @param page - Página atual (padrão: 1)
+	 * @param limit - Itens por página (padrão: 20)
+	 * @param sortBy - Tipo de ordenação (padrão: 'discount')
+	 * @returns Resultado paginado com promoções
+	 */
+	async getPromotions(
+		filters: PromotionFilters = {},
+		page: number = 1,
+		limit: number = 20,
+		sortBy: PromotionSortType = 'discount'
+	): Promise<PaginatedResult<Product>> {
+		// Construir query params
+		const params = new URLSearchParams();
+		params.append('page', page.toString());
+		params.append('limit', limit.toString());
+		params.append('sortBy', sortBy);
+
+		if (filters.query) params.append('q', filters.query);
+		if (filters.category) params.append('category', filters.category);
+		if (filters.publisher) params.append('publisher', filters.publisher);
+		if (filters.genre) params.append('genre', filters.genre);
+		if (filters.format) params.append('format', filters.format);
+		
+		if (filters.contributors && filters.contributors.length > 0) {
+			params.append('contributors', filters.contributors.join('|'));
+		}
+		
+		if (filters.preorder !== undefined) {
+			params.append('preorder', filters.preorder.toString());
+		}
+		
+		if (filters.inStock !== undefined) {
+			params.append('inStock', filters.inStock.toString());
+		}
+		
+		if (filters.onlyMyProducts !== undefined) {
+			params.append('onlyMyProducts', filters.onlyMyProducts.toString());
+		}
+
+		const response = await apiClient.get<ApiResponse<PaginatedResult<Product>>>(
+			`/products/promotions?${params.toString()}`
+		);
+
+		if (!response.data.success || !response.data.data) {
+			throw new Error(response.data.error || 'Falha ao buscar promoções');
+		}
+
+		return response.data.data;
+	},
+
+	/**
+	 * Busca opções disponíveis para filtros
+	 * @returns Valores únicos de cada campo filtrável
+	 */
+	async getFilterOptions(): Promise<FilterOptions> {
+		const response = await apiClient.get<ApiResponse<FilterOptions>>(
+			'/products/filter-options'
+		);
+
+		if (!response.data.success || !response.data.data) {
+			throw new Error(response.data.error || 'Falha ao buscar opções de filtros');
 		}
 
 		return response.data.data;

@@ -17,6 +17,9 @@ export * from './entities/UserProfile';
 // Re-exporta utilitários
 export * from './utils/Logger';
 
+// Re-exporta tipos
+export * from './types/PromotionFilters';
+
 // Re-exporta interfaces de repositórios
 export * from './repositories/Repository';
 export * from './repositories/ActionRepository';

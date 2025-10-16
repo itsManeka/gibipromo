@@ -55,6 +55,7 @@ export class AmazonPAAPIClient implements AmazonProductAPI {
 				'ItemInfo.Classifications',
 				'ItemInfo.ByLineInfo',
 				'BrowseNodeInfo.BrowseNodes',
+				'OffersV2.Listings.Availability',
 				'OffersV2.Listings.MerchantInfo',
 				'OffersV2.Listings.Price',
 			];
@@ -109,7 +110,7 @@ export class AmazonPAAPIClient implements AmazonProductAPI {
 				const title = item.ItemInfo?.Title?.DisplayValue || '';
 				const price = listing.Price;
 
-				const savingBasis = listing.Price?.SavingBasis;
+				const savingBasis = listing.Price?.SavingBasis?.Money;
 
 				const currentPrice = Number(price?.Money?.Amount) || 0;
 				const fullPrice = Number(savingBasis?.Amount) || currentPrice;
@@ -117,10 +118,11 @@ export class AmazonPAAPIClient implements AmazonProductAPI {
 				const offerId = listing.MerchantInfo?.Id || '';
 				const inStock = offerId !== '' && listing.Availability?.Type !== 'OUT_OF_STOCK';
 				const isPreOrder = listing.Availability?.Type === 'PREORDER';
-
+				
 				// Extract new fields
 				const category = this.extractCategory(item);
-				const format = item.ItemInfo?.Classifications?.Bindings?.DisplayValue || undefined;
+				const format = item.ItemInfo?.Classifications?.Binding?.DisplayValue || undefined;
+				const productGroup = item.ItemInfo?.Classifications?.ProductGroup?.DisplayValue || undefined;
 				const genre = this.extractGenre(item);
 				const publisher = item.ItemInfo?.ByLineInfo?.Brand?.DisplayValue || 
 					item.ItemInfo?.ByLineInfo?.Manufacturer?.DisplayValue || undefined;
@@ -142,7 +144,8 @@ export class AmazonPAAPIClient implements AmazonProductAPI {
 					format,
 					genre,
 					publisher,
-					contributors
+					contributors,
+					productGroup
 				};
 
 				result.set(item.ASIN!, product);

@@ -151,6 +151,7 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 				genre: amazonProduct.genre,
 				publisher: amazonProduct.publisher,
 				contributors: amazonProduct.contributors,
+				product_group: amazonProduct.productGroup,
 				store: 'Amazon'
 			});
 
@@ -168,6 +169,7 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 			if (oldPrice === newPrice &&
 				product.in_stock === amazonProduct.inStock &&
 				product.preorder === amazonProduct.isPreOrder &&
+				product.full_price === amazonProduct.fullPrice &&
 				existingProductUser) {
 				console.log(`Nenhuma mudança para o produto ${product.title}, pulando atualização.`);
 				await this.actionRepository.markProcessed(action.id);

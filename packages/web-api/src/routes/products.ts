@@ -8,7 +8,7 @@
 
 import { Router } from 'express';
 import { ProductsController } from '../controllers/ProductsController';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, optionalAuthMiddleware } from '../middleware/auth';
 
 const router = Router();
 const productsController = new ProductsController();
@@ -19,6 +19,20 @@ const productsController = new ProductsController();
  * Public endpoint - no authentication required
  */
 router.get('/', productsController.listProducts);
+
+/**
+ * GET /products/promotions
+ * List promotions with advanced filters
+ * Public endpoint with optional authentication for "Meus Produtos" filter
+ */
+router.get('/promotions', optionalAuthMiddleware, productsController.getPromotions);
+
+/**
+ * GET /products/filter-options
+ * Get unique values for filterable fields (categories, publishers, etc)
+ * Public endpoint - no authentication required
+ */
+router.get('/filter-options', productsController.getFilterOptions);
 
 /**
  * GET /products/search

@@ -11,10 +11,11 @@ import { BaseController } from './BaseController';
 import {
 	ProductsService,
 	PaginationOptions,
-	ProductSearchFilters
+	ProductSearchFilters,
+	PromotionSortType
 } from '../services/ProductsService';
-import { ApiResponse } from '@gibipromo/shared';
-import { DynamoDBProductRepository } from '@gibipromo/shared';
+import { ApiResponse, PromotionFilters } from '@gibipromo/shared';
+import { DynamoDBProductRepository, DynamoDBProductUserRepository } from '@gibipromo/shared';
 
 /**
  * Products Controller
@@ -26,7 +27,8 @@ export class ProductsController extends BaseController {
 	constructor() {
 		super();
 		const productRepository = new DynamoDBProductRepository();
-		this.productsService = new ProductsService(productRepository);
+		const productUserRepository = new DynamoDBProductUserRepository();
+		this.productsService = new ProductsService(productRepository, productUserRepository);
 	}
 
 	/**
@@ -232,5 +234,116 @@ export class ProductsController extends BaseController {
 		};
 
 		this.sendSuccess(res, response);
+	});
+
+	/**
+	 * GET /products/promotions
+	 * List promotions with advanced filters
+	 * Public endpoint with optional authentication for "Meus Produtos" filter
+	 */
+	getPromotions = this.asyncHandler(async (req: Request, res: Response) => {
+		// Parse pagination parameters
+		const pageParam = req.query.page as string;
+		const limitParam = req.query.limit as string;
+		
+		const page = pageParam ? parseInt(pageParam, 10) : 1;
+		const limit = limitParam ? parseInt(limitParam, 10) : 20;
+
+		// Validação de paginação
+		if (isNaN(page) || page < 1) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Page must be greater than 0'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		if (isNaN(limit) || limit < 1 || limit > 100) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Limit must be between 1 and 100'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		// Parse filter parameters
+		const filters: PromotionFilters = {
+			query: req.query.q as string,
+			category: req.query.category as string,
+			publisher: req.query.publisher as string,
+			genre: req.query.genre as string,
+			format: req.query.format as string,
+			contributors: req.query.contributors 
+				? (req.query.contributors as string).split('|').map(c => c.trim())
+				: undefined,
+			preorder: req.query.preorder === 'true',
+			inStock: req.query.inStock !== 'false', // Padrão: true (apenas em estoque)
+			onlyMyProducts: req.query.onlyMyProducts === 'true'
+		};
+
+		// Parse sort parameter
+		const sortBy = (req.query.sortBy as PromotionSortType) || 'discount';
+
+		// Validar sortBy
+		const validSorts: PromotionSortType[] = ['discount', 'price-low', 'price-high', 'name'];
+		if (!validSorts.includes(sortBy)) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: `Invalid sortBy. Valid values: ${validSorts.join(', ')}`
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		// Get userId from optionalAuth middleware (if authenticated)
+		const userId = req.user?.id;
+
+		// Validar filtro "Meus Produtos" sem autenticação
+		if (filters.onlyMyProducts && !userId) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Você precisa estar autenticado para usar o filtro "Meus Produtos"'
+			};
+			return this.sendUnauthorized(res, response);
+		}
+
+		try {
+			const result = await this.productsService.getPromotions(
+				filters,
+				{ page, limit },
+				sortBy,
+				userId
+			);
+
+			const response: ApiResponse<typeof result> = {
+				success: true,
+				data: result,
+				message: `${result.data.length} promoções encontradas`
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			throw error;
+		}
+	});
+
+	/**
+	 * GET /products/filter-options
+	 * Get unique values for filterable fields
+	 * Public endpoint - no authentication required
+	 */
+	getFilterOptions = this.asyncHandler(async (req: Request, res: Response) => {
+		try {
+			const options = await this.productsService.getFilterOptions();
+
+			const response: ApiResponse<typeof options> = {
+				success: true,
+				data: options,
+				message: 'Filter options retrieved'
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			throw error;
+		}
 	});
 }

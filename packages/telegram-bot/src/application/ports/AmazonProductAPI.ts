@@ -15,6 +15,7 @@ export interface AmazonProduct {
 	genre?: string; // Genre (e.g., Fantasia, Aventura)
 	publisher?: string; // Publisher (e.g., Editora JBC, Panini)
 	contributors?: string[]; // List of authors, illustrators, etc.
+	productGroup?: string; // e.g., "Book", "Drugstore", etc.
 }
 
 /**

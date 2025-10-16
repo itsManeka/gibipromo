@@ -22,7 +22,7 @@ export default {
 			statements: 80
 		}
 	},
-	moduleNameMapping: {
+	moduleNameMapper: {
 		'^@/(.*)$': '<rootDir>/src/$1',
 		'^@shared/(.*)$': '<rootDir>/../shared/src/$1',
 		'\\.(css|less|scss|sass)$': 'identity-obj-proxy'

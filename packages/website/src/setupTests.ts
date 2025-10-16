@@ -1,5 +1,22 @@
 import '@testing-library/jest-dom'
 
+// Mock do módulo client.ts para evitar problemas com import.meta.env
+jest.mock('./api/client');
+
+// Mock do import.meta.env (Vite environment variables)
+// @ts-ignore - import.meta não existe no Node.js/Jest
+global.import = {
+	meta: {
+		env: {
+			VITE_API_URL: 'http://localhost:3000/api/v1',
+			VITE_TELEGRAM_BOT_URL: 'https://t.me/test_bot',
+			MODE: 'test',
+			DEV: false,
+			PROD: false,
+		}
+	}
+}
+
 // Mock do matchMedia para os testes
 Object.defineProperty(window, 'matchMedia', {
 	writable: true,

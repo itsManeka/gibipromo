@@ -1,63 +1,72 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { User, Edit3, Save, X, Bell, Star, TrendingDown, BookOpen } from 'lucide-react'
-
-// Mock data do usuário
-const mockUser = {
-	id: '1',
-	name: 'João Silva',
-	email: 'joao@email.com',
-	telegramUsername: '@joaosilva',
-	avatar: '/api/placeholder/100/100',
-	joinedAt: '2024-01-15',
-	stats: {
-		totalSavings: 285.50,
-		alertsReceived: 42,
-		favoriteProducts: 18
-	}
-}
-
-// Mock data dos produtos favoritos
-const favoriteProducts = [
-	{
-		id: '1',
-		title: 'One Piece - Vol. 1',
-		author: 'Eiichiro Oda',
-		currentPrice: 19.90,
-		targetPrice: 15.00,
-		cover: '/api/placeholder/150/200'
-	},
-	{
-		id: '2',
-		title: 'Batman: Ano Um',
-		author: 'Frank Miller',
-		currentPrice: 35.50,
-		targetPrice: 25.00,
-		cover: '/api/placeholder/150/200'
-	},
-	{
-		id: '3',
-		title: 'Attack on Titan - Vol. 1',
-		author: 'Hajime Isayama',
-		currentPrice: 22.45,
-		targetPrice: 18.00,
-		cover: '/api/placeholder/150/200'
-	}
-]
+import { User, Edit3, Save, X, Bell, Star, TrendingDown, BookOpen, AlertCircle } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
+import { useProfile } from '../contexts/ProfileContext'
+import { formatDate } from '../utils/date'
 
 export function Profile() {
+	const { user } = useAuth()
+	const { profile, isLoading, error, updateProfile } = useProfile()
 	const [isEditing, setIsEditing] = useState(false)
-	const [editedUser, setEditedUser] = useState(mockUser)
+	const [editedNick, setEditedNick] = useState('')
+	const [updateError, setUpdateError] = useState<string | null>(null)
 
-	const handleSave = () => {
-		// Aqui seria feita a chamada para a API
-		console.log('Salvando dados:', editedUser)
-		setIsEditing(false)
+	// Inicializa o nick editável quando o perfil carrega
+	useEffect(() => {
+		if (profile?.nick) {
+			setEditedNick(profile.nick)
+		}
+	}, [profile])
+
+	const handleSave = async () => {
+		if (!editedNick.trim()) {
+			setUpdateError('O nickname não pode estar vazio')
+			return
+		}
+
+		try {
+			setUpdateError(null)
+			await updateProfile(editedNick.trim())
+			setIsEditing(false)
+		} catch (err) {
+			setUpdateError(err instanceof Error ? err.message : 'Erro ao atualizar perfil')
+		}
 	}
 
 	const handleCancel = () => {
-		setEditedUser(mockUser)
+		setEditedNick(profile?.nick || '')
+		setUpdateError(null)
 		setIsEditing(false)
+	}
+
+	if (isLoading && !profile) {
+		return (
+			<div className="min-h-screen flex items-center justify-center">
+				<div className="text-center">
+					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-yellow mx-auto mb-4"></div>
+					<p className="text-primary-light">Carregando perfil...</p>
+				</div>
+			</div>
+		)
+	}
+
+	if (error) {
+		return (
+			<div className="min-h-screen flex items-center justify-center px-4">
+				<div className="card max-w-md w-full text-center">
+					<AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+					<h2 className="text-xl font-semibold text-white mb-2">Erro ao carregar perfil</h2>
+					<p className="text-primary-light mb-4">{error}</p>
+					<button 
+						onClick={() => window.location.reload()} 
+						className="btn-primary"
+					>
+						Tentar novamente
+					</button>
+				</div>
+			</div>
+		)
 	}
 
 	return (
@@ -115,28 +124,29 @@ export function Profile() {
 									<div className="w-24 h-24 bg-purple-600 rounded-full flex items-center justify-center">
 										<User className="h-12 w-12 text-white" />
 									</div>
-									{isEditing && (
-										<button className="text-primary-yellow text-sm mt-2 hover:underline">
-											Alterar foto
-										</button>
-									)}
 								</div>
 
 								{/* Informações */}
 								<div className="flex-1 space-y-4">
 									<div>
 										<label className="block text-sm font-medium text-primary-light mb-1">
-											Nome
+											Nickname
 										</label>
 										{isEditing ? (
-											<input
-												type="text"
-												className="input w-full"
-												value={editedUser.name}
-												onChange={(e) => setEditedUser({ ...editedUser, name: e.target.value })}
-											/>
+											<div>
+												<input
+													type="text"
+													className="input w-full"
+													value={editedNick}
+													onChange={(e) => setEditedNick(e.target.value)}
+													placeholder="Digite seu nickname"
+												/>
+												{updateError && (
+													<p className="text-red-400 text-sm mt-1">{updateError}</p>
+												)}
+											</div>
 										) : (
-											<p className="text-white">{mockUser.name}</p>
+											<p className="text-white">{profile?.nick || 'Não definido'}</p>
 										)}
 									</div>
 
@@ -144,15 +154,15 @@ export function Profile() {
 										<label className="block text-sm font-medium text-primary-light mb-1">
 											Email
 										</label>
-										<p className="text-white">{mockUser.email}</p>
+										<p className="text-white">{user?.email}</p>
 									</div>
 
 									<div>
 										<label className="block text-sm font-medium text-primary-light mb-1">
 											Membro desde
 										</label>
-										<p className="text-primary-light">
-											{new Date(mockUser.joinedAt).toLocaleDateString('pt-BR')}
+										<p className="text-sm text-gray-400">
+											{user?.created_at ? formatDate(user.created_at) : 'Data não disponível'}
 										</p>
 									</div>
 								</div>
@@ -183,7 +193,7 @@ export function Profile() {
 					<div className="card">
 						<div className="flex justify-between items-center mb-6">
 							<h2 className="text-xl font-semibold text-white">
-								⭐ Ultimas promoções
+								⭐ Últimas promoções
 							</h2>
 							{/* Link para as promoções */}
 							<Link to="/promocoes" className="btn-ghost inline-flex items-center space-x-2 text-sm">
@@ -191,38 +201,15 @@ export function Profile() {
 							</Link>
 						</div>
 
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-							{favoriteProducts.map((product) => (
-								<div key={product.id} className="bg-dark-800 rounded-xl p-4 border border-dark-700">
-									<div className="flex space-x-3">
-										<div className="w-16 h-20 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-											<BookOpen className="h-8 w-8 text-white opacity-50" />
-										</div>
-										<div className="flex-1 min-w-0">
-											<h3 className="font-medium text-white text-sm line-clamp-2 mb-1">
-												{product.title}
-											</h3>
-											<p className="text-xs text-primary-light mb-2">
-												{product.author}
-											</p>
-											<div className="flex justify-between items-center">
-												<div>
-													<p className="text-xs text-primary-light">Atual</p>
-													<p className="text-sm font-semibold text-white">
-														R$ {product.currentPrice.toFixed(2)}
-													</p>
-												</div>
-												<div className="text-right">
-													<p className="text-xs text-primary-light">Meta</p>
-													<p className="text-sm font-semibold text-primary-yellow">
-														R$ {product.targetPrice.toFixed(2)}
-													</p>
-												</div>
-											</div>
-										</div>
-									</div>
-								</div>
-							))}
+						{/* Placeholder - será implementado quando integrar com produtos */}
+						<div className="text-center py-12">
+							<BookOpen className="h-12 w-12 text-primary-light mx-auto mb-4 opacity-50" />
+							<p className="text-primary-light">
+								Você ainda não tem produtos monitorados.
+							</p>
+							<Link to="/promocoes" className="btn-primary mt-4 inline-block">
+								Adicionar produto
+							</Link>
 						</div>
 					</div>
 				</div>

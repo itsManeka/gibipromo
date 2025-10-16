@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Menu, X, Settings, User, Home, Tag, LogOut, ChevronDown } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../contexts/AuthContext'
+import { useProfile } from '../contexts/ProfileContext'
 
 export function Header() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -11,6 +12,7 @@ export function Header() {
 	const navigate = useNavigate()
 	const { theme, toggleTheme } = useTheme()
 	const { user, isAuthenticated, logout } = useAuth()
+	const { profile } = useProfile()
 
 	const navigation = [
 		{ name: 'Início', href: '/', icon: Home, public: true },
@@ -77,7 +79,9 @@ export function Header() {
 										className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors"
 									>
 										<User className="h-4 w-4" />
-										<span className="max-w-[150px] truncate text-sm">{user?.email}</span>
+										<span className="max-w-[150px] truncate text-sm">
+											{profile?.nick ?? user?.email}
+										</span>
 										<ChevronDown className={`h-4 w-4 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
 									</button>
 

@@ -21,10 +21,10 @@ router.use('/auth', authRouter);
 router.use('/products', productsRouter);
 
 // User profile endpoints
-router.use('/users/profile', userProfileRouter);
+router.use('/users/', userProfileRouter);
 
 // User preferences endpoints
-router.use('/users/preferences', userPreferencesRouter);
+router.use('/users/', userPreferencesRouter);
 
 // Future routes will be added here:
 // router.use('/stats', statsRouter);

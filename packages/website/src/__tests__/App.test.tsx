@@ -25,11 +25,19 @@ jest.mock('../contexts/AuthContext', () => ({
 	)
 }))
 
+jest.mock('../contexts/ProfileContext', () => ({
+	ProfileProvider: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="profile-provider">{children}</div>
+	)
+}))
+
 describe('App', () => {
 	it('deve renderizar sem erros', () => {
 		render(<App />)
 
 		expect(screen.getByTestId('theme-provider')).toBeInTheDocument()
+		expect(screen.getByTestId('auth-provider')).toBeInTheDocument()
+		expect(screen.getByTestId('profile-provider')).toBeInTheDocument()
 		expect(screen.getByTestId('app-layout')).toBeInTheDocument()
 		expect(screen.getByTestId('app-routes')).toBeInTheDocument()
 	})
@@ -38,10 +46,14 @@ describe('App', () => {
 		render(<App />)
 
 		const themeProvider = screen.getByTestId('theme-provider')
+		const authProvider = screen.getByTestId('auth-provider')
+		const profileProvider = screen.getByTestId('profile-provider')
 		const appLayout = screen.getByTestId('app-layout')
 		const routes = screen.getByTestId('app-routes')
 
-		expect(themeProvider).toContainElement(appLayout)
+		expect(themeProvider).toContainElement(authProvider)
+		expect(authProvider).toContainElement(profileProvider)
+		expect(profileProvider).toContainElement(appLayout)
 		expect(appLayout).toContainElement(routes)
 	})
 })

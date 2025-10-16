@@ -8,3 +8,7 @@ export type { LoginRequest, RegisterRequest, AuthResponse } from './auth.service
 // Products Service
 export { productsService } from './products.service';
 export type { Product, ProductUser, AddProductRequest } from './products.service';
+
+// Profile Service
+export { profileService } from './profile.service';
+export type { UserProfile, UpdateProfileRequest } from './profile.service';

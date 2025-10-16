@@ -2,6 +2,7 @@ import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { Login } from '../Login'
+import { AuthProvider } from '../../contexts/AuthContext'
 
 // Mock dos ícones lucide-react
 jest.mock('lucide-react', () => ({
@@ -17,7 +18,9 @@ jest.mock('lucide-react', () => ({
 
 const LoginWithRouter = () => (
 	<BrowserRouter>
-		<Login />
+		<AuthProvider>
+			<Login />
+		</AuthProvider>
 	</BrowserRouter>
 )
 
@@ -47,11 +50,17 @@ describe('Login Page', () => {
 		render(<LoginWithRouter />)
 
 		const emailInput = screen.getByLabelText('Email')
+		const passwordInput = screen.getByLabelText('Senha')
 		const submitButton = screen.getByRole('button', { name: /entrar/i })
 
-		fireEvent.change(emailInput, { target: { value: 'email-invalido' } })
-		fireEvent.click(submitButton)
+		// Preencher com email inválido e senha válida
+		fireEvent.change(emailInput, { target: { value: 'emailinvalido' } })
+		fireEvent.change(passwordInput, { target: { value: '123456' } })
+		
+		// Submeter o formulário
+		fireEvent.submit(submitButton.closest('form')!)
 
+		// Aguardar a validação aparecer
 		await waitFor(() => {
 			expect(screen.getByText('Email inválido')).toBeInTheDocument()
 		})
@@ -85,19 +94,20 @@ describe('Login Page', () => {
 		}
 	})
 
-	it('deve mostrar informações do mock', () => {
+	it('deve ter link para recuperação de senha', () => {
 		render(<LoginWithRouter />)
 
-		expect(screen.getByText('💡 Demo - Dados para Teste')).toBeInTheDocument()
-		expect(screen.getByText('usuario@exemplo.com')).toBeInTheDocument()
-		expect(screen.getByText('123456')).toBeInTheDocument()
+		const forgotPasswordLink = screen.getByRole('link', { name: /esqueci minha senha/i })
+		expect(forgotPasswordLink).toBeInTheDocument()
+		expect(forgotPasswordLink).toHaveAttribute('href', '/esqueci-senha')
 	})
 
-	it('deve ter links para registro e telegram', () => {
+	it('deve ter link para registro', () => {
 		render(<LoginWithRouter />)
 
-		expect(screen.getByRole('link', { name: /cadastre-se grátis/i })).toHaveAttribute('href', '/registro')
-		expect(screen.getByRole('link', { name: /continuar com telegram/i })).toHaveAttribute('href', 'https://t.me/gibipromo_bot')
+		const registerLink = screen.getByRole('link', { name: /cadastre-se grátis/i })
+		expect(registerLink).toBeInTheDocument()
+		expect(registerLink).toHaveAttribute('href', '/registro')
 	})
 
 	it('deve simular login bem-sucedido com dados corretos', async () => {

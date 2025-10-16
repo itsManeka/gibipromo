@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { BookOpen, ExternalLink, TrendingDown, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
-import { PromotionFilters } from '../components'
+import { useAuth } from '../contexts/AuthContext'
+import { BookOpen, ExternalLink, TrendingDown, Loader2, AlertCircle, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
+import { PromotionFilters, AddProductForm } from '../components'
 import { 
 	productsService, 
 	PromotionFilters as IPromotionFilters,
@@ -23,6 +24,9 @@ export function Promotions() {
 	const [currentPage, setCurrentPage] = useState(1)
 	const [isLoading, setIsLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
+	const [showAddForm, setShowAddForm] = useState(false)
+	
+	const { isAuthenticated } = useAuth()
 
 	// Carregar opções de filtros
 	useEffect(() => {
@@ -114,9 +118,29 @@ export function Promotions() {
 			<div className="max-w-7xl mx-auto">
 				{/* Header */}
 				<div className="mb-8">
-					<h1 className="text-3xl md:text-4xl font-display font-bold text-white mb-2">
-						🔥 Promoções Ativas
-					</h1>
+					<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+						<h1 className="text-3xl md:text-4xl font-display font-bold text-white">
+							🔥 Promoções Ativas
+						</h1>
+						{isAuthenticated && (
+							<button
+								onClick={() => setShowAddForm(!showAddForm)}
+								className={`${showAddForm ? 'btn-ghost' : 'btn-primary'} inline-flex items-center space-x-2`}
+							>
+								{showAddForm ? (
+									<>
+										<X className="w-5 h-5" />
+										Fechar
+									</>
+								) : (
+									<>
+										<Plus className="w-5 h-5" />
+										Adicionar Produto
+									</>
+								)}
+							</button>
+						)}
+					</div>
 					<p className="text-dark-300">
 						{pagination ? (
 							<>
@@ -127,6 +151,18 @@ export function Promotions() {
 						)}
 					</p>
 				</div>
+
+				{/* Add Product Form */}
+				{showAddForm && (
+					<div className="mb-6">
+						<AddProductForm
+							compact
+							onSuccess={() => {
+								setShowAddForm(false)
+							}}
+						/>
+					</div>
+				)}
 
 				{/* Filtros */}
 				<PromotionFilters

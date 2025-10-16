@@ -16,6 +16,7 @@ export * from './entities/UserProfile';
 
 // Re-exporta utilitários
 export * from './utils/Logger';
+export * from './utils/urlResolver';
 
 // Re-exporta tipos
 export * from './types/PromotionFilters';

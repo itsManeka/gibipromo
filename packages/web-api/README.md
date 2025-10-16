@@ -2,7 +2,41 @@
 
 REST API para o website e extensão Chrome do GibiPromo.
 
-## 🚀 Início Rápido
+## � Índice
+
+- [Início Rápido](#-início-rápido)
+- [Infraestrutura DynamoDB](#-infraestrutura-dynamodb)
+- [Testes](#-testes)
+- [Variáveis de Ambiente](#-variáveis-de-ambiente)
+- [Arquitetura](#-arquitetura)
+- [API Endpoints](#-api-endpoints)
+  - [Authentication](#authentication)
+    - [POST /auth/register](#post-apiv1authregister)
+    - [POST /auth/login](#post-apiv1authlogin)
+  - [User Profile (Protected)](#user-profile-protected)
+    - [GET /users/profile](#get-apiv1usersprofile)
+    - [PUT /users/profile](#put-apiv1usersprofile)
+  - [User Preferences (Protected)](#user-preferences-protected)
+    - [GET /users/preferences](#get-apiv1userspreferences)
+    - [PUT /users/preferences](#put-apiv1userspreferences)
+  - [Products (Protected)](#products-protected)
+    - [GET /products](#get-apiv1products)
+    - [POST /products](#post-apiv1products)
+  - [Product Actions (Protected)](#product-actions-protected)
+    - [POST /products/add](#post-apiv1productsadd)
+    - [POST /products/add-multiple](#post-apiv1productsadd-multiple)
+    - [POST /products/validate-url](#post-apiv1productsvalidate-url)
+  - [Promotions (Public/Protected)](#promotions-publicprotected)
+    - [GET /products/promotions](#get-apiv1productspromotions)
+    - [GET /products/filter-options](#get-apiv1productsfilter-options)
+  - [Health Check](#health-check)
+    - [GET /health](#get-apiv1health)
+    - [GET /health/detailed](#get-apiv1healthdetailed)
+- [Debug](#-debug)
+- [Recursos Adicionais](#-recursos-adicionais)
+- [Contribuindo](#-contribuindo)
+
+## �🚀 Início Rápido
 
 ### Pré-requisitos
 
@@ -236,7 +270,36 @@ npm test -- --maxWorkers=1
 NODE_ENV=development npm test
 ```
 
-## � API Endpoints
+## 📡 API Endpoints
+
+### Resumo dos Endpoints
+
+| Método | Endpoint | Autenticação | Descrição |
+|--------|----------|--------------|-----------|
+| **Authentication** |
+| POST | `/api/v1/auth/register` | ❌ Público | Criar nova conta de usuário |
+| POST | `/api/v1/auth/login` | ❌ Público | Autenticar e obter token JWT |
+| **User Profile** |
+| GET | `/api/v1/users/profile` | ✅ JWT | Obter perfil do usuário |
+| PUT | `/api/v1/users/profile` | ✅ JWT | Atualizar perfil do usuário |
+| **User Preferences** |
+| GET | `/api/v1/users/preferences` | ✅ JWT | Obter preferências do usuário |
+| PUT | `/api/v1/users/preferences` | ✅ JWT | Atualizar preferências |
+| **Products** |
+| GET | `/api/v1/products` | ✅ JWT | Listar produtos monitorados |
+| POST | `/api/v1/products` | ✅ JWT | Adicionar produto (legado) |
+| **Product Actions** |
+| POST | `/api/v1/products/add` | ✅ JWT | Adicionar produto único via URL |
+| POST | `/api/v1/products/add-multiple` | ✅ JWT | Adicionar múltiplos produtos (máx 10) |
+| POST | `/api/v1/products/validate-url` | ❌ Público | Validar URL da Amazon |
+| **Promotions** |
+| GET | `/api/v1/products/promotions` | ⚠️ Opcional | Listar produtos em promoção com filtros |
+| GET | `/api/v1/products/filter-options` | ❌ Público | Obter opções de filtro disponíveis |
+| **Health Check** |
+| GET | `/api/v1/health` | ❌ Público | Status básico da API |
+| GET | `/api/v1/health/detailed` | ❌ Público | Status detalhado (inclui DynamoDB) |
+
+---
 
 ### Authentication
 
@@ -458,6 +521,280 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
+### Product Actions (Protected)
+
+#### POST `/api/v1/products/add`
+Adicionar produto único para monitoramento via URL da Amazon.
+
+**Headers:**
+```
+Authorization: Bearer <jwt-token>
+```
+
+**Request Body:**
+```json
+{
+  "url": "https://www.amazon.com.br/dp/B09876543"
+}
+```
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "message": "Produto adicionado com sucesso! Processaremos em breve.",
+  "data": {
+    "action_id": "action-uuid-v4"
+  }
+}
+```
+
+**Validações:**
+- URL é obrigatória
+- URL não pode estar vazia
+- URL deve ser de um domínio Amazon válido (`amazon.com`, `amazon.com.br`, `amzn.to`, `a.co`, etc.)
+- Usuário deve estar autenticado
+- Usuário deve estar ativo (`enabled: true`)
+
+**Erros:**
+
+**400 Bad Request:**
+```json
+{
+  "success": false,
+  "error": "URL é obrigatória"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "URL não pode estar vazia"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "URL deve ser da Amazon (amazon.com, amazon.com.br, amzn.to, a.co, etc.)"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Usuário não encontrado"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Usuário não está ativo"
+}
+```
+
+**401 Unauthorized:**
+```json
+{
+  "success": false,
+  "error": "Authentication required"
+}
+```
+
+#### POST `/api/v1/products/add-multiple`
+Adicionar múltiplos produtos para monitoramento em lote (máximo 10 URLs por requisição).
+
+**Headers:**
+```
+Authorization: Bearer <jwt-token>
+```
+
+**Request Body:**
+```json
+{
+  "urls": [
+    "https://www.amazon.com.br/dp/B09876543",
+    "https://www.amazon.com/dp/B12345678",
+    "https://amzn.to/abc123"
+  ]
+}
+```
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "message": "3 produtos adicionados com sucesso!",
+  "data": {
+    "success_count": 3,
+    "failed_count": 0,
+    "failed_urls": []
+  }
+}
+```
+
+**Response com Falhas Parciais (201):**
+```json
+{
+  "success": true,
+  "message": "2 de 3 produtos adicionados. 1 falhou.",
+  "data": {
+    "success_count": 2,
+    "failed_count": 1,
+    "failed_urls": [
+      "https://invalid-url.com/product"
+    ]
+  }
+}
+```
+
+**Validações:**
+- `urls` deve ser um array
+- Array não pode estar vazio
+- Máximo de 10 URLs por requisição
+- Cada URL deve ser de um domínio Amazon válido
+- Usuário deve estar autenticado
+- Usuário deve estar ativo (`enabled: true`)
+
+**Erros:**
+
+**400 Bad Request:**
+```json
+{
+  "success": false,
+  "error": "URLs deve ser um array"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Lista de URLs não pode estar vazia"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Máximo de 10 URLs por vez"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Usuário não encontrado"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Usuário não está ativo"
+}
+```
+
+**401 Unauthorized:**
+```json
+{
+  "success": false,
+  "error": "Authentication required"
+}
+```
+
+**Notas:**
+- Endpoint retorna **201** mesmo em caso de falhas parciais
+- URLs inválidas são retornadas no array `failed_urls`
+- Cada URL válida cria uma Action pendente para processamento assíncrono
+- O processamento das Actions é feito pelo telegram-bot scheduler
+- Suporta URLs encurtadas (`amzn.to`, `a.co`) que serão resolvidas
+
+#### POST `/api/v1/products/validate-url`
+Validar se uma URL é válida da Amazon (endpoint público, não requer autenticação).
+
+**Request Body:**
+```json
+{
+  "url": "https://www.amazon.com.br/dp/B09876543"
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "URL validation result",
+  "data": {
+    "valid": true
+  }
+}
+```
+
+**Response para URL Inválida (200):**
+```json
+{
+  "success": true,
+  "message": "URL validation result",
+  "data": {
+    "valid": false
+  }
+}
+```
+
+**Validações:**
+- URL é obrigatória
+- URL não pode estar vazia
+
+**Erros:**
+
+**400 Bad Request:**
+```json
+{
+  "success": false,
+  "error": "URL é obrigatória"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "URL não pode estar vazia"
+}
+```
+
+**Notas:**
+- Endpoint **público** (não requer autenticação)
+- Útil para validação no frontend antes de enviar
+- Retorna sempre **200** com campo `valid: true/false`
+- Valida domínios: `amazon.com`, `amazon.com.br`, `amazon.co.uk`, `amzn.to`, `a.co`, `amzlink.to`
+
+**Exemplo de uso completo:**
+```bash
+# 1. Validar URL antes de adicionar
+curl -X POST http://localhost:3001/api/v1/products/validate-url \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://www.amazon.com.br/dp/B09876543"}'
+
+# 2. Adicionar produto único
+curl -X POST http://localhost:3001/api/v1/products/add \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -d '{"url": "https://www.amazon.com.br/dp/B09876543"}'
+
+# 3. Adicionar múltiplos produtos
+curl -X POST http://localhost:3001/api/v1/products/add-multiple \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -d '{
+    "urls": [
+      "https://www.amazon.com.br/dp/B09876543",
+      "https://www.amazon.com/dp/B12345678",
+      "https://amzn.to/abc123"
+    ]
+  }'
+```
+
 ### Promotions (Public/Protected)
 
 #### GET `/api/v1/products/promotions`
@@ -661,11 +998,63 @@ Todas as rotas podem retornar os seguintes erros:
 }
 ```
 
-## �📚 Recursos Adicionais
+## 📚 Recursos Adicionais
 
 - [AWS SDK DynamoDB Documentation](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/dynamodb-examples.html)
 - [DynamoDB Local Guide](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html)
 - [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+
+## 🧪 Cobertura de Testes
+
+A Web API possui testes unitários completos para todos os endpoints e serviços:
+
+### Estrutura de Testes
+
+```
+tests/
+├── controllers/          # Testes de controllers (HTTP)
+│   ├── AuthController.test.ts
+│   ├── ProductActionsController.test.ts
+│   ├── ProductsController.test.ts
+│   ├── UserProfileController.test.ts
+│   └── UserPreferencesController.test.ts
+├── services/            # Testes de serviços (lógica de negócio)
+│   ├── AuthService.test.ts
+│   ├── ProductActionsService.test.ts
+│   ├── ProductsService.test.ts
+│   ├── UserProfileService.test.ts
+│   └── UserPreferencesService.test.ts
+├── middleware/          # Testes de middleware
+│   └── auth.test.ts
+├── routes/             # Testes de rotas
+│   └── health.test.ts
+└── infrastructure/     # Testes de infraestrutura
+    └── config/
+        └── dynamodb.test.ts
+```
+
+### Padrões de Teste
+
+- **Mock Repositories**: Implementações completas de interfaces para isolamento
+- **Supertest**: Testes HTTP para controllers
+- **Jest**: Framework de testes principal
+- **Coverage**: Relatórios de cobertura com Istanbul
+
+### Executar Testes
+
+```bash
+# Todos os testes
+npm test -- --maxWorkers=1
+
+# Testes específicos
+npm test -- ProductActions --maxWorkers=1
+
+# Com cobertura
+npm run test:coverage
+
+# Watch mode
+npm run test:watch
+```
 
 ## 🤝 Contribuindo
 

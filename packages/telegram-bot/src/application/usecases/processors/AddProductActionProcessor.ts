@@ -3,7 +3,7 @@ import {
 	AddProductAction,
 	createNotifyPriceAction
 } from '@gibipromo/shared/dist/entities/Action';
-import { createLogger } from '@gibipromo/shared';
+import { createLogger, resolveShortUrl } from '@gibipromo/shared';
 import { ActionRepository } from '../../ports/ActionRepository';
 import { ProductRepository } from '../../ports/ProductRepository';
 import { ProductUserRepository } from '../../ports/ProductUserRepository';
@@ -13,7 +13,6 @@ import { createProduct, updateProductPrice } from '@gibipromo/shared/dist/entiti
 import { createProductUser } from '@gibipromo/shared/dist/entities/ProductUser';
 import { ActionProcessor } from '../../ports/ActionProcessor';
 import { ProductStatsService } from '../ProductStatsService';
-import { resolveShortUrl } from '../../../infrastructure/utils/urlResolver';
 
 const logger = createLogger('AddProductActionProcessor');
 

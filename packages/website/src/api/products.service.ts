@@ -103,6 +103,23 @@ export interface AddProductRequest {
 }
 
 /**
+ * Resposta ao adicionar produto via URL
+ */
+export interface AddProductResponse {
+	action_id: string;
+	message: string;
+	estimated_time: string;
+}
+
+/**
+ * Resposta da validação de URL
+ */
+export interface ValidateUrlResponse {
+	valid: boolean;
+	message: string;
+}
+
+/**
  * Serviço de produtos
  * Responsável por gerenciar produtos monitorados pelo usuário
  */
@@ -250,5 +267,76 @@ export const productsService = {
 		}
 
 		return response.data.data;
+	},
+
+	/**
+	 * Adiciona produto para monitoramento via URL da Amazon
+	 * @param url - URL do produto na Amazon
+	 * @returns Dados da ação criada
+	 */
+	async addProductByUrl(url: string): Promise<AddProductResponse> {
+		const response = await apiClient.post<ApiResponse<AddProductResponse>>(
+			'/products/add',
+			{ url }
+		);
+
+		if (!response.data.success || !response.data.data) {
+			throw new Error(response.data.error || 'Falha ao adicionar produto');
+		}
+
+		return response.data.data;
+	},
+
+	/**
+	 * Adiciona múltiplos produtos de uma vez
+	 * @param urls - Array de URLs de produtos
+	 * @returns Resultado com contadores de sucesso/falha
+	 */
+	async addMultipleProducts(urls: string[]): Promise<{
+		success_count: number;
+		failed_count: number;
+		failed_urls: string[];
+		message: string;
+	}> {
+		const response = await apiClient.post<ApiResponse<{
+			success_count: number;
+			failed_count: number;
+			failed_urls: string[];
+			message: string;
+		}>>('/products/add-multiple', { urls });
+
+		if (!response.data.success || !response.data.data) {
+			throw new Error(response.data.error || 'Falha ao adicionar produtos');
+		}
+
+		return response.data.data;
+	},
+
+	/**
+	 * Valida URL da Amazon em tempo real (sem criar action)
+	 * @param url - URL a ser validada
+	 * @returns Resultado da validação
+	 */
+	async validateUrl(url: string): Promise<ValidateUrlResponse> {
+		try {
+			const response = await apiClient.post<ApiResponse<ValidateUrlResponse>>(
+				'/products/validate-url',
+				{ url }
+			);
+
+			if (!response.data.success || !response.data.data) {
+				return {
+					valid: false,
+					message: response.data.error || 'URL inválida'
+				};
+			}
+
+			return response.data.data;
+		} catch (error: any) {
+			return {
+				valid: false,
+				message: error.response?.data?.error || 'Erro ao validar URL'
+			};
+		}
 	},
 };

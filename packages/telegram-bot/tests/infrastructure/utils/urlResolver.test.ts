@@ -1,4 +1,4 @@
-import { resolveShortUrl } from '../../../src/infrastructure/utils/urlResolver';
+import { resolveShortUrl } from '@gibipromo/shared';
 
 describe('urlResolver', () => {
 	describe('resolveShortUrl', () => {

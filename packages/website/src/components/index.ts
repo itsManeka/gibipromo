@@ -1,1 +1,2 @@
-export { PromotionFilters } from './PromotionFilters'
+export { PromotionFilters } from './PromotionFilters';
+export { AddProductForm } from './AddProductForm';

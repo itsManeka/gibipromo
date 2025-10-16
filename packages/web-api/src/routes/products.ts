@@ -8,10 +8,19 @@
 
 import { Router } from 'express';
 import { ProductsController } from '../controllers/ProductsController';
+import { ProductActionsController } from '../controllers/ProductActionsController';
+import { ProductActionsService } from '../services/ProductActionsService';
 import { authMiddleware, optionalAuthMiddleware } from '../middleware/auth';
+import { createRepository } from '../infrastructure/factories/repositories';
 
 const router = Router();
 const productsController = new ProductsController();
+
+// Setup ProductActionsController
+const actionRepository = createRepository('actions');
+const userRepository = createRepository('users');
+const productActionsService = new ProductActionsService(actionRepository, userRepository);
+const productActionsController = new ProductActionsController(productActionsService);
 
 /**
  * GET /products
@@ -47,6 +56,27 @@ router.get('/search', productsController.searchProducts);
  * Public endpoint - no authentication required
  */
 router.get('/:id', productsController.getProductById);
+
+/**
+ * POST /products/add
+ * Add product to monitoring
+ * Requires authentication
+ */
+router.post('/add', authMiddleware, productActionsController.addProduct);
+
+/**
+ * POST /products/add-multiple
+ * Add multiple products to monitoring
+ * Requires authentication
+ */
+router.post('/add-multiple', authMiddleware, productActionsController.addMultipleProducts);
+
+/**
+ * POST /products/validate-url
+ * Validate Amazon URL without creating action
+ * Public endpoint - no authentication required (for real-time feedback)
+ */
+router.post('/validate-url', productActionsController.validateUrl);
 
 /**
  * DELETE /products/cache

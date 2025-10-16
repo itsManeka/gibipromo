@@ -1,313 +1,354 @@
-import React, { useState, useMemo } from 'react'
-import { Search, Filter, Star, BookOpen, ExternalLink, TrendingDown } from 'lucide-react'
-
-// Mock data expandido para promoções
-const mockPromotions = [
-	{
-		id: '1',
-		title: 'One Piece - Vol. 1',
-		author: 'Eiichiro Oda',
-		currentPrice: 19.90,
-		originalPrice: 29.90,
-		discount: 33,
-		cover: '/api/placeholder/200/300',
-		rating: 4.8,
-		reviews: 1250,
-		category: 'Mangá',
-		publisher: 'Panini',
-		format: 'Físico'
-	},
-	{
-		id: '2',
-		title: 'Attack on Titan - Vol. 1',
-		author: 'Hajime Isayama',
-		currentPrice: 22.45,
-		originalPrice: 34.90,
-		discount: 36,
-		cover: '/api/placeholder/200/300',
-		rating: 4.9,
-		reviews: 890,
-		category: 'Mangá',
-		publisher: 'Panini',
-		format: 'Físico'
-	},
-	{
-		id: '3',
-		title: 'Batman: Ano Um',
-		author: 'Frank Miller',
-		currentPrice: 35.50,
-		originalPrice: 49.90,
-		discount: 29,
-		cover: '/api/placeholder/200/300',
-		rating: 4.7,
-		reviews: 567,
-		category: 'DC Comics',
-		publisher: 'Panini',
-		format: 'Físico'
-	},
-	{
-		id: '4',
-		title: 'Demon Slayer - Vol. 1',
-		author: 'Koyoharu Gotouge',
-		currentPrice: 18.90,
-		originalPrice: 27.90,
-		discount: 32,
-		cover: '/api/placeholder/200/300',
-		rating: 4.9,
-		reviews: 2100,
-		category: 'Mangá',
-		publisher: 'Panini',
-		format: 'Digital'
-	},
-	{
-		id: '5',
-		title: 'Homem-Aranha: Volta ao Lar',
-		author: 'Dan Slott',
-		currentPrice: 28.90,
-		originalPrice: 39.90,
-		discount: 28,
-		cover: '/api/placeholder/200/300',
-		rating: 4.5,
-		reviews: 345,
-		category: 'Marvel',
-		publisher: 'Panini',
-		format: 'Físico'
-	},
-	{
-		id: '6',
-		title: 'Naruto - Vol. 1',
-		author: 'Masashi Kishimoto',
-		currentPrice: 17.90,
-		originalPrice: 26.90,
-		discount: 33,
-		cover: '/api/placeholder/200/300',
-		rating: 4.8,
-		reviews: 1890,
-		category: 'Mangá',
-		publisher: 'Panini',
-		format: 'Físico'
-	}
-]
+import React, { useState, useEffect } from 'react'
+import { BookOpen, ExternalLink, TrendingDown, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
+import { PromotionFilters } from '../components'
+import { 
+	productsService, 
+	PromotionFilters as IPromotionFilters,
+	FilterOptions,
+	Product,
+	PromotionSortType,
+	PaginatedResult
+} from '../api/products.service'
 
 export function Promotions() {
-	const [searchTerm, setSearchTerm] = useState('')
-	const [selectedCategory, setSelectedCategory] = useState('all')
-	const [selectedPublisher, setSelectedPublisher] = useState('all')
-	const [selectedFormat, setSelectedFormat] = useState('all')
-	const [sortBy, setSortBy] = useState('discount')
+	// Estados
+	const [products, setProducts] = useState<Product[]>([])
+	const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null)
+	const [pagination, setPagination] = useState<PaginatedResult<Product>['pagination'] | null>(null)
+	const [filters, setFilters] = useState<IPromotionFilters>({
+		inStock: true,
+		onlyMyProducts: false
+	})
+	const [sortBy, setSortBy] = useState<PromotionSortType>('discount')
+	const [currentPage, setCurrentPage] = useState(1)
+	const [isLoading, setIsLoading] = useState(true)
+	const [error, setError] = useState<string | null>(null)
 
-	// Filtros únicos
-	const categories = [...new Set(mockPromotions.map(p => p.category))]
-	const publishers = [...new Set(mockPromotions.map(p => p.publisher))]
-	const formats = [...new Set(mockPromotions.map(p => p.format))]
-
-	// Filtrar e ordenar promoções
-	const filteredPromotions = useMemo(() => {
-		let filtered = mockPromotions.filter(promo => {
-			const matchesSearch = promo.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-				promo.author.toLowerCase().includes(searchTerm.toLowerCase())
-			const matchesCategory = selectedCategory === 'all' || promo.category === selectedCategory
-			const matchesPublisher = selectedPublisher === 'all' || promo.publisher === selectedPublisher
-			const matchesFormat = selectedFormat === 'all' || promo.format === selectedFormat
-
-			return matchesSearch && matchesCategory && matchesPublisher && matchesFormat
-		})
-
-		// Ordenar
-		filtered.sort((a, b) => {
-			switch (sortBy) {
-				case 'discount':
-					return b.discount - a.discount
-				case 'price-low':
-					return a.currentPrice - b.currentPrice
-				case 'price-high':
-					return b.currentPrice - a.currentPrice
-				case 'rating':
-					return b.rating - a.rating
-				default:
-					return 0
+	// Carregar opções de filtros
+	useEffect(() => {
+		const loadFilterOptions = async () => {
+			try {
+				const options = await productsService.getFilterOptions()
+				setFilterOptions(options)
+			} catch (err) {
+				console.error('Erro ao carregar opções de filtros:', err)
+				setFilterOptions({
+					categories: [],
+					publishers: [],
+					genres: [],
+					formats: [],
+					contributors: []
+				})
 			}
-		})
+		}
 
-		return filtered
-	}, [searchTerm, selectedCategory, selectedPublisher, selectedFormat, sortBy])
+		loadFilterOptions()
+	}, [])
+
+	// Carregar promoções
+	useEffect(() => {
+		const loadPromotions = async () => {
+			if (!filterOptions) return
+
+			setIsLoading(true)
+			setError(null)
+
+			try {
+				const result = await productsService.getPromotions(
+					filters,
+					currentPage,
+					20,
+					sortBy
+				)
+
+				setProducts(result.data)
+				setPagination(result.pagination)
+			} catch (err) {
+				console.error('Erro ao carregar promoções:', err)
+				setError(
+					err instanceof Error 
+						? err.message 
+						: 'Erro ao carregar promoções. Tente novamente.'
+				)
+			} finally {
+				setIsLoading(false)
+			}
+		}
+
+		loadPromotions()
+	}, [filters, currentPage, sortBy, filterOptions])
+
+	// Handlers
+	const handleFilterChange = (newFilters: IPromotionFilters) => {
+		setFilters(newFilters)
+		setCurrentPage(1)
+	}
+
+	const handleSortChange = (newSort: PromotionSortType) => {
+		setSortBy(newSort)
+		setCurrentPage(1)
+	}
+
+	const handlePageChange = (page: number) => {
+		setCurrentPage(page)
+		window.scrollTo({ top: 0, behavior: 'smooth' })
+	}
+
+	const calculateDiscount = (product: Product): number => {
+		return Math.round(((product.full_price - product.price) / product.full_price) * 100)
+	}
+
+	if (!filterOptions) {
+		return (
+			<div className="min-h-screen flex items-center justify-center">
+				<div className="text-center">
+					<Loader2 className="h-12 w-12 text-primary animate-spin mx-auto mb-4" />
+					<p className="text-dark-300">Carregando filtros...</p>
+				</div>
+			</div>
+		)
+	}
 
 	return (
 		<div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
 			<div className="max-w-7xl mx-auto">
 				{/* Header */}
 				<div className="mb-8">
-					<h1 className="text-3xl font-display font-bold text-white mb-2">
+					<h1 className="text-3xl md:text-4xl font-display font-bold text-white mb-2">
 						🔥 Promoções Ativas
 					</h1>
-					<p className="text-primary-light">
-						{filteredPromotions.length} promoções encontradas pela nossa gatinha
+					<p className="text-dark-300">
+						{pagination ? (
+							<>
+								<span className="text-primary font-semibold">{pagination.total}</span> promoções encontradas
+							</>
+						) : (
+							'Carregando promoções...'
+						)}
 					</p>
 				</div>
 
 				{/* Filtros */}
-				<div className="bg-dark-900 rounded-2xl p-6 mb-8">
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-						{/* Busca */}
-						<div className="lg:col-span-2">
-							<label className="block text-sm font-medium text-primary-light mb-2">
-								Buscar
-							</label>
-							<div className="relative">
-								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-dark-400" />
-								<input
-									type="text"
-									placeholder="Título ou autor..."
-									className="input pl-10 w-full"
-									value={searchTerm}
-									onChange={(e) => setSearchTerm(e.target.value)}
-								/>
-							</div>
-						</div>
+				<PromotionFilters
+					filters={filters}
+					filterOptions={filterOptions}
+					onFilterChange={handleFilterChange}
+				/>
 
-						{/* Categoria */}
-						<div>
-							<label className="block text-sm font-medium text-primary-light mb-2">
-								Categoria
-							</label>
-							<select
-								className="input w-full"
-								value={selectedCategory}
-								onChange={(e) => setSelectedCategory(e.target.value)}
-							>
-								<option value="all">Todas</option>
-								{categories.map(category => (
-									<option key={category} value={category}>{category}</option>
-								))}
-							</select>
-						</div>
-
-						{/* Editora */}
-						<div>
-							<label className="block text-sm font-medium text-primary-light mb-2">
-								Editora
-							</label>
-							<select
-								className="input w-full"
-								value={selectedPublisher}
-								onChange={(e) => setSelectedPublisher(e.target.value)}
-							>
-								<option value="all">Todas</option>
-								{publishers.map(publisher => (
-									<option key={publisher} value={publisher}>{publisher}</option>
-								))}
-							</select>
-						</div>
-
-						{/* Formato */}
-						<div>
-							<label className="block text-sm font-medium text-primary-light mb-2">
-								Formato
-							</label>
-							<select
-								className="input w-full"
-								value={selectedFormat}
-								onChange={(e) => setSelectedFormat(e.target.value)}
-							>
-								<option value="all">Todos</option>
-								{formats.map(format => (
-									<option key={format} value={format}>{format}</option>
-								))}
-							</select>
-						</div>
-
-						{/* Ordenar */}
-						<div>
-							<label className="block text-sm font-medium text-primary-light mb-2">
-								Ordenar por
-							</label>
-							<select
-								className="input w-full"
-								value={sortBy}
-								onChange={(e) => setSortBy(e.target.value)}
-							>
-								<option value="discount">Maior desconto</option>
-								<option value="price-low">Menor preço</option>
-								<option value="price-high">Maior preço</option>
-								<option value="rating">Melhor avaliação</option>
-							</select>
-						</div>
+				{/* Ordenação */}
+				<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+					<p className="text-sm text-dark-300">
+						Página {pagination?.page || 1} de {pagination?.totalPages || 1}
+					</p>
+					<div className="flex items-center gap-2">
+						<label htmlFor="sort" className="text-sm text-dark-300">
+							Ordenar por:
+						</label>
+						<select
+							id="sort"
+							value={sortBy}
+							onChange={(e) => handleSortChange(e.target.value as PromotionSortType)}
+							className="input text-sm py-2"
+						>
+							<option value="discount">Maior Desconto</option>
+							<option value="price-low">Menor Preço</option>
+							<option value="price-high">Maior Preço</option>
+							<option value="name">Nome (A-Z)</option>
+						</select>
 					</div>
 				</div>
 
-				{/* Grid de Promoções */}
-				{filteredPromotions.length === 0 ? (
-					<div className="text-center py-12">
+				{/* Loading */}
+				{isLoading && (
+					<div className="text-center py-20">
+						<Loader2 className="h-12 w-12 text-primary animate-spin mx-auto mb-4" />
+						<p className="text-dark-300">Buscando promoções...</p>
+					</div>
+				)}
+
+				{/* Erro */}
+				{!isLoading && error && (
+					<div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
+						<AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+						<h3 className="text-lg font-semibold text-white mb-2">Erro ao carregar promoções</h3>
+						<p className="text-dark-300 mb-4">{error}</p>
+						<button
+							onClick={() => window.location.reload()}
+							className="btn-primary"
+						>
+							Tentar Novamente
+						</button>
+					</div>
+				)}
+
+				{/* Lista de Produtos */}
+				{!isLoading && !error && products.length > 0 && (
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+						{products.map((product) => {
+							const discount = calculateDiscount(product)
+							return (
+								<a
+									key={product.id}
+									href={product.url}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="card-product group"
+								>
+									<div className="relative mb-4">
+										<div className="aspect-[2/3] bg-dark-800 rounded-xl overflow-hidden">
+											{product.image ? (
+												<img
+													src={product.image}
+													alt={product.title}
+													className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+													loading="lazy"
+												/>
+											) : (
+												<div className="w-full h-full bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center">
+													<BookOpen className="h-16 w-16 text-white opacity-50" />
+												</div>
+											)}
+										</div>
+
+										{/* Badge de desconto */}
+										{discount > 0 && (
+											<div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-lg text-sm font-semibold flex items-center gap-1 shadow-lg">
+												<TrendingDown className="h-3 w-3" />
+												<span>-{discount}%</span>
+											</div>
+										)}
+
+										{/* Badges de status */}
+										<div className="absolute top-2 left-2 flex flex-col gap-1">
+											{product.format && (
+												<div className="bg-purple-600 text-white px-2 py-1 rounded-lg text-xs font-medium shadow-lg">
+													{product.format}
+												</div>
+											)}
+											{product.preorder && (
+												<div className="bg-yellow-500 text-dark-900 px-2 py-1 rounded-lg text-xs font-medium shadow-lg">
+													Pré-venda
+												</div>
+											)}
+											{!product.in_stock && (
+												<div className="bg-red-500 text-white px-2 py-1 rounded-lg text-xs font-medium shadow-lg">
+													Sem Estoque
+												</div>
+											)}
+										</div>
+									</div>
+
+									<div className="space-y-3">
+										<div>
+											<h3 className="font-semibold text-white line-clamp-2 group-hover:text-primary transition-colors mb-1">
+												{product.title}
+											</h3>
+											{product.contributors && product.contributors.length > 0 && (
+												<p className="text-dark-300 text-sm line-clamp-1">
+													{product.contributors.join(', ')}
+												</p>
+											)}
+											<div className="flex flex-wrap gap-1 mt-1">
+												{product.category && (
+													<span className="text-dark-400 text-xs">{product.category}</span>
+												)}
+												{product.publisher && (
+													<>
+														<span className="text-dark-600 text-xs">•</span>
+														<span className="text-dark-400 text-xs">{product.publisher}</span>
+													</>
+												)}
+											</div>
+										</div>
+
+										<div className="flex items-baseline gap-2">
+											<span className="text-xl font-bold text-primary">
+												R$ {product.price.toFixed(2)}
+											</span>
+											<span className="text-sm text-dark-400 line-through">
+												R$ {product.full_price.toFixed(2)}
+											</span>
+										</div>
+
+										<button className="w-full btn-primary text-sm py-2 inline-flex items-center justify-center gap-2">
+											<ExternalLink className="h-4 w-4" />
+											<span>Ver na Amazon</span>
+										</button>
+									</div>
+								</a>
+							)
+						})}
+					</div>
+				)}
+
+				{/* Sem resultados */}
+				{!isLoading && !error && products.length === 0 && (
+					<div className="text-center py-20">
 						<BookOpen className="h-16 w-16 text-dark-600 mx-auto mb-4" />
 						<h3 className="text-xl font-semibold text-white mb-2">
 							Nenhuma promoção encontrada
 						</h3>
-						<p className="text-primary-light">
-							Tente ajustar os filtros ou aguarde novas ofertas da nossa gatinha!
+						<p className="text-dark-300 mb-6">
+							Tente ajustar os filtros para encontrar mais produtos
 						</p>
-					</div>
-				) : (
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-						{filteredPromotions.map((promo) => (
-							<div key={promo.id} className="card-product">
-								<div className="relative mb-4">
-									<div className="aspect-[2/3] bg-dark-800 rounded-xl overflow-hidden">
-										<div className="w-full h-full bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center">
-											<BookOpen className="h-16 w-16 text-white opacity-50" />
-										</div>
-									</div>
-
-									{/* Badge de desconto */}
-									<div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-lg text-sm font-semibold flex items-center space-x-1">
-										<TrendingDown className="h-3 w-3" />
-										<span>-{promo.discount}%</span>
-									</div>
-
-									{/* Badge de formato */}
-									<div className="absolute top-2 left-2 bg-purple-600 text-white px-2 py-1 rounded-lg text-xs font-medium">
-										{promo.format}
-									</div>
-								</div>
-
-								<div className="space-y-3">
-									<div>
-										<h3 className="font-semibold text-white line-clamp-2 group-hover:text-primary-yellow transition-colors mb-1">
-											{promo.title}
-										</h3>
-										<p className="text-primary-light text-sm">{promo.author}</p>
-										<p className="text-primary-light text-xs">{promo.category} • {promo.publisher}</p>
-									</div>
-
-									<div className="flex items-baseline space-x-2">
-										<span className="text-xl font-bold text-primary-yellow">
-											R$ {promo.currentPrice.toFixed(2)}
-										</span>
-										<span className="text-sm text-primary-light line-through">
-											R$ {promo.originalPrice.toFixed(2)}
-										</span>
-									</div>
-
-									<div className="flex space-x-2">
-										<button className="flex-1 btn-primary text-sm py-2 inline-flex items-center justify-center space-x-1">
-											<ExternalLink className="h-4 w-4" />
-											<span>Amazon</span>
-										</button>
-									</div>
-								</div>
-							</div>
-						))}
+						<button
+							onClick={() => handleFilterChange({ inStock: true, onlyMyProducts: false })}
+							className="btn-ghost"
+						>
+							Limpar Filtros
+						</button>
 					</div>
 				)}
 
-				{/* Paginação (placeholder) */}
-				{filteredPromotions.length > 0 && (
+				{/* Paginação */}
+				{!isLoading && !error && pagination && pagination.totalPages > 1 && (
 					<div className="flex justify-center mt-12">
-						<div className="flex space-x-2">
-							<button className="btn-ghost px-4 py-2">Anterior</button>
-							<button className="bg-purple-600 text-white px-4 py-2 rounded-lg">1</button>
-							<button className="btn-ghost px-4 py-2">2</button>
-							<button className="btn-ghost px-4 py-2">3</button>
-							<button className="btn-ghost px-4 py-2">Próximo</button>
+						<div className="flex items-center gap-2">
+							<button
+								onClick={() => handlePageChange(currentPage - 1)}
+								disabled={!pagination.hasPreviousPage}
+								className="btn-ghost px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+							>
+								<ChevronLeft className="h-4 w-4" />
+								<span className="hidden sm:inline">Anterior</span>
+							</button>
+
+							{Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+								let pageNumber: number
+
+								if (pagination.totalPages <= 5) {
+									pageNumber = i + 1
+								} else if (currentPage <= 3) {
+									pageNumber = i + 1
+								} else if (currentPage >= pagination.totalPages - 2) {
+									pageNumber = pagination.totalPages - 4 + i
+								} else {
+									pageNumber = currentPage - 2 + i
+								}
+
+								return (
+									<button
+										key={pageNumber}
+										onClick={() => handlePageChange(pageNumber)}
+										className={`px-4 py-2 rounded-lg transition-colors ${
+											currentPage === pageNumber
+												? 'bg-primary text-dark-900 font-semibold'
+												: 'btn-ghost'
+										}`}
+									>
+										{pageNumber}
+									</button>
+								)
+							})}
+
+							<button
+								onClick={() => handlePageChange(currentPage + 1)}
+								disabled={!pagination.hasNextPage}
+								className="btn-ghost px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+							>
+								<span className="hidden sm:inline">Próximo</span>
+								<ChevronRight className="h-4 w-4" />
+							</button>
 						</div>
 					</div>
 				)}

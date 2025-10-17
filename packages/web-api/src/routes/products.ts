@@ -37,6 +37,13 @@ router.get('/', productsController.listProducts);
 router.get('/promotions', optionalAuthMiddleware, productsController.getPromotions);
 
 /**
+ * GET /products/latest-promotions
+ * Get latest promotions (ordenadas por updated_at DESC)
+ * Public endpoint - no authentication required
+ */
+router.get('/latest-promotions', productsController.getLatestPromotions);
+
+/**
  * GET /products/filter-options
  * Get unique values for filterable fields (categories, publishers, etc)
  * Public endpoint - no authentication required

@@ -285,7 +285,7 @@ export class ProductsController extends BaseController {
 		const sortBy = (req.query.sortBy as PromotionSortType) || 'discount';
 
 		// Validar sortBy
-		const validSorts: PromotionSortType[] = ['discount', 'price-low', 'price-high', 'name'];
+		const validSorts: PromotionSortType[] = ['discount', 'price-low', 'price-high', 'name', 'updated', 'created'];
 		if (!validSorts.includes(sortBy)) {
 			const response: ApiResponse<null> = {
 				success: false,
@@ -339,6 +339,40 @@ export class ProductsController extends BaseController {
 				success: true,
 				data: options,
 				message: 'Filter options retrieved'
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			throw error;
+		}
+	});
+
+	/**
+	 * GET /products/latest-promotions
+	 * Get latest promotions (ordenadas por updated_at DESC)
+	 * Public endpoint para exibir na home page
+	 */
+	getLatestPromotions = this.asyncHandler(async (req: Request, res: Response) => {
+		// Parse limit parameter
+		const limitParam = req.query.limit as string;
+		const limit = limitParam ? parseInt(limitParam, 10) : 3;
+
+		// Validação
+		if (isNaN(limit) || limit < 1 || limit > 10) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Limite deve estar entre 1 e 10'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		try {
+			const products = await this.productsService.getLatestPromotions(limit);
+
+			const response: ApiResponse<typeof products> = {
+				success: true,
+				data: products,
+				message: `${products.length} promoções mais recentes`
 			};
 
 			this.sendSuccess(res, response);

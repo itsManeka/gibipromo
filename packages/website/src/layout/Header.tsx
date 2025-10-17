@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Menu, X, Settings, User, Home, Tag, LogOut, ChevronDown } from 'lucide-react'
+import { Menu, X, Settings, User, Home, Tag, LogOut, ChevronDown, Plus } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useProfile } from '../contexts/ProfileContext'
@@ -16,7 +16,8 @@ export function Header() {
 
 	const navigation = [
 		{ name: 'Início', href: '/', icon: Home, public: true },
-		{ name: 'Promoções', href: '/promocoes', icon: Tag, public: true }
+		{ name: 'Promoções', href: '/promocoes', icon: Tag, public: true },
+		{ name: 'Adicionar Produtos', href: '/adicionar-produtos', icon: Plus, public: false }
 	]
 
 	const mobileNavigation = [

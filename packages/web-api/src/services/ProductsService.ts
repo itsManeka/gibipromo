@@ -13,7 +13,7 @@ export interface PaginationOptions {
 /**
  * Tipos de ordenação para promoções
  */
-export type PromotionSortType = 'discount' | 'price-low' | 'price-high' | 'name';
+export type PromotionSortType = 'discount' | 'price-low' | 'price-high' | 'name' | 'updated' | 'created';
 
 /**
  * Interface para resultado paginado
@@ -262,6 +262,56 @@ export class ProductsService extends BaseService {
 			return result;
 		} catch (error) {
 			this.logError(error as Error, 'getPromotions');
+			throw error;
+		}
+	}
+
+	/**
+	 * Get latest promotions (ordenadas por updated_at)
+	 * Endpoint público para exibir na home page
+	 * @param limit - Número máximo de promoções (padrão: 3)
+	 * @returns Lista de produtos em promoção ordenados por updated_at DESC
+	 */
+	async getLatestPromotions(limit: number = 3): Promise<Product[]> {
+		const cacheKey = `latest-promotions:${limit}`;
+
+		// Verificar cache (TTL de 3 minutos)
+		const cached = this.getFromCache<Product[]>(cacheKey, this.PROMOTIONS_CACHE_TTL);
+		if (cached) {
+			this.logAction('Cache hit for latest promotions', { cacheKey });
+			return cached;
+		}
+
+		this.logAction('Getting latest promotions', { limit });
+
+		try {
+			// Buscar produtos em promoção (price < full_price e in_stock)
+			const allProducts = await this.productRepository.findPromotions({}, 1000);
+
+			// Filtrar apenas produtos válidos em promoção
+			const promotions = allProducts.filter(p => 
+				p.price < p.full_price && 
+				p.in_stock &&
+				p.price > 0 &&
+				p.full_price > 0
+			);
+
+			// Ordenar por updated_at (mais recente primeiro)
+			promotions.sort((a, b) => {
+				const dateA = new Date(a.updated_at).getTime();
+				const dateB = new Date(b.updated_at).getTime();
+				return dateB - dateA;
+			});
+
+			// Retornar apenas o limite solicitado
+			const result = promotions.slice(0, limit);
+
+			// Cachear resultado
+			this.setCache(cacheKey, result);
+
+			return result;
+		} catch (error) {
+			this.logError(error as Error, 'getLatestPromotions');
 			throw error;
 		}
 	}
@@ -560,6 +610,22 @@ export class ProductsService extends BaseService {
 			case 'name':
 				// Ordenar por título (A-Z)
 				return sorted.sort((a, b) => a.title.localeCompare(b.title));
+
+			case 'updated':
+				// Ordenar por data de atualização (mais recente primeiro)
+				return sorted.sort((a, b) => {
+					const dateA = new Date(a.updated_at).getTime();
+					const dateB = new Date(b.updated_at).getTime();
+					return dateB - dateA;
+				});
+
+			case 'created':
+				// Ordenar por data de criação (mais recente primeiro)
+				return sorted.sort((a, b) => {
+					const dateA = new Date(a.created_at).getTime();
+					const dateB = new Date(b.created_at).getTime();
+					return dateB - dateA;
+				});
 
 			default:
 				// Padrão: desconto

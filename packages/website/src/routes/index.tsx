@@ -5,6 +5,7 @@ import { Home } from '../pages/Home'
 import { Promotions } from '../pages/Promotions'
 import { Profile } from '../pages/Profile'
 import { Settings } from '../pages/Settings'
+import { AddProducts } from '../pages/AddProducts'
 import { Login } from '../pages/Login'
 import { Register } from '../pages/Register'
 import { NotFound } from '../pages/NotFound'
@@ -24,6 +25,14 @@ export function AppRoutes() {
 				element={
 					<ProtectedRoute>
 						<Profile />
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/adicionar-produtos"
+				element={
+					<ProtectedRoute>
+						<AddProducts />
 					</ProtectedRoute>
 				}
 			/>

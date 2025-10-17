@@ -130,7 +130,7 @@ export function Profile() {
 								<div className="flex-1 space-y-4">
 									<div>
 										<label className="block text-sm font-medium text-primary-light mb-1">
-											Nickname
+											Nome
 										</label>
 										{isEditing ? (
 											<div>
@@ -184,32 +184,6 @@ export function Profile() {
 									Excluir Conta
 								</button>
 							</div>
-						</div>
-					</div>
-				</div>
-
-				{/* Produtos Favoritos */}
-				<div className="mt-12">
-					<div className="card">
-						<div className="flex justify-between items-center mb-6">
-							<h2 className="text-xl font-semibold text-white">
-								⭐ Últimas promoções
-							</h2>
-							{/* Link para as promoções */}
-							<Link to="/promocoes" className="btn-ghost inline-flex items-center space-x-2 text-sm">
-								<span>Ver todas as promoções</span>
-							</Link>
-						</div>
-
-						{/* Placeholder - será implementado quando integrar com produtos */}
-						<div className="text-center py-12">
-							<BookOpen className="h-12 w-12 text-primary-light mx-auto mb-4 opacity-50" />
-							<p className="text-primary-light">
-								Você ainda não tem produtos monitorados.
-							</p>
-							<Link to="/promocoes" className="btn-primary mt-4 inline-block">
-								Adicionar produto
-							</Link>
 						</div>
 					</div>
 				</div>

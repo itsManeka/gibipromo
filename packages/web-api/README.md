@@ -806,7 +806,7 @@ Listar produtos em promoção com filtros avançados. Suporta acesso público (t
 |-----------|------|-------------|-----------|---------|
 | `page` | number | Não | Número da página (padrão: 1) | `page=2` |
 | `limit` | number | Não | Itens por página (1-100, padrão: 20) | `limit=50` |
-| `sortBy` | string | Não | Ordenação: `discount`, `price_asc`, `price_desc`, `newest`, `oldest` (padrão: `discount`) | `sortBy=price_asc` |
+| `sortBy` | string | Não | Ordenação: `discount`, `price-low`, `price-high`, `name`, `updated`, `created` (padrão: `discount`) | `sortBy=updated` |
 | `q` | string | Não | Busca por título ou contributors | `q=spider-man` |
 | `category` | string | Não | Filtrar por categoria | `category=HQs` |
 | `publisher` | string | Não | Filtrar por editora | `publisher=Panini` |

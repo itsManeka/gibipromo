@@ -53,7 +53,7 @@ export interface PromotionFilters {
 /**
  * Opções de ordenação para promoções
  */
-export type PromotionSortType = 'discount' | 'price-low' | 'price-high' | 'name';
+export type PromotionSortType = 'discount' | 'price-low' | 'price-high' | 'name' | 'updated' | 'created';
 
 /**
  * Opções de filtros disponíveis
@@ -126,16 +126,23 @@ export interface ValidateUrlResponse {
 export const productsService = {
 	/**
 	 * Lista todos os produtos monitorados pelo usuário
-	 * @returns Lista de produtos com relação ProductUser
+	 * @returns Lista de produtos do usuário (não paginado)
 	 */
-	async getUserProducts(): Promise<ProductUser[]> {
-		const response = await apiClient.get<ApiResponse<ProductUser[]>>('/products');
+	async getUserProducts(
+		limit: number,
+		sortBy: PromotionSortType = 'updated'
+	): Promise<Product[]> {
+		// Usa o endpoint de promoções com filtro onlyMyProducts
+		// Limite alto para pegar todos os produtos do usuário
+		const response = await apiClient.get<ApiResponse<PaginatedResult<Product>>>(
+			`/products/promotions?onlyMyProducts=true&limit=${limit}&sortBy=${sortBy}`
+		);
 
 		if (!response.data.success || !response.data.data) {
 			throw new Error(response.data.error || 'Falha ao buscar produtos');
 		}
 
-		return response.data.data;
+		return response.data.data.data; // Retorna apenas o array de produtos
 	},
 
 	/**
@@ -338,5 +345,23 @@ export const productsService = {
 				message: error.response?.data?.error || 'Erro ao validar URL'
 			};
 		}
+	},
+
+	/**
+	 * Busca as últimas promoções (ordenadas por updated_at DESC)
+	 * Endpoint público para exibir na home page
+	 * @param limit - Número máximo de promoções (padrão: 3)
+	 * @returns Lista de produtos em promoção
+	 */
+	async getLatestPromotions(limit: number = 3): Promise<Product[]> {
+		const response = await apiClient.get<ApiResponse<Product[]>>(
+			`/products/latest-promotions?limit=${limit}`
+		);
+
+		if (!response.data.success || !response.data.data) {
+			throw new Error(response.data.error || 'Falha ao buscar últimas promoções');
+		}
+
+		return response.data.data;
 	},
 };

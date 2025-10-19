@@ -9,6 +9,7 @@ import { AddProducts } from '../pages/AddProducts'
 import { Login } from '../pages/Login'
 import { Register } from '../pages/Register'
 import { NotFound } from '../pages/NotFound'
+import Notifications from '../pages/Notifications'
 
 export function AppRoutes() {
 	return (
@@ -41,6 +42,14 @@ export function AppRoutes() {
 				element={
 					<ProtectedRoute>
 						<Settings />
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/notificacoes"
+				element={
+					<ProtectedRoute>
+						<Notifications />
 					</ProtectedRoute>
 				}
 			/>

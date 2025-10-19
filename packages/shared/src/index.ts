@@ -6,6 +6,7 @@
 export * from './entities/Action';
 export * from './entities/ActionConfig';
 export * from './entities/Entity';
+export * from './entities/Notification';
 export * from './entities/Product';
 export * from './entities/ProductStats';
 export * from './entities/ProductUser';
@@ -18,6 +19,16 @@ export * from './entities/UserProfile';
 export * from './utils/Logger';
 export * from './utils/urlResolver';
 
+// Re-exporta constantes
+export * from './constants';
+export {
+	UserOrigin,
+	ActionOrigin,
+	NotificationType,
+	NotificationStatus,
+	TELEGRAM_COMMANDS
+} from './constants/index';
+
 // Re-exporta tipos
 export * from './types/PromotionFilters';
 
@@ -25,6 +36,7 @@ export * from './types/PromotionFilters';
 export * from './repositories/Repository';
 export * from './repositories/ActionRepository';
 export * from './repositories/ActionConfigRepository';
+export * from './repositories/NotificationRepository';
 export * from './repositories/ProductRepository';
 export * from './repositories/ProductStatsRepository';
 export * from './repositories/ProductUserRepository';

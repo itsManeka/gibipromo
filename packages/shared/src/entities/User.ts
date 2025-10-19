@@ -2,6 +2,7 @@ import { Entity } from './Entity';
 import { v4 as uuidv4 } from 'uuid';
 import { UserPreferences, createUserPreferences } from './UserPreferences';
 import { UserProfile, createUserProfile } from './UserProfile';
+import { UserOrigin } from '../constants';
 
 /**
  * Represents a user in the system
@@ -12,6 +13,7 @@ export interface User extends Entity {
 	name: string;
 	language: string;
 	enabled: boolean;
+	origin?: UserOrigin; // Origin of the user (TELEGRAM, SITE, BOTH) - optional for backward compatibility
 	email?: string; // Email for website authentication
 	password_hash?: string; // Password hash for website authentication
 	session_id?: string; // Current active session ID
@@ -71,6 +73,7 @@ export class UserFactory {
 			name: name || '',
 			language,
 			enabled: false, // Users start with monitoring disabled
+			origin: UserOrigin.TELEGRAM, // User created via Telegram bot
 			created_at: now,
 			updated_at: now
 		};
@@ -93,6 +96,7 @@ export class UserFactory {
 			name: '',
 			language: 'en',
 			enabled: true, // Web users start enabled
+			origin: UserOrigin.SITE, // User created via website
 			created_at: now,
 			updated_at: now
 		};

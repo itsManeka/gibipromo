@@ -7,7 +7,7 @@ import { TelegramNotifier } from '../../../../src/infrastructure/adapters/telegr
 import { ActionType, NotifyPriceAction } from '@gibipromo/shared/dist/entities/Action';
 import { Product } from '@gibipromo/shared/dist/entities/Product';
 import { ProductUser } from '@gibipromo/shared/dist/entities/ProductUser';
-import { createProduct } from '../../../test-helpers/factories';
+import { createProduct, createMockNotificationRepository } from '../../../test-helpers/factories';
 
 jest.mock('../../../../src/application/ports/ActionRepository');
 jest.mock('../../../../src/application/ports/ProductRepository');
@@ -104,12 +104,15 @@ describe('NotifyPriceActionProcessor', () => {
 			notifyPriceChange: jest.fn()
 		} as any;
 
+		const mockNotificationRepository = createMockNotificationRepository();
+
 		processor = new NotifyPriceActionProcessor(
 			mockActionRepo,
 			mockProductRepo,
 			mockProductUserRepo,
 			mockUserRepo,
-			mockNotifier
+			mockNotifier,
+			mockNotificationRepository
 		);
 
 		// Reset mocks

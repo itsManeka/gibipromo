@@ -5,17 +5,20 @@ import { AppRoutes } from './routes'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { AuthProvider } from './contexts/AuthContext'
 import { ProfileProvider } from './contexts/ProfileContext'
+import { NotificationProvider } from './contexts/NotificationContext'
 
 function App() {
 	return (
 		<ThemeProvider>
 			<AuthProvider>
 				<ProfileProvider>
-					<BrowserRouter>
-						<AppLayout>
-							<AppRoutes />
-						</AppLayout>
-					</BrowserRouter>
+					<NotificationProvider>
+						<BrowserRouter>
+							<AppLayout>
+								<AppRoutes />
+							</AppLayout>
+						</BrowserRouter>
+					</NotificationProvider>
 				</ProfileProvider>
 			</AuthProvider>
 		</ThemeProvider>

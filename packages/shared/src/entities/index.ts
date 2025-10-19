@@ -1,6 +1,7 @@
 export * from './Action';
 export * from './ActionConfig';
 export * from './Entity';
+export * from './Notification';
 export * from './Product';
 export * from './ProductStats';
 export * from './ProductUser';

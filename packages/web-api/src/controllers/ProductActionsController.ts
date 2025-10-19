@@ -75,7 +75,7 @@ export class ProductActionsController extends BaseController {
 				success: true,
 				data: {
 					action_id: actionId,
-					message: 'Produto adicionado para análise! Você será notificado quando houver alterações no preço.',
+					message: 'Link adicionado para análise! Você será notificado quando o produto for incluído ou quando houver alterações no preço.',
 					estimated_time: 'O produto será analisado em até 5 minutos'
 				}
 			};

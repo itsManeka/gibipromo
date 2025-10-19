@@ -9,7 +9,8 @@ import {
 	DynamoDBProductUserRepository,
 	DynamoDBUserRepository,
 	DynamoDBActionConfigRepository,
-	DynamoDBProductStatsRepository
+	DynamoDBProductStatsRepository,
+	DynamoDBNotificationRepository
 } from '@gibipromo/shared';
 import { AmazonProductAPI } from '../ports/AmazonProductAPI';
 import { TelegramNotifier } from '../../infrastructure/adapters/telegram';
@@ -24,6 +25,7 @@ export function createActionScheduler(
 	const userRepository = new DynamoDBUserRepository();
 	const actionConfigRepository = new DynamoDBActionConfigRepository();
 	const productStatsRepository = new DynamoDBProductStatsRepository();
+	const notificationRepository = new DynamoDBNotificationRepository();
 
 	// Serviços
 	const productStatsService = new ProductStatsService(productStatsRepository);
@@ -39,7 +41,8 @@ export function createActionScheduler(
 			productUserRepository,
 			userRepository,
 			amazonApi,
-			productStatsService
+			productStatsService,
+			notificationRepository
 		),
 		new CheckProductActionProcessor(
 			actionRepository,
@@ -52,7 +55,8 @@ export function createActionScheduler(
 			productRepository,
 			productUserRepository,
 			userRepository,
-			notifier
+			notifier,
+			notificationRepository
 		)
 	];
 

@@ -4,6 +4,7 @@ import { Menu, X, Settings, User, Home, Tag, LogOut, ChevronDown, Plus } from 'l
 import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useProfile } from '../contexts/ProfileContext'
+import NotificationBell from '../components/NotificationBell'
 
 export function Header() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -60,9 +61,9 @@ export function Header() {
 										key={item.name}
 										to={item.href}
 										className={`nav-link flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${isActive(item.href)
-												? 'nav-link-active bg-purple-700'
-												: 'hover:bg-purple-700'
-											}`}
+											? 'nav-link-active bg-purple-700'
+											: 'hover:bg-purple-700'
+										}`}
 									>
 										<Icon className="h-4 w-4" />
 										<span>{item.name}</span>
@@ -73,58 +74,66 @@ export function Header() {
 						{/* Auth Section */}
 						<div className="flex items-center space-x-4 border-l border-purple-500 pl-4">
 							{isAuthenticated ? (
-								/* User Menu Dropdown */
-								<div className="relative">
-									<button
-										onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-										className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-									>
-										<User className="h-4 w-4" />
-										<span className="max-w-[150px] truncate text-sm">
-											{profile?.nick ?? user?.email}
-										</span>
-										<ChevronDown className={`h-4 w-4 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
-									</button>
+								<>
+									{/* Notification Bell */}
+									<NotificationBell />
 
-									{isUserMenuOpen && (
-										<div className="absolute right-0 mt-2 w-48 bg-dark-800 border border-dark-700 rounded-lg shadow-lg py-1 z-50">
-											<Link
-												to="/perfil"
-												onClick={() => setIsUserMenuOpen(false)}
-												className="flex items-center space-x-2 px-4 py-2 text-sm text-primary-light hover:bg-dark-700 transition-colors"
-											>
-												<User className="h-4 w-4" />
-												<span>Meu Perfil</span>
-											</Link>
-											<Link
-												to="/configuracoes"
-												onClick={() => setIsUserMenuOpen(false)}
-												className="flex items-center space-x-2 px-4 py-2 text-sm text-primary-light hover:bg-dark-700 transition-colors"
-											>
-												<Settings className="h-4 w-4" />
-												<span>Configurações</span>
-											</Link>
-											<hr className="my-1 border-dark-700" />
-											<button
-												onClick={handleLogout}
-												className="flex items-center space-x-2 px-4 py-2 text-sm text-red-400 hover:bg-dark-700 transition-colors w-full text-left"
-											>
-												<LogOut className="h-4 w-4" />
-												<span>Sair</span>
-											</button>
-										</div>
-									)}
-								</div>
+									{/* User Menu Dropdown */}
+									<div className="relative">
+										<button
+											onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+											className="nav-link flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+										>
+											<User className="h-4 w-4" />
+											<span className="max-w-[150px] truncate">
+												{profile?.nick ?? user?.email}
+											</span>
+											<ChevronDown className={`h-4 w-4 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+										</button>
+
+										{isUserMenuOpen && (
+											<div className="absolute right-0 mt-2 w-48 bg-purple-700 rounded-lg shadow-lg py-1 z-50">
+												<Link
+													to="/perfil"
+													onClick={() => setIsUserMenuOpen(false)}
+													className="nav-link flex items-center space-x-2 px-4 py-2 text-sm"
+												>
+													<User className="h-4 w-4" />
+													<span>Meu Perfil</span>
+												</Link>
+												<Link
+													to="/configuracoes"
+													onClick={() => setIsUserMenuOpen(false)}
+													className="nav-link flex items-center space-x-2 px-4 py-2 text-sm"
+												>
+													<Settings className="h-4 w-4" />
+													<span>Configurações</span>
+												</Link>
+												<hr className="my-1 border-l border-purple-500" />
+												<button
+													onClick={handleLogout}
+													className="nav-link flex items-center space-x-2 px-4 py-2 text-sm"
+												>
+													<LogOut className="h-4 w-4" />
+													<span>Sair</span>
+												</button>
+											</div>
+										)}
+									</div>
+								</>
 							) : (
 								/* Login/Register Links */
 								<>
 									<Link
 										to="/login"
-										className={`nav-link px-3 py-2 rounded-lg transition-all duration-200 ${
-											isActive('/login') 
-												? 'nav-link-active bg-purple-700' 
-												: 'hover:bg-purple-700'
-										}`}
+										className={`
+											nav-link px-3 py-2 rounded-lg transition-all duration-200 
+											${
+												isActive('/login')
+													? 'nav-link-active bg-purple-700'
+													: 'hover:bg-purple-700'
+											}`
+										}
 									>
 										Entrar
 									</Link>
@@ -177,10 +186,13 @@ export function Header() {
 										key={item.name}
 										to={item.href}
 										onClick={() => setIsMenuOpen(false)}
-										className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 ${isActive(item.href)
+										className={`
+											flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200
+											${isActive(item.href)
 												? 'bg-purple-800 text-primary-yellow'
 												: 'text-white hover:bg-purple-600'
-											}`}
+											}`
+										}
 									>
 										<Icon className="h-5 w-5" />
 										<span className="font-medium">{item.name}</span>
@@ -197,7 +209,7 @@ export function Header() {
 										<div className="text-xs text-primary-light/70">Conectado como</div>
 										<div className="text-sm font-medium truncate">{user?.email}</div>
 									</div>
-									
+
 									{/* Logout Button */}
 									<button
 										onClick={handleLogout}
@@ -212,11 +224,12 @@ export function Header() {
 									<Link
 										to="/login"
 										onClick={() => setIsMenuOpen(false)}
-										className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 ${
-											isActive('/login') 
-												? 'bg-purple-800 text-primary-yellow' 
+										className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200
+											${isActive('/login')
+												? 'bg-purple-800 text-primary-yellow'
 												: 'text-white hover:bg-purple-600'
-										}`}
+											}`
+										}
 									>
 										<User className="h-5 w-5" />
 										<span className="font-medium">Entrar</span>

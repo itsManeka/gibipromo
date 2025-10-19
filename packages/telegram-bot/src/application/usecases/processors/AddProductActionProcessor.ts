@@ -3,11 +3,18 @@ import {
 	AddProductAction,
 	createNotifyPriceAction
 } from '@gibipromo/shared/dist/entities/Action';
-import { createLogger, resolveShortUrl } from '@gibipromo/shared';
+import { 
+	createLogger, 
+	resolveShortUrl,
+	ActionOrigin,
+	UserOrigin,
+	createProductAddedNotification
+} from '@gibipromo/shared';
 import { ActionRepository } from '../../ports/ActionRepository';
 import { ProductRepository } from '../../ports/ProductRepository';
 import { ProductUserRepository } from '../../ports/ProductUserRepository';
 import { UserRepository } from '../../ports/UserRepository';
+import { NotificationRepository } from '@gibipromo/shared/dist/repositories/NotificationRepository';
 import { AmazonProduct, AmazonProductAPI } from '../../ports/AmazonProductAPI';
 import { createProduct, updateProductPrice } from '@gibipromo/shared/dist/entities/Product';
 import { createProductUser } from '@gibipromo/shared/dist/entities/ProductUser';
@@ -28,7 +35,8 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 		private readonly productUserRepository: ProductUserRepository,
 		private readonly userRepository: UserRepository,
 		private readonly amazonApi: AmazonProductAPI,
-		private readonly productStatsService: ProductStatsService
+		private readonly productStatsService: ProductStatsService,
+		private readonly notificationRepository: NotificationRepository
 	) { }
 
 	/**
@@ -220,6 +228,30 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 			});
 			await this.productUserRepository.upsert(productUser);
 			console.log(`Usuário ${user.id} adicionado ao monitoramento do produto ${product.id}`);
+
+			// Notificar usuários do site sobre produto adicionado
+			if (action.origin === ActionOrigin.SITE &&
+				(user.origin === UserOrigin.SITE || user.origin === UserOrigin.BOTH)) {
+
+				const notification = createProductAddedNotification(
+					user.id,
+					product.title,
+					product.id,
+					product.url
+				);
+
+				try {
+					await this.notificationRepository.create(notification);
+					logger.info('Notificação de produto adicionado criada', {
+						userId: user.id,
+						productId: product.id,
+						notificationId: notification.id
+					});
+				} catch (error) {
+					logger.error('Erro ao criar notificação de produto adicionado', error);
+					// Não falha o processo por erro de notificação
+				}
+			}
 		}
 		await this.actionRepository.markProcessed(action.id);
 		return true;

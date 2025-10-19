@@ -6,7 +6,12 @@ import { ProductUserRepository } from '../../ports/ProductUserRepository';
 import { UserRepository } from '../../ports/UserRepository';
 import { TelegramNotifier } from '../../../infrastructure/adapters/telegram';
 import { shouldNotifyForPrice } from '@gibipromo/shared/dist/entities/ProductUser';
-import { User } from '@gibipromo/shared';
+import { User, NotificationRepository } from '@gibipromo/shared';
+import { createPriceDropNotification } from '@gibipromo/shared/dist/entities/Notification';
+import { UserOrigin } from '@gibipromo/shared/dist/constants';
+import { createLogger } from '@gibipromo/shared/dist/utils/Logger';
+
+const logger = createLogger('NotifyPriceActionProcessor');
 
 /**
  * Processador de ações de notificação de preço
@@ -19,7 +24,8 @@ export class NotifyPriceActionProcessor implements ActionProcessor<NotifyPriceAc
 		private readonly productRepository: ProductRepository,
 		private readonly productUserRepository: ProductUserRepository,
 		private readonly userRepository: UserRepository,
-		private readonly notifier: TelegramNotifier
+		private readonly notifier: TelegramNotifier,
+		private readonly notificationRepository: NotificationRepository
 	) { }
 
 	async process(action: NotifyPriceAction): Promise<void> {
@@ -91,6 +97,42 @@ export class NotifyPriceActionProcessor implements ActionProcessor<NotifyPriceAc
 					)
 				)
 			);
+
+			// Criar notificações para usuários do site
+			const siteUsers = users.filter((user: User | null) => {
+				if (!user) return false;
+				return user.origin === UserOrigin.SITE || user.origin === UserOrigin.BOTH;
+			}) as User[];
+
+			if (siteUsers.length > 0) {
+				await Promise.all(
+					siteUsers.map(async (user: User) => {
+						const notification = createPriceDropNotification(
+							user.id,
+							product.title,
+							product.id,
+							product.url,
+							oldPrice,
+							currentPrice
+						);
+
+						try {
+							await this.notificationRepository.create(notification);
+							logger.info('Notificação de queda de preço criada', {
+								userId: user.id,
+								productId: product.id,
+								notificationId: notification.id,
+								oldPrice,
+								newPrice: currentPrice
+							});
+						} catch (error) {
+							logger.error('Erro ao criar notificação de queda de preço', error);
+							// Não falha o processo por erro de notificação
+						}
+					})
+				);
+			}
+
 			await this.actionRepository.markProcessed(action.id);
 		} catch (error) {
 			console.error('Erro ao processar ação de notificação:', error);

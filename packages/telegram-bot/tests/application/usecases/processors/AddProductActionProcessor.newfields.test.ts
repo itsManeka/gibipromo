@@ -1,6 +1,6 @@
 import { AddProductActionProcessor } from '../../../../src/application/usecases/processors/AddProductActionProcessor';
 import { User } from '@gibipromo/shared/dist/entities/User';
-import { createTestAction } from '../../../test-helpers/factories';
+import { createTestAction, createMockNotificationRepository } from '../../../test-helpers/factories';
 
 // Mock the Logger
 jest.mock('@gibipromo/shared', () => ({
@@ -20,6 +20,7 @@ describe('AddProductActionProcessor - New Fields', () => {
 	let mockUserRepository: any;
 	let mockAmazonApi: any;
 	let mockProductStatsService: any;
+	let mockNotificationRepository: any;
 
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -62,13 +63,16 @@ describe('AddProductActionProcessor - New Fields', () => {
 			createProductStats: jest.fn().mockResolvedValue(undefined),
 		};
 
+		mockNotificationRepository = createMockNotificationRepository();
+
 		processor = new AddProductActionProcessor(
 			mockActionRepository,
 			mockProductRepository,
 			mockProductUserRepository,
 			mockUserRepository,
 			mockAmazonApi,
-			mockProductStatsService
+			mockProductStatsService,
+			mockNotificationRepository
 		);
 	});
 

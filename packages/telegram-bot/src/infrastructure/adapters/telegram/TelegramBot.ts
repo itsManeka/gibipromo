@@ -8,6 +8,7 @@ import { UserPreferencesRepository } from '../../../application/ports/UserPrefer
 import { UserProfileRepository } from '../../../application/ports/UserProfileRepository';
 import { UserFactory } from '@gibipromo/shared';
 import { createAddProductAction } from '@gibipromo/shared';
+import { ActionOrigin } from '@gibipromo/shared/dist/constants';
 import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../../../.env') });
@@ -498,7 +499,7 @@ _Clique nos botões abaixo para ver o produto ou gerenciar sua monitoria_
 
 			// Cria ações para cada link
 			for (const link of links) {
-				const action = createAddProductAction(user.id, link);
+				const action = createAddProductAction(user.id, link, ActionOrigin.TELEGRAM);
 				await this.actionRepository.create(action);
 			}
 

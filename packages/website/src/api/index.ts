@@ -12,3 +12,7 @@ export type { Product, ProductUser, AddProductRequest } from './products.service
 // Profile Service
 export { profileService } from './profile.service';
 export type { UserProfile, UpdateProfileRequest } from './profile.service';
+
+// Notifications Service
+export { notificationsService } from './notifications.service';
+export type { GetNotificationsParams, NotificationsResponse } from './notifications.service';

@@ -1,5 +1,5 @@
 import { BaseService } from './BaseService';
-import { createAddProductAction, validateAmazonUrl } from '@gibipromo/shared';
+import { createAddProductAction, validateAmazonUrl, ActionOrigin } from '@gibipromo/shared';
 import type { ActionRepository } from '@gibipromo/shared/dist/repositories/ActionRepository';
 import type { UserRepository } from '@gibipromo/shared/dist/repositories/UserRepository';
 
@@ -44,8 +44,8 @@ export class ProductActionsService extends BaseService {
 			throw new Error(validation.message);
 		}
 
-		// Cria ação ADD_PRODUCT usando factory do shared
-		const action = createAddProductAction(userId, url);
+		// Cria ação ADD_PRODUCT usando factory do shared com origin SITE
+		const action = createAddProductAction(userId, url, ActionOrigin.SITE);
 		await this.actionRepository.create(action);
 
 		this.logAction('Ação criada com sucesso', { 

@@ -300,6 +300,49 @@ const tables = [
 			ReadCapacityUnits: 5,
 			WriteCapacityUnits: 5
 		}
+	},
+	{
+		TableName: 'Notifications',
+		AttributeDefinitions: [
+			{ AttributeName: 'id', AttributeType: 'S' },
+			{ AttributeName: 'user_id', AttributeType: 'S' },
+			{ AttributeName: 'status', AttributeType: 'S' },
+			{ AttributeName: 'created_at', AttributeType: 'S' }
+		],
+		KeySchema: [
+			{ AttributeName: 'id', KeyType: 'HASH' }
+		],
+		GlobalSecondaryIndexes: [
+			{
+				IndexName: 'UserIdCreatedIndex',
+				KeySchema: [
+					{ AttributeName: 'user_id', KeyType: 'HASH' },
+					{ AttributeName: 'created_at', KeyType: 'RANGE' }
+				],
+				Projection: { ProjectionType: 'ALL' },
+				ProvisionedThroughput: {
+					ReadCapacityUnits: 5,
+					WriteCapacityUnits: 5
+				}
+			},
+			{
+				IndexName: 'UserIdStatusIndex',
+				KeySchema: [
+					{ AttributeName: 'user_id', KeyType: 'HASH' },
+					{ AttributeName: 'status', KeyType: 'RANGE' }
+				],
+				Projection: { ProjectionType: 'ALL' },
+				ProvisionedThroughput: {
+					ReadCapacityUnits: 5,
+					WriteCapacityUnits: 5
+				}
+			}
+		],
+		BillingMode: 'PROVISIONED',
+		ProvisionedThroughput: {
+			ReadCapacityUnits: 5,
+			WriteCapacityUnits: 5
+		}
 	}
 ];
 

@@ -58,6 +58,34 @@ router.get('/filter-options', productsController.getFilterOptions);
 router.get('/search', productsController.searchProducts);
 
 /**
+ * GET /products/:id/stats
+ * Get price statistics for a product
+ * Public endpoint - no authentication required
+ */
+router.get('/:id/stats', productsController.getProductStats);
+
+/**
+ * GET /products/:id/monitoring-status
+ * Check if user is monitoring this product
+ * Requires authentication
+ */
+router.get('/:id/monitoring-status', authMiddleware, productsController.getMonitoringStatus);
+
+/**
+ * POST /products/:id/monitor
+ * Start monitoring a product
+ * Requires authentication
+ */
+router.post('/:id/monitor', authMiddleware, productsController.monitorProduct);
+
+/**
+ * DELETE /products/:id/monitor
+ * Stop monitoring a product
+ * Requires authentication
+ */
+router.delete('/:id/monitor', authMiddleware, productsController.unmonitorProduct);
+
+/**
  * GET /products/:id
  * Get product by ID
  * Public endpoint - no authentication required

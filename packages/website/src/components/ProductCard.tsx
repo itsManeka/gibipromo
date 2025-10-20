@@ -1,6 +1,8 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { TrendingDown, BookOpen, ExternalLink } from 'lucide-react'
 import { Product } from '../api/products.service'
+import { normalizeContributors } from '../utils/format'
 
 /**
  * Card de produto padronizado
@@ -15,13 +17,8 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
 	const discount = Math.round(((product.full_price - product.price) / product.full_price) * 100)
 
 	return (
-		<a
-			href={product.url}
-			target="_blank"
-			rel="noopener noreferrer"
-			className={`card-product group ${className}`}
-		>
-			<div className="relative mb-4">
+		<div className={`card-product group ${className}`}>
+			<Link to={`/produto/${product.id}`} className="block relative mb-4">
 				<div className="aspect-[2/3] bg-dark-800 rounded-xl overflow-hidden">
 					{product.image ? (
 						<img
@@ -63,30 +60,32 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
 						</div>
 					)}
 				</div>
-			</div>
+			</Link>
 
 			<div className="space-y-3">
-				<div>
+				<Link to={`/produto/${product.id}`}>
 					<h3 className="font-semibold text-white line-clamp-2 group-hover:text-primary transition-colors mb-1">
 						{product.title}
 					</h3>
-					{product.contributors && product.contributors.length > 0 && (
-						<p className="text-dark-300 text-sm line-clamp-1">
-							{product.contributors.join(', ')}
-						</p>
-					)}
-					<div className="flex flex-wrap gap-1 mt-1">
-						{product.category && (
-							<span className="text-dark-400 text-xs">{product.category}</span>
+				</Link>
+					<div>
+						{product.contributors && product.contributors.length > 0 && (
+							<p className="text-dark-300 text-sm line-clamp-1">
+								{normalizeContributors(product.contributors).join(' • ')}
+							</p>
 						)}
-						{product.publisher && (
-							<>
-								<span className="text-dark-600 text-xs">•</span>
-								<span className="text-dark-400 text-xs">{product.publisher}</span>
-							</>
-						)}
+						<div className="flex flex-wrap gap-1 mt-1">
+							{product.category && (
+								<span className="text-dark-400 text-xs">{product.category}</span>
+							)}
+							{product.publisher && (
+								<>
+									<span className="text-dark-600 text-xs">•</span>
+									<span className="text-dark-400 text-xs">{product.publisher}</span>
+								</>
+							)}
+						</div>
 					</div>
-				</div>
 
 				<div className="flex items-baseline gap-2">
 					<span className="text-xl font-bold text-primary">
@@ -97,11 +96,17 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
 					</span>
 				</div>
 
-				<button className="w-full btn-primary text-sm py-2 inline-flex items-center justify-center gap-2">
+				<a
+					href={product.url}
+					target="_blank"
+					rel="noopener noreferrer"
+					onClick={(e) => e.stopPropagation()}
+					className="w-full btn-primary text-sm py-2 inline-flex items-center justify-center gap-2"
+				>
 					<ExternalLink className="h-4 w-4" />
 					<span>Ver na Amazon</span>
-				</button>
+				</a>
 			</div>
-		</a>
+		</div>
 	)
 }

@@ -88,10 +88,16 @@ export default function Notifications() {
 		}
 	};
 
-	// Handler para quando uma notificação é atualizada/deletada
-	const handleNotificationChange = () => {
-		refresh(); // Atualiza context
-		loadNotifications(true); // Recarrega lista
+	// Handler para quando uma notificação é deletada
+	const handleNotificationDelete = () => {
+		refresh(); // Atualiza context (contador de não lidas)
+		loadNotifications(true); // Recarrega lista local
+	};
+
+	// Handler para quando uma notificação é marcada como lida
+	const handleNotificationMarkAsRead = () => {
+		refresh(); // Atualiza context (contador de não lidas)
+		// Não precisa recarregar a lista, pois o contexto já atualiza o estado
 	};
 
 	return (
@@ -199,12 +205,13 @@ export default function Notifications() {
 					<>
 						<div className="card divide-y divide-gray-700/50 p-0 overflow-hidden">
 							{notifications.map((notification) => (
-								<div key={notification.id} onClick={handleNotificationChange}>
-									<NotificationItem 
-										notification={notification}
-										variant="page"
-									/>
-								</div>
+								<NotificationItem 
+									key={notification.id}
+									notification={notification}
+									variant="page"
+									onDelete={handleNotificationDelete}
+									onMarkAsRead={handleNotificationMarkAsRead}
+								/>
 							))}
 						</div>
 

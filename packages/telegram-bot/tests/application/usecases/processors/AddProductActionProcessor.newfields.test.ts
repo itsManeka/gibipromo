@@ -2,13 +2,19 @@ import { AddProductActionProcessor } from '../../../../src/application/usecases/
 import { User } from '@gibipromo/shared/dist/entities/User';
 import { createTestAction, createMockNotificationRepository } from '../../../test-helpers/factories';
 
-// Mock the Logger
+// Mock the Logger and resolveShortUrl
 jest.mock('@gibipromo/shared', () => ({
+	...jest.requireActual('@gibipromo/shared'),
 	createLogger: jest.fn(() => ({
 		info: jest.fn(),
 		error: jest.fn(),
 		warn: jest.fn(),
 		debug: jest.fn(),
+	})),
+	resolveShortUrl: jest.fn((url: string) => ({
+		success: true,
+		finalUrl: url,
+		isAmazonUrl: true
 	})),
 }));
 
@@ -60,7 +66,8 @@ describe('AddProductActionProcessor - New Fields', () => {
 		};
 
 		mockProductStatsService = {
-			createProductStats: jest.fn().mockResolvedValue(undefined),
+			createInitialStats: jest.fn().mockResolvedValue({ id: 'stats-1', product_id: 'B012345678', price: 29.90, old_price: 29.90, percentage_change: 0, created_at: new Date().toISOString() }),
+			handlePriceChange: jest.fn().mockResolvedValue(null),
 		};
 
 		mockNotificationRepository = createMockNotificationRepository();

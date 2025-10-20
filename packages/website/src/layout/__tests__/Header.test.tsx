@@ -40,11 +40,12 @@ describe('Header', () => {
 		
 		// Links públicos visíveis quando NÃO está logado
 		expect(screen.getByText('Início')).toBeInTheDocument()
+		expect(screen.getByText('Promoções')).toBeInTheDocument() // Agora é público
 		expect(screen.getByText('Entrar')).toBeInTheDocument()
 		expect(screen.getByText('Cadastrar')).toBeInTheDocument()
 
 		// Links privados NÃO devem aparecer quando não está logado
-		expect(screen.queryByText('Promoções')).not.toBeInTheDocument()
+		expect(screen.queryByText('Adicionar Produtos')).not.toBeInTheDocument()
 	})
 
 	it('deve abrir/fechar menu mobile', () => {

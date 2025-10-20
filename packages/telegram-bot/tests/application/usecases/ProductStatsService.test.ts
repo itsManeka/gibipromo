@@ -20,6 +20,92 @@ describe('ProductStatsService', () => {
 		service = new ProductStatsService(mockRepository);
 	});
 
+	describe('createInitialStats', () => {
+		it('should create initial statistics for a newly added product', async () => {
+			const product: Product = {
+				id: 'prod123',
+				offer_id: 'offer123',
+				title: 'New Product',
+				full_price: 100,
+				price: 89.90,
+				old_price: 89.90,
+				lowest_price: 89.90,
+				in_stock: true,
+				url: 'https://amazon.com/test',
+				image: 'https://amazon.com/image.jpg',
+				preorder: false,
+				store: 'Amazon',
+				created_at: '2023-01-01T00:00:00.000Z',
+				updated_at: '2023-01-01T00:00:00.000Z'
+			};
+
+			const expectedStats: ProductStats = {
+				id: 'stats123',
+				product_id: 'prod123',
+				price: 89.90,
+				old_price: 89.90, // Same as price for initial entry
+				percentage_change: 0, // No change on initial entry
+				created_at: '2023-01-01T00:00:00.000Z'
+			};
+
+			mockRepository.create.mockResolvedValue(expectedStats);
+
+			const result = await service.createInitialStats(product);
+
+			expect(result).toBeDefined();
+			expect(result.product_id).toBe('prod123');
+			expect(result.price).toBe(89.90);
+			expect(result.old_price).toBe(89.90);
+			expect(result.percentage_change).toBe(0);
+			expect(mockRepository.create).toHaveBeenCalledTimes(1);
+			expect(mockRepository.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					product_id: 'prod123',
+					price: 89.90,
+					old_price: 89.90,
+					percentage_change: 0
+				})
+			);
+		});
+
+		it('should create initial statistics even when product has zero price', async () => {
+			const product: Product = {
+				id: 'prod456',
+				offer_id: 'offer456',
+				title: 'Free Product',
+				full_price: 0,
+				price: 0,
+				old_price: 0,
+				lowest_price: 0,
+				in_stock: true,
+				url: 'https://amazon.com/test',
+				image: 'https://amazon.com/image.jpg',
+				preorder: false,
+				store: 'Amazon',
+				created_at: '2023-01-01T00:00:00.000Z',
+				updated_at: '2023-01-01T00:00:00.000Z'
+			};
+
+			const expectedStats: ProductStats = {
+				id: 'stats456',
+				product_id: 'prod456',
+				price: 0,
+				old_price: 0,
+				percentage_change: 0,
+				created_at: '2023-01-01T00:00:00.000Z'
+			};
+
+			mockRepository.create.mockResolvedValue(expectedStats);
+
+			const result = await service.createInitialStats(product);
+
+			expect(result).toBeDefined();
+			expect(result.price).toBe(0);
+			expect(result.old_price).toBe(0);
+			expect(result.percentage_change).toBe(0);
+		});
+	});
+
 	describe('handlePriceChange', () => {
 		it('should create statistics for 5% price reduction', async () => {
 			const product: Product = {

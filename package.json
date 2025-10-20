@@ -16,11 +16,14 @@
 		"init:dynamo": "node scripts/init-dynamo.js",
 		"dev:bot": "npm run dev --workspace=packages/telegram-bot",
 		"test:bot": "npm run test --workspace=packages/telegram-bot -- --maxWorkers=1",
+		"build:bot": "npm run build --workspace=packages/telegram-bot",
 		"build:shared": "npm run build --workspace=packages/shared",
 		"dev:api": "npm run dev --workspace=packages/web-api",
+		"build:api": "npm run build --workspace=packages/web-api",
 		"test:api": "npm run test --workspace=packages/web-api -- --maxWorkers=1",
 		"dev:web": "npm run dev --workspace=packages/website",
-		"test:web": "npm run test --workspace=packages/website -- --maxWorkers=1"
+		"test:web": "npm run test --workspace=packages/website -- --maxWorkers=1",
+		"build:web": "npm run build --workspace=packages/website"
 	},
 	"dependencies": {
 		"@itsmaneka/paapi5-nodejs-sdk": "^1.2.7",

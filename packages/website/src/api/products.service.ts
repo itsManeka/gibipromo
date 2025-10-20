@@ -120,6 +120,18 @@ export interface ValidateUrlResponse {
 }
 
 /**
+ * Estatísticas de preço do produto
+ */
+export interface ProductStats {
+	id: string;
+	product_id: string;
+	price: number;
+	old_price: number;
+	percentage_change: number;
+	created_at: string;
+}
+
+/**
  * Serviço de produtos
  * Responsável por gerenciar produtos monitorados pelo usuário
  */
@@ -363,5 +375,78 @@ export const productsService = {
 		}
 
 		return response.data.data;
+	},
+
+	/**
+	 * Busca estatísticas de preço de um produto
+	 * @param productId - ASIN do produto
+	 * @param period - Período em dias (30, 90, 180, 365)
+	 * @returns Array de estatísticas de preço
+	 */
+	async getProductStats(productId: string, period: number = 30): Promise<ProductStats[]> {
+		const response = await apiClient.get<ApiResponse<ProductStats[]>>(
+			`/products/${productId}/stats?period=${period}`
+		);
+
+		if (!response.data.success || !response.data.data) {
+			throw new Error(response.data.error || 'Falha ao buscar estatísticas');
+		}
+
+		return response.data.data;
+	},
+
+	/**
+	 * Verifica se o usuário está monitorando um produto
+	 * Requer autenticação
+	 * @param productId - ASIN do produto
+	 * @returns true se estiver monitorando
+	 */
+	async isMonitoring(productId: string): Promise<boolean> {
+		try {
+			const response = await apiClient.get<ApiResponse<{ isMonitoring: boolean }>>(
+				`/products/${productId}/monitoring-status`
+			);
+
+			if (!response.data.success || !response.data.data) {
+				return false;
+			}
+
+			return response.data.data.isMonitoring;
+		} catch (error) {
+			// Se não autenticado ou erro, retornar false
+			return false;
+		}
+	},
+
+	/**
+	 * Adiciona produto ao monitoramento
+	 * Requer autenticação
+	 * @param productId - ASIN do produto
+	 * @param desiredPrice - Preço desejado (opcional)
+	 */
+	async monitorProduct(productId: string, desiredPrice?: number): Promise<void> {
+		const response = await apiClient.post<ApiResponse<void>>(
+			`/products/${productId}/monitor`,
+			{ desired_price: desiredPrice }
+		);
+
+		if (!response.data.success) {
+			throw new Error(response.data.error || 'Falha ao monitorar produto');
+		}
+	},
+
+	/**
+	 * Remove produto do monitoramento
+	 * Requer autenticação
+	 * @param productId - ASIN do produto
+	 */
+	async unmonitorProduct(productId: string): Promise<void> {
+		const response = await apiClient.delete<ApiResponse<void>>(
+			`/products/${productId}/monitor`
+		);
+
+		if (!response.data.success) {
+			throw new Error(response.data.error || 'Falha ao parar de monitorar');
+		}
 	},
 };

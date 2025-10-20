@@ -82,7 +82,7 @@ export function createProductAddedNotification(
 		id: uuidv4(),
 		user_id: userId,
 		type: NotificationType.PRODUCT_ADDED,
-		title: '✅ Produto adicionado!',
+		title: 'Produto adicionado!',
 		message: `O produto "${productTitle}" foi adicionado à sua lista de monitoramento com sucesso.`,
 		status: NotificationStatus.UNREAD,
 		metadata: {
@@ -132,7 +132,7 @@ export function createPriceDropNotification(
 		id: uuidv4(),
 		user_id: userId,
 		type: NotificationType.PRICE_DROP,
-		title: `🔥 Promoção: ${productTitle}`,
+		title: `Promoção: ${productTitle}`,
 		message: `O preço caiu de R$ ${oldPrice.toFixed(2)} para R$ ${newPrice.toFixed(2)} (${discount}% de desconto)!`,
 		status: NotificationStatus.UNREAD,
 		metadata: {

@@ -4,7 +4,8 @@ import {
 	CheckIcon,
 	TrashIcon,
 	ShoppingCartIcon,
-	TagIcon
+	TagIcon,
+	ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
 import { Notification, NotificationStatus, NotificationType } from '@gibipromo/shared';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -19,6 +20,10 @@ interface NotificationItemProps {
 	onClick?: () => void;
 	/** Variante de estilo: 'dropdown' para fundo roxo, 'page' para fundo transparente */
 	variant?: 'dropdown' | 'page';
+	/** Callback chamado após deletar a notificação */
+	onDelete?: () => void;
+	/** Callback chamado após marcar como lida */
+	onMarkAsRead?: () => void;
 }
 
 /**
@@ -39,7 +44,7 @@ interface NotificationItemProps {
  * <NotificationItem notification={notif} variant="page" />
  * ```
  */
-export default function NotificationItem({ notification, compact = false, onClick, variant = 'dropdown' }: NotificationItemProps) {
+export default function NotificationItem({ notification, compact = false, onClick, variant = 'dropdown', onDelete, onMarkAsRead }: NotificationItemProps) {
 	const { markAsRead, deleteNotification } = useNotifications();
 	const navigate = useNavigate();
 
@@ -74,6 +79,7 @@ export default function NotificationItem({ notification, compact = false, onClic
 		e.stopPropagation();
 		if (isUnread) {
 			await markAsRead(notification.id);
+			onMarkAsRead?.();
 		}
 	};
 
@@ -82,6 +88,7 @@ export default function NotificationItem({ notification, compact = false, onClic
 		e.stopPropagation();
 		if (confirm('Deseja realmente excluir esta notificação?')) {
 			await deleteNotification(notification.id);
+			onDelete?.();
 		}
 	};
 
@@ -92,17 +99,40 @@ export default function NotificationItem({ notification, compact = false, onClic
 			// Marca como lida ao clicar no produto
 			if (isUnread) {
 				markAsRead(notification.id);
+				onMarkAsRead?.();
 			}
-			navigate(`/promotions?product=${notification.metadata.product_id}`);
+			navigate(`/produto/${notification.metadata.product_id}`);
 			onClick?.();
+		}
+	};
+
+	// Handler para abrir Amazon
+	const handleViewAmazon = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		if (notification.metadata?.url) {
+			// Marca como lida ao clicar
+			if (isUnread) {
+				markAsRead(notification.id);
+				onMarkAsRead?.();
+			}
+			window.open(notification.metadata.url, '_blank', 'noopener,noreferrer');
 		}
 	};
 
 	// Handler para clicar no card
 	const handleCardClick = () => {
+		// Marca como lida
 		if (isUnread) {
 			markAsRead(notification.id);
+			onMarkAsRead?.();
 		}
+		
+		// Se tiver produto vinculado, navega para ele
+		if (notification.metadata?.product_id) {
+			navigate(`/produto/${notification.metadata.product_id}`);
+		}
+		
+		// Fecha dropdown (se aplicável)
 		onClick?.();
 	};
 
@@ -127,9 +157,10 @@ export default function NotificationItem({ notification, compact = false, onClic
 		<div
 			onClick={handleCardClick}
 			className={`
-				transition-all cursor-pointer
+				transition-all cursor-pointer relative
 				${getBackgroundClasses()}
 				${compact ? 'p-3' : 'p-4'}
+				${isUnread && compact ? 'animate-pulse-subtle' : ''}
 			`}
 		>
 			<div className="flex items-start gap-3">
@@ -167,6 +198,21 @@ export default function NotificationItem({ notification, compact = false, onClic
 						{notification.message}
 					</p>
 
+					{/* Informações extras no modo compacto */}
+					{compact && notification.metadata?.new_price && notification.metadata?.old_price && (
+						<div className="flex items-center gap-2 mt-2">
+							<span className="text-xs text-gray-400 line-through">
+								R$ {notification.metadata.old_price.toFixed(2)}
+							</span>
+							<span className="text-sm font-semibold text-green-400">
+								R$ {notification.metadata.new_price.toFixed(2)}
+							</span>
+							<span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
+								{Math.round(((notification.metadata.old_price - notification.metadata.new_price) / notification.metadata.old_price) * 100)}% OFF
+							</span>
+						</div>
+					)}
+
 					{/* Ações */}
 					{!compact && (
 						<div className="flex items-center gap-3 mt-3 flex-wrap">
@@ -177,6 +223,18 @@ export default function NotificationItem({ notification, compact = false, onClic
 									className="text-xs font-medium text-primary-yellow hover:text-primary-yellow/80 transition-colors"
 								>
 									Ver produto
+								</button>
+							)}
+
+							{/* Ver na Amazon */}
+							{notification.metadata?.url && (
+								<button
+									onClick={handleViewAmazon}
+									className="flex items-center gap-1 text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors"
+									aria-label="Ver na Amazon"
+								>
+									<ArrowTopRightOnSquareIcon className="h-4 w-4" />
+									Ver na Amazon
 								</button>
 							)}
 

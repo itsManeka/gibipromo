@@ -48,6 +48,19 @@ Object.defineProperty(global, 'localStorage', {
 // Mock do scrollTo
 global.scrollTo = jest.fn()
 
+// Mock ResizeObserver for Recharts
+global.ResizeObserver = class ResizeObserver {
+	observe() {
+		// do nothing
+	}
+	unobserve() {
+		// do nothing
+	}
+	disconnect() {
+		// do nothing
+	}
+} as any
+
 // Suprimir warnings de console durante os testes
 const originalConsoleError = console.error
 beforeAll(() => {

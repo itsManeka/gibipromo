@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import { ProtectedRoute } from './ProtectedRoute'
 import { Home } from '../pages/Home'
 import { Promotions } from '../pages/Promotions'
+import { ProductDetails } from '../pages/ProductDetails'
 import { Profile } from '../pages/Profile'
 import { Settings } from '../pages/Settings'
 import { AddProducts } from '../pages/AddProducts'
@@ -14,11 +15,12 @@ import Notifications from '../pages/Notifications'
 export function AppRoutes() {
 	return (
 		<Routes>
-			{/* Rotas públicas */}
-			<Route path="/" element={<Home />} />
-			<Route path="/login" element={<Login />} />
-			<Route path="/registro" element={<Register />} />
-			<Route path="/promocoes" element={<Promotions />} />
+		{/* Rotas públicas */}
+		<Route path="/" element={<Home />} />
+		<Route path="/login" element={<Login />} />
+		<Route path="/registro" element={<Register />} />
+		<Route path="/promocoes" element={<Promotions />} />
+		<Route path="/produto/:id" element={<ProductDetails />} />
 
 			{/* Rotas protegidas */}
 			<Route

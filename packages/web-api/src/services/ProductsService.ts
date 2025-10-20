@@ -1,5 +1,5 @@
 import { Product } from '@gibipromo/shared/dist/entities/Product';
-import { ProductRepository, ProductUserRepository, PromotionFilters, FilterOptions } from '@gibipromo/shared';
+import { ProductRepository, ProductUserRepository, ProductStatsRepository, PromotionFilters, FilterOptions, ProductStats, createProductUser } from '@gibipromo/shared';
 import { BaseService } from './BaseService';
 
 /**
@@ -63,7 +63,8 @@ export class ProductsService extends BaseService {
 
 	constructor(
 		private readonly productRepository: ProductRepository,
-		private readonly productUserRepository?: ProductUserRepository
+		private readonly productUserRepository?: ProductUserRepository,
+		private readonly productStatsRepository?: ProductStatsRepository
 	) {
 		super('ProductsService');
 		this.cache = new Map();
@@ -341,6 +342,143 @@ export class ProductsService extends BaseService {
 			return options;
 		} catch (error) {
 			this.logError(error as Error, 'getFilterOptions');
+			throw error;
+		}
+	}
+
+	/**
+	 * Get product price statistics for a given period
+	 * @param productId - Product ASIN
+	 * @param period - Number of days to look back (30, 90, 180, 365)
+	 * @returns Array of ProductStats for the period
+	 */
+	async getProductStats(productId: string, period: number): Promise<ProductStats[]> {
+		if (!this.productStatsRepository) {
+			this.logAction('ProductStatsRepository not configured, returning empty stats');
+			return [];
+		}
+
+		const cacheKey = `stats:${productId}:${period}`;
+
+		// Verificar cache
+		const cached = this.getFromCache<ProductStats[]>(cacheKey);
+		if (cached) {
+			this.logAction('Cache hit for product stats', { productId, period });
+			return cached;
+		}
+
+		this.logAction('Getting product stats', { productId, period });
+
+		try {
+			// Calcular data de início
+			const endDate = new Date().toISOString();
+			const startDate = new Date();
+			startDate.setDate(startDate.getDate() - period);
+
+			const stats = await this.productStatsRepository.findByProductIdAndDateRange(
+				productId,
+				startDate.toISOString(),
+				endDate
+			);
+
+			// Armazenar no cache
+			this.setCache(cacheKey, stats);
+
+			return stats;
+		} catch (error) {
+			this.logError(error as Error, 'getProductStats');
+			throw error;
+		}
+	}
+
+	/**
+	 * Check if user is monitoring a product
+	 * @param userId - User ID
+	 * @param productId - Product ASIN
+	 * @returns true if user is monitoring the product
+	 */
+	async isUserMonitoring(userId: string, productId: string): Promise<boolean> {
+		if (!this.productUserRepository) {
+			return false;
+		}
+
+		this.logAction('Checking if user is monitoring product', { userId, productId });
+
+		try {
+			const relation = await this.productUserRepository.findByProductAndUser(productId, userId);
+			return relation !== null;
+		} catch (error) {
+			this.logError(error as Error, 'isUserMonitoring');
+			return false;
+		}
+	}
+
+	/**
+	 * Start monitoring a product
+	 * Creates a ProductUser relationship if it doesn't exist
+	 * @param userId - User ID
+	 * @param productId - Product ASIN
+	 * @param desiredPrice - Optional desired price for notifications
+	 */
+	async monitorProduct(userId: string, productId: string, desiredPrice?: number): Promise<void> {
+		if (!this.productUserRepository) {
+			throw new Error('ProductUserRepository não configurado');
+		}
+
+		this.logAction('User attempting to monitor product', { userId, productId, desiredPrice });
+
+		try {
+			// Verificar se produto existe
+			const product = await this.productRepository.findById(productId);
+			if (!product) {
+				throw new Error('Produto não encontrado');
+			}
+
+			// Verificar se já monitora
+			const existing = await this.productUserRepository.findByProductAndUser(productId, userId);
+			if (existing) {
+				throw new Error('Você já está monitorando este produto');
+			}
+
+			// Criar relação ProductUser
+			const productUser = createProductUser({
+				product_id: productId,
+				user_id: userId,
+				desired_price: desiredPrice
+			});
+
+			await this.productUserRepository.create(productUser);
+			this.logAction('User started monitoring product', { userId, productId });
+
+			// Limpar cache relacionado
+			this.clearCache(`promotions:*${userId}*`);
+		} catch (error) {
+			this.logError(error as Error, 'monitorProduct');
+			throw error;
+		}
+	}
+
+	/**
+	 * Stop monitoring a product
+	 * Removes the ProductUser relationship
+	 * @param userId - User ID
+	 * @param productId - Product ASIN
+	 */
+	async unmonitorProduct(userId: string, productId: string): Promise<void> {
+		if (!this.productUserRepository) {
+			throw new Error('ProductUserRepository não configurado');
+		}
+
+		this.logAction('User attempting to stop monitoring product', { userId, productId });
+
+		try {
+			await this.productUserRepository.removeByProductAndUser(productId, userId);
+			this.logAction('User stopped monitoring product', { userId, productId });
+
+			// Limpar cache relacionado
+			this.clearCache(`promotions:*${userId}*`);
+		} catch (error) {
+			this.logError(error as Error, 'unmonitorProduct');
 			throw error;
 		}
 	}

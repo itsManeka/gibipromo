@@ -164,6 +164,16 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 
 			await this.productRepository.create(product);
 			console.log(`Produto criado com sucesso: ${product.title} (R$ ${product.price})`);
+
+			// Cria entrada inicial de estatísticas para o produto
+			// Isso garante que sempre haverá pelo menos um ponto de dados no gráfico
+			try {
+				const initialStats = await this.productStatsService.createInitialStats(product);
+				console.log(`Estatística inicial criada para ${product.title} (baseline: R$ ${initialStats.price})`);
+			} catch (error) {
+				console.error('Erro ao criar estatística inicial do produto:', error);
+				// Não falha o processamento se houver erro nas estatísticas
+			}
 		} else {
 			// Produto existe, verifica se o preço mudou
 			const oldPrice = product.price;

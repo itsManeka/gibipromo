@@ -80,23 +80,21 @@ export class NotifyPriceActionProcessor implements ActionProcessor<NotifyPriceAc
 				return true;
 			}) as User[]; // Safe cast porque já filtramos nulls e users sem telegram_id
 
-			if (telegramUsers.length === 0) {
-				console.log(`Nenhum usuário do Telegram deve ser notificado para o produto ${product.id}`);
-				await this.actionRepository.markProcessed(action.id);
-				return;
-			}
-
-			// Notifica todos os usuários do Telegram
-			await Promise.all(
-				telegramUsers.map((user: User) =>
-					this.notifier.notifyPriceChange(
-						user.telegram_id!,
-						product,
-						oldPrice,
-						currentPrice
+			// Notifica todos os usuários do Telegram (se houver)
+			if (telegramUsers.length > 0) {
+				await Promise.all(
+					telegramUsers.map((user: User) =>
+						this.notifier.notifyPriceChange(
+							user.telegram_id!,
+							product,
+							oldPrice,
+							currentPrice
+						)
 					)
-				)
-			);
+				);
+			} else {
+				console.log(`Nenhum usuário do Telegram deve ser notificado para o produto ${product.id}`);
+			}
 
 			// Criar notificações para usuários do site
 			const siteUsers = users.filter((user: User | null) => {

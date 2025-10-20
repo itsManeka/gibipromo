@@ -15,7 +15,7 @@ import {
 	PromotionSortType
 } from '../services/ProductsService';
 import { ApiResponse, PromotionFilters } from '@gibipromo/shared';
-import { DynamoDBProductRepository, DynamoDBProductUserRepository } from '@gibipromo/shared';
+import { DynamoDBProductRepository, DynamoDBProductUserRepository, DynamoDBProductStatsRepository } from '@gibipromo/shared';
 
 /**
  * Products Controller
@@ -28,7 +28,8 @@ export class ProductsController extends BaseController {
 		super();
 		const productRepository = new DynamoDBProductRepository();
 		const productUserRepository = new DynamoDBProductUserRepository();
-		this.productsService = new ProductsService(productRepository, productUserRepository);
+		const productStatsRepository = new DynamoDBProductStatsRepository();
+		this.productsService = new ProductsService(productRepository, productUserRepository, productStatsRepository);
 	}
 
 	/**
@@ -373,6 +374,190 @@ export class ProductsController extends BaseController {
 				success: true,
 				data: products,
 				message: `${products.length} promoções mais recentes`
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			throw error;
+		}
+	});
+
+	/**
+	 * GET /products/:id/stats
+	 * Get price statistics for a product
+	 * Query params: period (30|90|180|365)
+	 * Public endpoint - no authentication required
+	 */
+	getProductStats = this.asyncHandler(async (req: Request, res: Response) => {
+		const { id } = req.params;
+		const periodParam = req.query.period as string;
+		const period = periodParam ? parseInt(periodParam, 10) : 30;
+
+		// Validação
+		if (!id) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Product ID é obrigatório'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		if (![30, 90, 180, 365].includes(period)) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Período deve ser 30, 90, 180 ou 365 dias'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		try {
+			const stats = await this.productsService.getProductStats(id, period);
+
+			const response: ApiResponse<typeof stats> = {
+				success: true,
+				data: stats,
+				message: `${stats.length} registros de estatísticas`
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			throw error;
+		}
+	});
+
+	/**
+	 * GET /products/:id/monitoring-status
+	 * Check if user is monitoring this product
+	 * Requires authentication
+	 */
+	getMonitoringStatus = this.asyncHandler(async (req: Request, res: Response) => {
+		const { id } = req.params;
+		const userId = req.user?.id;
+
+		// Validação
+		if (!id) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Product ID é obrigatório'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		if (!userId) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Autenticação necessária'
+			};
+			return this.sendUnauthorized(res, response);
+		}
+
+		try {
+			const isMonitoring = await this.productsService.isUserMonitoring(userId, id);
+
+			const response: ApiResponse<{ isMonitoring: boolean; productId: string }> = {
+				success: true,
+				data: { isMonitoring, productId: id }
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			throw error;
+		}
+	});
+
+	/**
+	 * POST /products/:id/monitor
+	 * Start monitoring a product
+	 * Requires authentication
+	 */
+	monitorProduct = this.asyncHandler(async (req: Request, res: Response) => {
+		const { id } = req.params;
+		const userId = req.user?.id;
+		const { desired_price } = req.body;
+
+		// Validação
+		if (!id) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Product ID é obrigatório'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		if (!userId) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Autenticação necessária'
+			};
+			return this.sendUnauthorized(res, response);
+		}
+
+		// Validar desired_price se fornecido
+		if (desired_price !== undefined && desired_price !== null) {
+			const price = parseFloat(desired_price);
+			if (isNaN(price) || price <= 0) {
+				const response: ApiResponse<null> = {
+					success: false,
+					error: 'Preço desejado deve ser um número positivo'
+				};
+				return this.sendBadRequest(res, response);
+			}
+		}
+
+		try {
+			await this.productsService.monitorProduct(userId, id, desired_price);
+
+			const response: ApiResponse<null> = {
+				success: true,
+				message: 'Produto adicionado ao monitoramento'
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			// Se o erro for "já está monitorando", retornar erro 400
+			if (error instanceof Error && error.message.includes('já está monitorando')) {
+				const response: ApiResponse<null> = {
+					success: false,
+					error: error.message
+				};
+				return this.sendBadRequest(res, response);
+			}
+			throw error;
+		}
+	});
+
+	/**
+	 * DELETE /products/:id/monitor
+	 * Stop monitoring a product
+	 * Requires authentication
+	 */
+	unmonitorProduct = this.asyncHandler(async (req: Request, res: Response) => {
+		const { id } = req.params;
+		const userId = req.user?.id;
+
+		// Validação
+		if (!id) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Product ID é obrigatório'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		if (!userId) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Autenticação necessária'
+			};
+			return this.sendUnauthorized(res, response);
+		}
+
+		try {
+			await this.productsService.unmonitorProduct(userId, id);
+
+			const response: ApiResponse<null> = {
+				success: true,
+				message: 'Produto removido do monitoramento'
 			};
 
 			this.sendSuccess(res, response);

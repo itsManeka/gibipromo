@@ -4,6 +4,7 @@ import { Loader2, TrendingDown, Calendar } from 'lucide-react'
 import { productsService, ProductStats } from '../api/products.service'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { useTheme } from '../contexts/ThemeContext'
 
 /**
  * Props do componente PriceHistoryChart
@@ -23,6 +24,7 @@ type Period = 30 | 90 | 180 | 365
  * Usa Recharts para visualizar mudanças de preço ao longo do tempo
  */
 export function PriceHistoryChart({ productId, className = '' }: PriceHistoryChartProps) {
+	const { theme } = useTheme()
 	const [stats, setStats] = useState<ProductStats[]>([])
 	const [period, setPeriod] = useState<Period>(30)
 	const [isLoading, setIsLoading] = useState(false)
@@ -83,19 +85,19 @@ export function PriceHistoryChart({ productId, className = '' }: PriceHistoryCha
 			const percentageChange = ((data.old_price - data.price) / data.old_price) * 100
 
 			return (
-				<div className="bg-dark-800 border border-dark-700 rounded-lg p-3 shadow-lg">
-					<p className="text-dark-300 text-sm mb-2 flex items-center gap-1">
+				<div className="bg-gray-100 dark:bg-dark-800 border border-gray-300 dark:border-dark-700 rounded-lg p-3 shadow-lg">
+					<p className="text-gray-700 dark:text-dark-300 text-sm mb-2 flex items-center gap-1">
 						<Calendar className="h-3 w-3" />
 						{data.formatted_date}
 					</p>
-					<p className="text-white font-semibold text-lg mb-1">
+					<p className="text-gray-900 dark:text-white font-semibold text-lg mb-1">
 						R$ {data.price.toFixed(2)}
 					</p>
 					{data.old_price !== data.price && (
-						<p className="text-dark-400 text-sm flex items-center gap-1">
+						<p className="text-gray-600 dark:text-dark-400 text-sm flex items-center gap-1">
 							<TrendingDown className="h-3 w-3 text-green-500" />
 							<span className="line-through">R$ {data.old_price.toFixed(2)}</span>
-							<span className="text-green-500 ml-1">
+							<span className="text-green-600 dark:text-green-500 ml-1">
 								-{percentageChange.toFixed(1)}%
 							</span>
 						</p>
@@ -107,11 +109,11 @@ export function PriceHistoryChart({ productId, className = '' }: PriceHistoryCha
 	}
 
 	return (
-		<div className={`bg-dark-900 border border-dark-700 rounded-2xl p-6 ${className}`}>
+		<div className={`bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-700 rounded-2xl p-6 ${className}`}>
 			{/* Header com seletor de período */}
 			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-				<h3 className="text-xl font-semibold text-white flex items-center gap-2">
-					<TrendingDown className="h-5 w-5 text-primary" />
+				<h3 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+					<TrendingDown className="h-5 w-5 text-purple-600 dark:text-primary" />
 					Histórico de Preços
 				</h3>
 
@@ -123,7 +125,7 @@ export function PriceHistoryChart({ productId, className = '' }: PriceHistoryCha
 							className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
 								period === p
 									? 'bg-purple-600 text-white'
-									: 'bg-dark-800 text-dark-300 hover:bg-dark-700 hover:text-white'
+									: 'bg-gray-200 dark:bg-dark-800 text-gray-700 dark:text-dark-300 hover:bg-purple-100 dark:hover:bg-dark-700 hover:text-purple-900 dark:hover:text-white'
 							}`}
 							disabled={isLoading}
 						>
@@ -136,17 +138,17 @@ export function PriceHistoryChart({ productId, className = '' }: PriceHistoryCha
 			{/* Loading */}
 			{isLoading && (
 				<div className="flex items-center justify-center py-20">
-					<Loader2 className="h-8 w-8 text-primary animate-spin" />
+					<Loader2 className="h-8 w-8 text-purple-600 dark:text-primary animate-spin" />
 				</div>
 			)}
 
 			{/* Erro */}
 			{!isLoading && error && (
 				<div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-center">
-					<p className="text-red-500">{error}</p>
+					<p className="text-red-600 dark:text-red-500">{error}</p>
 					<button
 						onClick={loadStats}
-						className="mt-3 text-sm text-white hover:text-primary transition-colors"
+						className="mt-3 text-sm text-purple-600 dark:text-white hover:text-purple-700 dark:hover:text-primary transition-colors"
 					>
 						Tentar novamente
 					</button>
@@ -156,8 +158,8 @@ export function PriceHistoryChart({ productId, className = '' }: PriceHistoryCha
 			{/* Empty state */}
 			{!isLoading && !error && stats.length === 0 && (
 				<div className="text-center py-20">
-					<TrendingDown className="h-12 w-12 text-dark-600 mx-auto mb-4" />
-					<p className="text-dark-400">
+					<TrendingDown className="h-12 w-12 text-gray-400 dark:text-dark-600 mx-auto mb-4" />
+					<p className="text-gray-600 dark:text-dark-400">
 						Nenhuma alteração de preço registrada nos últimos {period} dias
 					</p>
 				</div>
@@ -168,18 +170,18 @@ export function PriceHistoryChart({ productId, className = '' }: PriceHistoryCha
 				<div className="w-full h-80">
 					<ResponsiveContainer width="100%" height="100%">
 						<LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-							<CartesianGrid strokeDasharray="3 3" stroke="#44444F" />
+							<CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#44444F' : '#E5E7EB'} />
 							<XAxis
 								dataKey="formatted_date"
-								stroke="#9191A3"
-								tick={{ fill: '#9191A3', fontSize: 12 }}
+								stroke={theme === 'dark' ? '#9191A3' : '#9CA3AF'}
+								tick={{ fill: theme === 'dark' ? '#9191A3' : '#6B7280', fontSize: 12 }}
 								angle={-45}
 								textAnchor="end"
 								height={80}
 							/>
 							<YAxis
-								stroke="#9191A3"
-								tick={{ fill: '#9191A3', fontSize: 12 }}
+								stroke={theme === 'dark' ? '#9191A3' : '#9CA3AF'}
+								tick={{ fill: theme === 'dark' ? '#9191A3' : '#6B7280', fontSize: 12 }}
 								domain={[yAxisMin, yAxisMax]}
 								tickFormatter={(value) => `R$ ${value.toFixed(0)}`}
 							/>
@@ -187,31 +189,31 @@ export function PriceHistoryChart({ productId, className = '' }: PriceHistoryCha
 							<Line
 								type="monotone"
 								dataKey="price"
-								stroke="#6C2BD9"
+								stroke={theme === 'dark' ? '#6C2BD9' : '#9333EA'}
 								strokeWidth={2}
-								dot={{ fill: '#6C2BD9', r: 4 }}
-								activeDot={{ r: 6, fill: '#F5C542' }}
+								dot={{ fill: theme === 'dark' ? '#6C2BD9' : '#9333EA', r: 4 }}
+								activeDot={{ r: 6, fill: theme === 'dark' ? '#F5C542' : '#9333EA' }}
 							/>
 						</LineChart>
 					</ResponsiveContainer>
 
 					{/* Estatísticas resumidas */}
-					<div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-dark-700">
+					<div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-dark-700">
 						<div>
-							<p className="text-dark-400 text-sm mb-1">Menor Preço</p>
-							<p className="text-green-500 font-semibold text-lg">
+							<p className="text-gray-600 dark:text-dark-400 text-sm mb-1">Menor Preço</p>
+							<p className="text-green-600 dark:text-green-500 font-semibold text-lg">
 								R$ {minPrice.toFixed(2)}
 							</p>
 						</div>
 						<div>
-							<p className="text-dark-400 text-sm mb-1">Maior Preço</p>
-							<p className="text-red-500 font-semibold text-lg">
+							<p className="text-gray-600 dark:text-dark-400 text-sm mb-1">Maior Preço</p>
+							<p className="text-red-600 dark:text-red-500 font-semibold text-lg">
 								R$ {maxPrice.toFixed(2)}
 							</p>
 						</div>
 						<div className="col-span-2 sm:col-span-1">
-							<p className="text-dark-400 text-sm mb-1">Alterações</p>
-							<p className="text-white font-semibold text-lg">
+							<p className="text-gray-600 dark:text-dark-400 text-sm mb-1">Alterações</p>
+							<p className="text-gray-900 dark:text-white font-semibold text-lg">
 								{stats.length} registro{stats.length !== 1 ? 's' : ''}
 							</p>
 						</div>

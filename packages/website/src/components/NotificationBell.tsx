@@ -54,8 +54,8 @@ export default function NotificationBell() {
 				className={`
 					relative p-2 rounded-full transition-colors
 					${hasUnread
-						? 'nav-link hover:bg-purple-700 dark:hover:bg-purple-700'
-						: 'nav-link hover:bg-purple-700 dark:hover:bg-purple-700'
+						? 'text-purple-900 dark:text-gray-100 hover:bg-purple-200 dark:hover:bg-purple-700'
+						: 'text-purple-900 dark:text-gray-100 hover:bg-purple-200 dark:hover:bg-purple-700'
 					}
 				`}
 				aria-label="Notificações"
@@ -67,7 +67,7 @@ export default function NotificationBell() {
 				{/* Badge de contador */}
 				{hasUnread && (
 					<span
-						className="absolute top-1 right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] text-primary-light font-bold bg-red-600 rounded-full"
+						className="absolute top-1 right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] text-white font-bold bg-red-600 rounded-full"
 						aria-label={`${unreadCount} notificações não lidas`}
 					>
 						{unreadCount > 99 ? '99+' : unreadCount}

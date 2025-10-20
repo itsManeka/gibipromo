@@ -89,10 +89,10 @@ export function AddProducts() {
 			<div className="max-w-5xl mx-auto">
 				{/* Header */}
 				<div className="mb-8">
-					<h1 className="text-3xl md:text-4xl font-display font-bold text-white mb-2">
+					<h1 className="text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white mb-2">
 						🛍️ Adicionar Produtos
 					</h1>
-					<p className="text-dark-300">
+					<p className="text-gray-600 dark:text-dark-300">
 						Cole os links dos produtos da Amazon que você deseja monitorar
 					</p>
 				</div>
@@ -100,18 +100,18 @@ export function AddProducts() {
 				{/* Formulário Principal */}
 				<div className="card mb-8">
 					<div className="flex items-center gap-3 mb-6">
-						<div className="bg-primary/20 p-3 rounded-xl">
-							<Link2 className="h-6 w-6 text-primary" />
+						<div className="p-3 rounded-xl">
+							<Link2 className="h-6 w-6 text-dark dark:text-white" />
 						</div>
 						<div>
-							<h2 className="text-xl font-bold text-white">Cole os Links</h2>
-							<p className="text-sm text-dark-300">Você pode adicionar múltiplos produtos de uma vez</p>
+							<h2 className="text-xl font-bold text-gray-900 dark:text-white">Cole os Links</h2>
+							<p className="text-sm text-gray-600 dark:text-dark-300">Você pode adicionar múltiplos produtos de uma vez</p>
 						</div>
 					</div>
 
 					<form onSubmit={handleSubmit} className="space-y-4">
 						<div>
-							<label htmlFor="urls" className="block text-sm font-medium text-dark-300 mb-2">
+							<label htmlFor="urls" className="block text-sm font-medium text-gray-700 dark:text-dark-300 mb-2">
 								URLs dos Produtos
 							</label>
 							<textarea
@@ -123,15 +123,15 @@ export function AddProducts() {
 								className="input w-full resize-none"
 								disabled={isSubmitting}
 							/>
-							<p className="mt-2 text-sm text-dark-400">
+							<p className="mt-2 text-sm text-gray-500 dark:text-dark-400">
 								Você pode usar links diretos ou encurtados (amzn.to, a.co). Separe múltiplos links por linha.
 							</p>
 						</div>
 
 						{/* Aviso de Processamento */}
-						<div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 flex items-start gap-3">
-							<Clock className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-							<div className="text-sm text-yellow-200">
+						<div className="bg-purple-100 dark:bg-yellow-500/10 border border-purple-200 dark:border-yellow-500/20 rounded-xl p-4 flex items-start gap-3">
+							<Clock className="h-5 w-5 text-purple-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+							<div className="text-sm text-purple-800 dark:text-yellow-200">
 								<strong className="font-semibold">Tempo de processamento:</strong> Os produtos podem levar até 5 minutos para serem processados e aparecerem na sua lista.
 							</div>
 						</div>

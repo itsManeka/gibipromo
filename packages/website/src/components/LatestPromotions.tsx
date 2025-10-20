@@ -36,11 +36,11 @@ export function LatestPromotions() {
 	// Loading state
 	if (isLoading) {
 		return (
-			<section className="py-16 bg-dark-800">
+			<section className="py-16 bg-gray-100 dark:bg-dark-800">
 				<div className="max-w-7xl mx-auto px-4">
 					<div className="text-center">
-						<Loader2 className="h-12 w-12 text-primary animate-spin mx-auto mb-4" />
-						<p className="text-dark-300">Carregando promoções...</p>
+						<Loader2 className="h-12 w-12 text-purple-600 dark:text-primary animate-spin mx-auto mb-4" />
+						<p className="text-gray-600 dark:text-dark-300">Carregando promoções...</p>
 					</div>
 				</div>
 			</section>
@@ -50,11 +50,11 @@ export function LatestPromotions() {
 	// Error state
 	if (error) {
 		return (
-			<section className="py-16 bg-dark-800">
+			<section className="py-16 bg-gray-100 dark:bg-dark-800">
 				<div className="max-w-7xl mx-auto px-4">
 					<div className="text-center bg-red-500/10 border border-red-500/20 rounded-xl p-8">
 						<AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-						<p className="text-red-400">{error}</p>
+						<p className="text-red-600 dark:text-red-400">{error}</p>
 					</div>
 				</div>
 			</section>
@@ -67,15 +67,15 @@ export function LatestPromotions() {
 	}
 
 	return (
-		<section className="py-16 px-4 sm:px-6 lg:px-8">
+		<section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-100 dark:bg-transparent">
 			<div className="max-w-7xl mx-auto">
 				{/* Header */}
 				<div className="flex justify-between items-center mb-8">
 					<div>
-						<h2 className="text-3xl font-display font-bold text-white mb-2">
+						<h2 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2">
 							🔥 Últimas Promoções
 						</h2>
-						<p className="text-primary-light">
+						<p className="text-gray-600 dark:text-primary-light">
 							As melhores ofertas encontradas pela nossa gatinha
 						</p>
 					</div>

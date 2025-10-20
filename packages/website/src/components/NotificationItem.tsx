@@ -54,11 +54,11 @@ export default function NotificationItem({ notification, compact = false, onClic
 	const getIcon = () => {
 		switch (notification.type) {
 			case NotificationType.PRODUCT_ADDED:
-				return <ShoppingCartIcon className="h-5 w-5 text-white" />;
+				return <ShoppingCartIcon className="h-5 w-5 text-purple-900 dark:text-white" />;
 			case NotificationType.PRICE_DROP:
-				return <TagIcon className="h-5 w-5 text-white" />;
+				return <TagIcon className="h-5 w-5 text-purple-900 dark:text-white" />;
 			default:
-				return <CheckIcon className="h-5 w-5 text-white" />;
+				return <CheckIcon className="h-5 w-5 text-purple-900 dark:text-white" />;
 		}
 	};
 
@@ -141,16 +141,16 @@ export default function NotificationItem({ notification, compact = false, onClic
 		if (variant === 'page') {
 			// Para a página completa: sem background quando lida, sutil quando não lida
 			if (isUnread) {
-				return 'bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800/70';
+				return 'bg-purple-100 dark:bg-gray-800/50 hover:bg-purple-200 dark:hover:bg-gray-800/70';
 			}
-			return 'bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30';
+			return 'bg-transparent hover:bg-purple-50 dark:hover:bg-gray-800/30';
 		}
 		
 		// Para o dropdown: backgrounds roxos com hover mais perceptível para lidas
 		if (isUnread) {
-			return 'bg-purple-50 dark:bg-purple-800/30 hover:bg-purple-100 dark:hover:bg-purple-800/50';
+			return 'bg-purple-200 dark:bg-purple-800/30 hover:bg-purple-300 dark:hover:bg-purple-800/50';
 		}
-		return 'bg-transparent hover:bg-purple-200/60 dark:hover:bg-purple-600/40';
+		return 'bg-transparent hover:bg-purple-100 dark:hover:bg-purple-600/40';
 	};
 
 	return (
@@ -175,24 +175,24 @@ export default function NotificationItem({ notification, compact = false, onClic
 					<div className="flex items-start justify-between gap-2 mb-1">
 						<div className="flex items-center gap-2 flex-1 min-w-0">
 							{isUnread && (
-								<span className="flex-shrink-0 w-2 h-2 bg-primary-yellow rounded-full" aria-label="Não lida"></span>
+								<span className="flex-shrink-0 w-2 h-2 bg-purple-600 dark:bg-primary-yellow rounded-full" aria-label="Não lida"></span>
 							)}
 							<h3 className={`
-								text-sm font-medium text-white
+								text-sm font-medium text-gray-900 dark:text-white
 								${isUnread ? 'font-semibold' : ''}
 								${compact ? 'line-clamp-1' : ''}
 							`}>
 								{notification.title}
 							</h3>
 						</div>
-						<span className="flex-shrink-0 text-xs text-gray-400 whitespace-nowrap">
+						<span className="flex-shrink-0 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
 							{getRelativeTime()}
 						</span>
 					</div>
 
 					{/* Mensagem */}
 					<p className={`
-						text-sm text-gray-300
+						text-sm text-gray-700 dark:text-gray-300
 						${compact ? 'line-clamp-2' : 'line-clamp-3'}
 					`}>
 						{notification.message}
@@ -201,10 +201,10 @@ export default function NotificationItem({ notification, compact = false, onClic
 					{/* Informações extras no modo compacto */}
 					{compact && notification.metadata?.new_price && notification.metadata?.old_price && (
 						<div className="flex items-center gap-2 mt-2">
-							<span className="text-xs text-gray-400 line-through">
+							<span className="text-xs text-gray-600 dark:text-gray-400 line-through">
 								R$ {notification.metadata.old_price.toFixed(2)}
 							</span>
-							<span className="text-sm font-semibold text-green-400">
+							<span className="text-sm font-semibold text-green-600 dark:text-green-400">
 								R$ {notification.metadata.new_price.toFixed(2)}
 							</span>
 							<span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
@@ -220,7 +220,7 @@ export default function NotificationItem({ notification, compact = false, onClic
 							{notification.metadata?.product_id && (
 								<button
 									onClick={handleViewProduct}
-									className="text-xs font-medium text-primary-yellow hover:text-primary-yellow/80 transition-colors"
+									className="text-xs font-medium text-purple-600 dark:text-primary-yellow hover:text-purple-700 dark:hover:text-primary-yellow/80 transition-colors"
 								>
 									Ver produto
 								</button>
@@ -230,7 +230,7 @@ export default function NotificationItem({ notification, compact = false, onClic
 							{notification.metadata?.url && (
 								<button
 									onClick={handleViewAmazon}
-									className="flex items-center gap-1 text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors"
+									className="flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
 									aria-label="Ver na Amazon"
 								>
 									<ArrowTopRightOnSquareIcon className="h-4 w-4" />
@@ -242,7 +242,7 @@ export default function NotificationItem({ notification, compact = false, onClic
 							{isUnread && (
 								<button
 									onClick={handleMarkAsRead}
-									className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+									className="flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
 									aria-label="Marcar como lida"
 								>
 									<CheckIcon className="h-4 w-4" />
@@ -253,7 +253,7 @@ export default function NotificationItem({ notification, compact = false, onClic
 							{/* Deletar */}
 							<button
 								onClick={handleDelete}
-								className="flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors ml-auto"
+								className="flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors ml-auto"
 								aria-label="Excluir notificação"
 							>
 								<TrashIcon className="h-4 w-4" />

@@ -44,8 +44,8 @@ export function Profile() {
 		return (
 			<div className="min-h-screen flex items-center justify-center">
 				<div className="text-center">
-					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-yellow mx-auto mb-4"></div>
-					<p className="text-primary-light">Carregando perfil...</p>
+					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 dark:border-primary-yellow mx-auto mb-4"></div>
+					<p className="text-gray-600 dark:text-primary-light">Carregando perfil...</p>
 				</div>
 			</div>
 		)
@@ -55,9 +55,9 @@ export function Profile() {
 		return (
 			<div className="min-h-screen flex items-center justify-center px-4">
 				<div className="card max-w-md w-full text-center">
-					<AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-					<h2 className="text-xl font-semibold text-white mb-2">Erro ao carregar perfil</h2>
-					<p className="text-primary-light mb-4">{error}</p>
+					<AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+					<h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Erro ao carregar perfil</h2>
+					<p className="text-gray-600 dark:text-primary-light mb-4">{error}</p>
 					<button 
 						onClick={() => window.location.reload()} 
 						className="btn-primary"
@@ -74,10 +74,10 @@ export function Profile() {
 			<div className="max-w-4xl mx-auto">
 				{/* Header */}
 				<div className="mb-8">
-					<h1 className="text-3xl font-display font-bold text-white mb-2">
+					<h1 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2">
 						👤 Meu Perfil
 					</h1>
-					<p className="text-primary-light">
+					<p className="text-gray-600 dark:text-primary-light">
 						Gerencie suas informações
 					</p>
 				</div>
@@ -87,7 +87,7 @@ export function Profile() {
 					<div className="lg:col-span-2">
 						<div className="card">
 							<div className="flex justify-between items-start mb-6">
-								<h2 className="text-xl font-semibold text-white">
+								<h2 className="text-xl font-semibold text-gray-900 dark:text-white">
 									Informações Pessoais
 								</h2>
 								{!isEditing ? (
@@ -120,16 +120,16 @@ export function Profile() {
 
 							<div className="flex items-start space-x-6 mb-6">
 								{/* Avatar */}
-								<div className="flex-shrink-0">
-									<div className="w-24 h-24 bg-purple-600 rounded-full flex items-center justify-center">
-										<User className="h-12 w-12 text-white" />
-									</div>
+							<div className="flex-shrink-0">
+								<div className="w-24 h-24 bg-purple-600 rounded-full flex items-center justify-center">
+									<User className="h-12 w-12 text-white dark:text-white" />
 								</div>
+							</div>
 
 								{/* Informações */}
 								<div className="flex-1 space-y-4">
 									<div>
-										<label className="block text-sm font-medium text-primary-light mb-1">
+										<label className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-1">
 											Nome
 										</label>
 										{isEditing ? (
@@ -146,22 +146,22 @@ export function Profile() {
 												)}
 											</div>
 										) : (
-											<p className="text-white">{profile?.nick || 'Não definido'}</p>
+											<p className="text-gray-900 dark:text-white">{profile?.nick || 'Não definido'}</p>
 										)}
 									</div>
 
 									<div>
-										<label className="block text-sm font-medium text-primary-light mb-1">
+										<label className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-1">
 											Email
 										</label>
-										<p className="text-white">{user?.email}</p>
+										<p className="text-gray-900 dark:text-white">{user?.email}</p>
 									</div>
 
 									<div>
-										<label className="block text-sm font-medium text-primary-light mb-1">
+										<label className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-1">
 											Membro desde
 										</label>
-										<p className="text-sm text-gray-400">
+										<p className="text-sm text-gray-600 dark:text-gray-400">
 											{user?.created_at ? formatDate(user.created_at) : 'Data não disponível'}
 										</p>
 									</div>
@@ -173,7 +173,7 @@ export function Profile() {
 					{/* Quick Actions */}
 					<div className="space-y-6">
 						<div className="card">
-							<h3 className="text-lg font-semibold text-white mb-4">
+							<h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
 								⚡ Ações Rápidas
 							</h3>
 							<div className="space-y-3">

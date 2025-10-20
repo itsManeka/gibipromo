@@ -105,10 +105,10 @@ export default function Notifications() {
 			<div className="max-w-4xl mx-auto">
 				{/* Header */}
 				<div className="mb-8">
-					<h1 className="text-3xl md:text-4xl font-display font-bold text-white mb-2">
+					<h1 className="text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white mb-2">
 						🔔 Notificações
 					</h1>
-					<p className="text-dark-300">
+					<p className="text-gray-600 dark:text-dark-300">
 						Acompanhe atualizações sobre seus produtos monitorados
 					</p>
 				</div>
@@ -118,7 +118,7 @@ export default function Notifications() {
 					<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
 						{/* Filtros */}
 						<div className="flex items-center gap-3">
-							<FunnelIcon className="h-5 w-5 text-primary-yellow" />
+							<FunnelIcon className="h-5 w-5 text-purple-600 dark:text-primary-yellow" />
 							<div className="flex gap-2">
 								<button
 									onClick={() => setFilter('all')}
@@ -126,7 +126,7 @@ export default function Notifications() {
 										px-4 py-2 rounded-lg text-sm font-medium transition-colors
 										${filter === 'all'
 											? 'bg-primary-yellow text-dark-950'
-											: 'bg-purple-700 text-white hover:bg-purple-600'
+											: 'bg-purple-100 dark:bg-purple-700 text-purple-900 dark:text-white hover:bg-purple-200 dark:hover:bg-purple-600'
 										}
 									`}
 								>
@@ -138,7 +138,7 @@ export default function Notifications() {
 										px-4 py-2 rounded-lg text-sm font-medium transition-colors
 										${filter === 'unread'
 											? 'bg-primary-yellow text-dark-950'
-											: 'bg-purple-700 text-white hover:bg-purple-600'
+											: 'bg-purple-100 dark:bg-purple-700 text-purple-900 dark:text-white hover:bg-purple-200 dark:hover:bg-purple-600'
 										}
 									`}
 								>
@@ -164,13 +164,13 @@ export default function Notifications() {
 				{loading ? (
 					// Loading state
 					<div className="text-center py-20">
-						<div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-yellow mb-4"></div>
-						<p className="text-dark-300">Carregando notificações...</p>
+						<div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 dark:border-primary-yellow mb-4"></div>
+						<p className="text-gray-600 dark:text-dark-300">Carregando notificações...</p>
 					</div>
 				) : error ? (
 					// Error state
 					<div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
-						<p className="text-red-400 mb-4">{error}</p>
+						<p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
 						<button
 							onClick={() => loadNotifications(true)}
 							className="btn-primary"

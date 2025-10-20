@@ -136,8 +136,8 @@ export function ProductDetails() {
 		return (
 			<div className="min-h-screen flex items-center justify-center">
 				<div className="text-center">
-					<Loader2 className="h-12 w-12 text-primary animate-spin mx-auto mb-4" />
-					<p className="text-dark-300">Carregando produto...</p>
+					<Loader2 className="h-12 w-12 text-purple-600 dark:text-primary animate-spin mx-auto mb-4" />
+					<p className="text-gray-600 dark:text-dark-300">Carregando produto...</p>
 				</div>
 			</div>
 		)
@@ -149,8 +149,8 @@ export function ProductDetails() {
 			<div className="min-h-screen flex items-center justify-center px-4">
 				<div className="text-center max-w-md">
 					<AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-					<h1 className="text-2xl font-bold text-white mb-2">Produto não encontrado</h1>
-					<p className="text-dark-300 mb-6">{error || 'O produto que você procura não existe'}</p>
+					<h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Produto não encontrado</h1>
+					<p className="text-gray-600 dark:text-dark-300 mb-6">{error || 'O produto que você procura não existe'}</p>
 					<Link to="/promocoes" className="btn-primary">
 						Ver Promoções
 					</Link>
@@ -168,26 +168,26 @@ export function ProductDetails() {
 		<div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 pb-20">
 			<div className="max-w-6xl mx-auto">
 				{/* Breadcrumb */}
-				<nav className="flex items-center gap-2 text-sm text-dark-400 mb-6">
-					<Link to="/" className="hover:text-primary transition-colors flex items-center gap-1">
+				<nav className="flex items-center gap-2 text-sm text-gray-600 dark:text-dark-400 mb-6">
+					<Link to="/" className="hover:text-purple-600 dark:hover:text-primary transition-colors flex items-center gap-1">
 						<Home className="h-4 w-4" />
 						Home
 					</Link>
 					<ChevronRight className="h-4 w-4" />
-					<Link to="/promocoes" className="hover:text-primary transition-colors">
+					<Link to="/promocoes" className="hover:text-purple-600 dark:hover:text-primary transition-colors">
 						Promoções
 					</Link>
 					<ChevronRight className="h-4 w-4" />
-					<span className="text-dark-300 truncate max-w-[200px]">{product.title}</span>
+					<span className="text-gray-700 dark:text-dark-300 truncate max-w-[200px]">{product.title}</span>
 				</nav>
 
 				{/* Produto */}
-				<div className="bg-dark-900 border border-dark-700 rounded-2xl overflow-hidden mb-6">
+				<div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-700 rounded-2xl overflow-hidden mb-6">
 					<div className="grid md:grid-cols-5 gap-6 p-6">
 						{/* Imagem do produto */}
 						<div className="md:col-span-2">
 							<div className="relative">
-								<div className="aspect-[2/3] bg-dark-800 rounded-xl overflow-hidden">
+								<div className="aspect-[2/3] bg-gray-200 dark:bg-dark-800 rounded-xl overflow-hidden">
 									{product.image ? (
 										<img
 											src={product.image}
@@ -236,27 +236,27 @@ export function ProductDetails() {
 							<div className="mb-4">
 								<div className="flex flex-wrap gap-2 mb-2">
 									{product.category && (
-										<span className="bg-dark-800 text-primary px-3 py-1 rounded-lg text-sm font-medium flex items-center gap-1">
+										<span className="bg-purple-100 dark:bg-dark-800 text-purple-700 dark:text-primary-light px-3 py-1 rounded-lg text-sm font-medium flex items-center gap-1">
 											<Tag className="h-3 w-3" />
 											{product.category}
 										</span>
 									)}
 									{product.genre && (
-										<span className="bg-dark-800 text-dark-300 px-3 py-1 rounded-lg text-sm">
+										<span className="bg-gray-200 dark:bg-dark-800 text-gray-700 dark:text-dark-300 px-3 py-1 rounded-lg text-sm">
 											{product.genre}
 										</span>
 									)}
 								</div>
-								<h1 className="text-2xl md:text-3xl font-bold text-white mb-3">
+								<h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-3">
 									{product.title}
 								</h1>
 								{product.contributors && product.contributors.length > 0 && (
-									<p className="text-dark-300 mb-2">
-										Por: <span className="text-white">{normalizeContributors(product.contributors).join(' • ')}</span>
+									<p className="text-gray-600 dark:text-dark-300 mb-2">
+										Por: <span className="text-gray-900 dark:text-white">{normalizeContributors(product.contributors).join(' • ')}</span>
 									</p>
 								)}
 								{product.publisher && (
-									<p className="text-dark-400 text-sm">
+									<p className="text-gray-500 dark:text-dark-400 text-sm">
 										Editora: {product.publisher}
 									</p>
 								)}
@@ -265,17 +265,17 @@ export function ProductDetails() {
 							{/* Preços */}
 							<div className="mb-6">
 								<div className="flex items-baseline gap-3 mb-2">
-									<span className="text-4xl font-bold text-primary">
+									<span className="text-4xl font-bold text-green-600 dark:text-primary">
 										R$ {product.price.toFixed(2)}
 									</span>
 									{product.full_price > product.price && (
-										<span className="text-xl text-dark-400 line-through">
+										<span className="text-xl text-gray-500 dark:text-dark-400 line-through">
 											R$ {product.full_price.toFixed(2)}
 										</span>
 									)}
 								</div>
 								{product.lowest_price < product.price && (
-									<p className="text-sm text-dark-400 flex items-center gap-1">
+									<p className="text-sm text-gray-600 dark:text-dark-400 flex items-center gap-1">
 										<Package className="h-4 w-4" />
 										Menor preço histórico: R$ {product.lowest_price.toFixed(2)}
 									</p>
@@ -339,23 +339,23 @@ export function ProductDetails() {
 				<div className="mb-6">
 					<button
 						onClick={toggleChart}
-						className="w-full bg-dark-900 border border-dark-700 rounded-2xl p-6 hover:border-purple-600 transition-colors text-left flex items-center justify-between"
+						className="w-full bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-700 rounded-2xl p-6 hover:border-purple-600 transition-colors text-left flex items-center justify-between"
 					>
 						<div className="flex items-center gap-3">
-							<TrendingDown className="h-6 w-6 text-primary" />
+							<TrendingDown className="h-6 w-6 text-purple-600 dark:text-primary" />
 							<div>
-								<h2 className="text-xl font-semibold text-white">
+								<h2 className="text-xl font-semibold text-gray-900 dark:text-white">
 									Histórico de Preços
 								</h2>
-								<p className="text-dark-400 text-sm">
+								<p className="text-gray-600 dark:text-dark-400 text-sm">
 									Visualize as mudanças de preço ao longo do tempo
 								</p>
 							</div>
 						</div>
 						{showChart ? (
-							<ChevronUp className="h-6 w-6 text-dark-400" />
+							<ChevronUp className="h-6 w-6 text-gray-600 dark:text-dark-400" />
 						) : (
-							<ChevronDown className="h-6 w-6 text-dark-400" />
+							<ChevronDown className="h-6 w-6 text-gray-600 dark:text-dark-400" />
 						)}
 					</button>
 

@@ -63,15 +63,15 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 	)
 
 	return (
-		<div className="bg-dark-900 rounded-2xl overflow-hidden mb-8">
+		<div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-700 rounded-2xl overflow-hidden mb-8">
 			{/* Header com toggle (mobile) */}
-			<div className="p-4 md:p-6 border-b border-dark-700">
+			<div className="p-4 md:p-6 border-b border-gray-200 dark:border-dark-700">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-3">
-						<Filter className="h-5 w-5 text-primary" />
-						<h2 className="text-lg font-semibold text-white">Filtros</h2>
+						<Filter className="h-5 w-5 text-primary dark:text-primary" />
+						<h2 className="text-lg font-semibold text-gray-900 dark:text-white">Filtros</h2>
 						{hasActiveFilters() && (
-							<span className="px-2 py-1 text-xs font-medium bg-primary/20 text-primary rounded-full">
+							<span className="px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-primary/20 text-purple-700 dark:text-primary rounded-full">
 								Ativos
 							</span>
 						)}
@@ -80,7 +80,7 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 						{hasActiveFilters() && (
 							<button
 								onClick={clearAllFilters}
-								className="text-sm text-dark-400 hover:text-primary transition-colors flex items-center gap-1"
+								className="text-sm text-gray-600 dark:text-dark-400 hover:text-purple-600 dark:hover:text-primary transition-colors flex items-center gap-1"
 							>
 								<X className="h-4 w-4" />
 								<span className="hidden sm:inline">Limpar</span>
@@ -88,14 +88,14 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 						)}
 						<button
 							onClick={() => setIsExpanded(!isExpanded)}
-							className="p-2 hover:bg-dark-800 rounded-lg transition-colors flex items-center gap-2"
+							className="p-2 hover:bg-gray-100 dark:hover:bg-dark-800 rounded-lg transition-colors flex items-center gap-2"
 							aria-label={isExpanded ? 'Recolher filtros' : 'Expandir filtros'}
 						>
-							<span className="text-sm text-dark-300 hidden sm:inline">
+							<span className="text-sm text-gray-600 dark:text-dark-300 hidden sm:inline">
 								{isExpanded ? 'Recolher' : 'Expandir'}
 							</span>
 							<ChevronDown
-								className={`h-5 w-5 text-dark-400 transition-transform ${
+								className={`h-5 w-5 text-gray-600 dark:text-dark-400 transition-transform ${
 									isExpanded ? 'rotate-180' : ''
 								}`}
 							/>
@@ -112,7 +112,7 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 						{/* Filtro "Meus Produtos" - Apenas se logado */}
 						{isAuthenticated && (
 							<div className="sm:col-span-2 lg:col-span-1">
-								<label className="block text-sm font-medium text-primary-light mb-2">
+								<label className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-2">
 									Escopo
 								</label>
 								<select
@@ -128,11 +128,11 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 
 						{/* Busca */}
 						<div className={`${isAuthenticated ? 'sm:col-span-2 lg:col-span-2' : 'sm:col-span-2 lg:col-span-3'}`}>
-							<label className="block text-sm font-medium text-primary-light mb-2">
+							<label className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-2">
 								Buscar
 							</label>
 							<div className="relative">
-								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-dark-400" />
+								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-dark-400" />
 								<input
 									type="text"
 									placeholder="Título ou Autores e Ilustradores..."
@@ -143,7 +143,7 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 								{filters.query && (
 									<button
 										onClick={() => updateFilter('query', undefined)}
-										className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-400 hover:text-white"
+										className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-dark-400 hover:text-gray-900 dark:hover:text-white"
 									>
 										<X className="h-4 w-4" />
 									</button>
@@ -153,7 +153,7 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 
 						{/* Categoria */}
 						<div>
-							<label className="block text-sm font-medium text-primary-light mb-2">
+							<label className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-2">
 								Categoria
 							</label>
 							<select
@@ -172,7 +172,7 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 
 						{/* Editora */}
 						<div>
-							<label className="block text-sm font-medium text-primary-light mb-2">
+							<label className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-2">
 								Editora
 							</label>
 							<select
@@ -191,7 +191,7 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 
 						{/* Gênero */}
 						<div>
-							<label className="block text-sm font-medium text-primary-light mb-2">
+							<label className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-2">
 								Gênero
 							</label>
 							<select
@@ -210,7 +210,7 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 
 						{/* Formato */}
 						<div>
-							<label className="block text-sm font-medium text-primary-light mb-2">
+							<label className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-2">
 								Formato
 							</label>
 							<select
@@ -231,7 +231,7 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 					{/* Multi-select de Autores e Ilustradores */}
 					{filterOptions.contributors.length > 0 && (
 						<div>
-							<label className="block text-sm font-medium text-primary-light mb-2">
+							<label className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-2">
 								Autores e Ilustradores
 								{filters.contributors && filters.contributors.length > 0 && (
 									<span className="ml-2 text-xs text-primary">
@@ -271,7 +271,7 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 												className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
 													isSelected
 														? 'bg-primary/20 text-primary'
-														: 'hover:bg-dark-800 text-dark-300'
+														: 'hover:bg-dark-800 text-gray-700 hover:text-dark-300'
 												}`}
 											>
 												<input
@@ -302,7 +302,7 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 								onChange={e => updateFilter('inStock', e.target.checked)}
 								className="form-checkbox h-5 w-5 text-primary rounded border-dark-600 focus:ring-primary focus:ring-offset-dark-900"
 							/>
-							<span className="text-sm font-medium text-dark-300 group-hover:text-white transition-colors">
+							<span className="text-sm font-medium text-gray-700 group-hover:text-purple-600 transition-colors">
 								Apenas em Estoque
 							</span>
 						</label>
@@ -314,7 +314,7 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 								onChange={e => updateFilter('preorder', e.target.checked)}
 								className="form-checkbox h-5 w-5 text-primary rounded border-dark-600 focus:ring-primary focus:ring-offset-dark-900"
 							/>
-							<span className="text-sm font-medium text-dark-300 group-hover:text-white transition-colors">
+							<span className="text-sm font-medium text-gray-700 group-hover:text-purple-600 transition-colors">
 								Apenas Pré-vendas
 							</span>
 						</label>

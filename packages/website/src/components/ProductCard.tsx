@@ -19,7 +19,7 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
 	return (
 		<div className={`card-product group ${className}`}>
 			<Link to={`/produto/${product.id}`} className="block relative mb-4">
-				<div className="aspect-[2/3] bg-dark-800 rounded-xl overflow-hidden">
+				<div className="aspect-[2/3] bg-gray-200 dark:bg-dark-800 rounded-xl overflow-hidden">
 					{product.image ? (
 						<img
 							src={product.image}
@@ -64,34 +64,34 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
 
 			<div className="space-y-3">
 				<Link to={`/produto/${product.id}`}>
-					<h3 className="font-semibold text-white line-clamp-2 group-hover:text-primary transition-colors mb-1">
+					<h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors mb-1">
 						{product.title}
 					</h3>
 				</Link>
 					<div>
 						{product.contributors && product.contributors.length > 0 && (
-							<p className="text-dark-300 text-sm line-clamp-1">
+							<p className="text-gray-600 dark:text-dark-300 text-sm line-clamp-1">
 								{normalizeContributors(product.contributors).join(' • ')}
 							</p>
 						)}
 						<div className="flex flex-wrap gap-1 mt-1">
 							{product.category && (
-								<span className="text-dark-400 text-xs">{product.category}</span>
+								<span className="text-gray-500 dark:text-dark-400 text-xs">{product.category}</span>
 							)}
 							{product.publisher && (
 								<>
-									<span className="text-dark-600 text-xs">•</span>
-									<span className="text-dark-400 text-xs">{product.publisher}</span>
+									<span className="text-gray-400 dark:text-dark-600 text-xs">•</span>
+									<span className="text-gray-500 dark:text-dark-400 text-xs">{product.publisher}</span>
 								</>
 							)}
 						</div>
 					</div>
 
 				<div className="flex items-baseline gap-2">
-					<span className="text-xl font-bold text-primary">
+					<span className="text-xl font-bold text-green-600 dark:text-green-500">
 						R$ {product.price.toFixed(2)}
 					</span>
-					<span className="text-sm text-dark-400 line-through">
+					<span className="text-sm text-gray-500 dark:text-dark-400 line-through">
 						R$ {product.full_price.toFixed(2)}
 					</span>
 				</div>

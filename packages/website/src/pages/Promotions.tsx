@@ -102,8 +102,8 @@ export function Promotions() {
 		return (
 			<div className="min-h-screen flex items-center justify-center">
 				<div className="text-center">
-					<Loader2 className="h-12 w-12 text-primary animate-spin mx-auto mb-4" />
-					<p className="text-dark-300">Carregando filtros...</p>
+					<Loader2 className="h-12 w-12 text-purple-600 dark:text-primary animate-spin mx-auto mb-4" />
+					<p className="text-gray-600 dark:text-dark-300">Carregando filtros...</p>
 				</div>
 			</div>
 		)
@@ -115,7 +115,7 @@ export function Promotions() {
 				{/* Header */}
 				<div className="mb-8">
 					<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
-						<h1 className="text-3xl md:text-4xl font-display font-bold text-white">
+						<h1 className="text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white">
 							🔥 Promoções Ativas
 						</h1>
 						{isAuthenticated && (
@@ -137,10 +137,10 @@ export function Promotions() {
 							</button>
 						)}
 					</div>
-					<p className="text-dark-300">
+					<p className="text-gray-600 dark:text-dark-300">
 						{pagination ? (
 							<>
-								<span className="text-primary font-semibold">{pagination.total}</span> promoções encontradas
+								<span className="text-green-600 font-semibold">{pagination.total}</span> promoções encontradas
 							</>
 						) : (
 							'Carregando promoções...'
@@ -169,11 +169,11 @@ export function Promotions() {
 
 				{/* Ordenação */}
 				<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-					<p className="text-sm text-dark-300">
+					<p className="text-sm text-gray-600 dark:text-dark-300">
 						Página {pagination?.page || 1} de {pagination?.totalPages || 1}
 					</p>
 					<div className="flex items-center gap-2">
-						<label htmlFor="sort" className="text-sm text-dark-300">
+						<label htmlFor="sort" className="text-sm text-gray-600 dark:text-dark-300">
 							Ordenar por:
 						</label>
 						<select
@@ -194,8 +194,8 @@ export function Promotions() {
 				{/* Loading */}
 				{isLoading && (
 					<div className="text-center py-20">
-						<Loader2 className="h-12 w-12 text-primary animate-spin mx-auto mb-4" />
-						<p className="text-dark-300">Buscando promoções...</p>
+						<Loader2 className="h-12 w-12 text-purple-600 dark:text-primary animate-spin mx-auto mb-4" />
+						<p className="text-gray-600 dark:text-dark-300">Buscando promoções...</p>
 					</div>
 				)}
 
@@ -203,8 +203,8 @@ export function Promotions() {
 				{!isLoading && error && (
 					<div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
 						<AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-						<h3 className="text-lg font-semibold text-white mb-2">Erro ao carregar promoções</h3>
-						<p className="text-dark-300 mb-4">{error}</p>
+						<h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Erro ao carregar promoções</h3>
+						<p className="text-gray-600 dark:text-dark-300 mb-4">{error}</p>
 						<button
 							onClick={() => window.location.reload()}
 							className="btn-primary"
@@ -226,11 +226,11 @@ export function Promotions() {
 				{/* Sem resultados */}
 				{!isLoading && !error && products.length === 0 && (
 					<div className="text-center py-20">
-						<BookOpen className="h-16 w-16 text-dark-600 mx-auto mb-4" />
-						<h3 className="text-xl font-semibold text-white mb-2">
+						<BookOpen className="h-16 w-16 text-gray-400 dark:text-dark-600 mx-auto mb-4" />
+						<h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
 							Nenhuma promoção encontrada
 						</h3>
-						<p className="text-dark-300 mb-6">
+						<p className="text-gray-600 dark:text-dark-300 mb-6">
 							Tente ajustar os filtros para encontrar mais produtos
 						</p>
 						<button
@@ -273,7 +273,7 @@ export function Promotions() {
 										key={pageNumber}
 										onClick={() => handlePageChange(pageNumber)}
 										className={`px-4 py-2 rounded-lg transition-colors ${currentPage === pageNumber
-											? 'bg-primary text-dark-900 font-semibold'
+											? 'bg-purple-600 dark:bg-primary text-white dark:text-dark-900 font-semibold'
 											: 'btn-ghost'
 											}`}
 									>

@@ -34,10 +34,10 @@ export function Settings() {
 			<div className="max-w-4xl mx-auto">
 				{/* Header */}
 				<div className="mb-8">
-					<h1 className="text-3xl font-display font-bold text-white mb-2">
+					<h1 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2">
 						⚙️ Configurações
 					</h1>
-					<p className="text-primary-light">
+					<p className="text-gray-600 dark:text-primary-light">
 						Personalize sua experiência no GibiPromo
 					</p>
 				</div>
@@ -45,7 +45,7 @@ export function Settings() {
 				<div className="space-y-8">
 					{/* Aparência */}
 					<div className="card">
-						<h2 className="text-xl font-semibold text-white mb-6">
+						<h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
 							🎨 Aparência
 						</h2>
 
@@ -54,21 +54,21 @@ export function Settings() {
 								<div className="flex items-center space-x-3">
 									<div className="bg-purple-600 rounded-full p-2">
 										{theme === 'dark' ? (
-											<Moon className="h-5 w-5 text-white" />
+											<Moon className="h-5 w-5 text-white dark:text-white" />
 										) : (
-											<Sun className="h-5 w-5 text-white" />
+											<Sun className="h-5 w-5 text-white dark:text-white" />
 										)}
 									</div>
 									<div>
-										<p className="text-white font-medium">Tema</p>
-										<p className="text-sm text-primary-light">
+										<p className="text-gray-900 dark:text-white font-medium">Tema</p>
+										<p className="text-sm text-gray-600 dark:text-primary-light">
 											{theme === 'dark' ? 'Modo escuro ativo' : 'Modo claro ativo'}
 										</p>
 									</div>
 								</div>
 								<button
 									onClick={toggleTheme}
-									className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${theme === 'dark' ? 'bg-purple-600' : 'bg-gray-300'
+									className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${theme === 'dark' ? 'bg-purple-600' : 'bg-gray-600'
 										}`}
 								>
 									<span
@@ -82,15 +82,15 @@ export function Settings() {
 
 					{/* Monitoria */}
 					<div className="card">
-						<h2 className="text-xl font-semibold text-white mb-6">
+						<h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
 							🔍 Monitoria
 						</h2>
 
 						<div className="space-y-4">
 							<div className="flex items-center justify-between">
 								<div>
-									<p className="text-white font-medium">Cupons</p>
-									<p className="text-sm text-primary-light">
+									<p className="text-gray-900 dark:text-white font-medium">Cupons</p>
+									<p className="text-sm text-gray-600 dark:text-primary-light">
 										Receber notificações de cupons disponíveis
 									</p>
 								</div>
@@ -108,8 +108,8 @@ export function Settings() {
 
 							<div className="flex items-center justify-between">
 								<div>
-									<p className="text-white font-medium">Pré-vendas</p>
-									<p className="text-sm text-primary-light">
+									<p className="text-gray-900 dark:text-white font-medium">Pré-vendas</p>
+									<p className="text-sm text-gray-600 dark:text-primary-light">
 										Receber notificações de pré-vendas de lançamentos
 									</p>
 								</div>
@@ -141,7 +141,7 @@ export function Settings() {
 
 					{/* Conta */}
 					<div className="card">
-						<h2 className="text-xl font-semibold text-white mb-6">
+						<h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
 							🔒 Conta
 						</h2>
 

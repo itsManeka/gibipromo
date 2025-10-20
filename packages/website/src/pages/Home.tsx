@@ -14,7 +14,7 @@ export function Home() {
 						{/* Conteúdo textual */}
 						<div className="text-center lg:text-left">
 							<div className="animate-fade-in">
-								<h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-white leading-tight mb-6">
+								<h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-gray-900 dark:text-white leading-tight mb-6">
 									Descubra as melhores{' '}
 									<span className="text-primary-yellow animate-bounce-gentle inline-block">
 										promoções
@@ -22,7 +22,7 @@ export function Home() {
 									de quadrinhos e mangás
 								</h1>
 
-								<p className="text-xl text-primary-light mb-8 leading-relaxed">
+								<p className="text-xl text-gray-700 dark:text-primary-light mb-8 leading-relaxed">
 									A gatinha que monitora preços na Amazon e te avisa das melhores ofertas
 									de HQs e mangás direto no Telegram! 📚✨
 								</p>
@@ -50,13 +50,13 @@ export function Home() {
 						{/* Ilustração/Placeholder */}
 						<div className="animate-float">
 							<div className="bg-gradient-card rounded-3xl p-8 text-center filter-drop-shadow">
-								<div className="bg-primary-yellow rounded-full w-64 h-64 mx-auto mb-6 flex items-center justify-center">
+								<div className="bg-primary-purple dark:bg-primary-yellow rounded-full w-64 h-64 mx-auto mb-6 flex items-center justify-center border-4 border-transparent">
 									<img src="/images/logo.png" alt="Gibi" className="h-60 w-60 rounded-full" />
 								</div>
-								<h3 className="text-xl font-display font-semibold text-white mb-2">
+								<h3 className="text-xl font-display font-semibold text-gray-900 dark:text-white mb-2">
 									Gibi
 								</h3>
-								<p className="text-primary-light">
+								<p className="text-gray-700 dark:text-primary-light">
 									Sua companheira na busca pelos melhores descontos!
 								</p>
 							</div>
@@ -72,13 +72,13 @@ export function Home() {
 			<LatestPromotions />
 
 			{/* Features Section */}
-			<section className="py-16 px-4 sm:px-6 lg:px-8 bg-dark-900 mb-16">
+			<section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-dark-900 mb-16">
 				<div className="max-w-7xl mx-auto">
 					<div className="text-center mb-12">
-						<h2 className="text-3xl font-display font-bold text-white mb-4">
+						<h2 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-4">
 							Como funciona?
 						</h2>
-						<p className="text-primary-light text-lg">
+						<p className="text-gray-600 dark:text-primary-light text-lg">
 							Simples e eficiente como deve ser!
 						</p>
 					</div>
@@ -88,10 +88,10 @@ export function Home() {
 							<div className="bg-primary-yellow rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
 								<Bell className="h-8 w-8 text-dark-950" />
 							</div>
-							<h3 className="text-xl font-semibold text-white mb-2">
+							<h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
 								Configure Alertas
 							</h3>
-							<p className="text-primary-light">
+							<p className="text-gray-600 dark:text-primary-light">
 								Adicione seus quadrinhos favoritos e defina o preço desejado
 							</p>
 						</div>
@@ -100,10 +100,10 @@ export function Home() {
 							<div className="bg-primary-yellow rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
 								<TrendingDown className="h-8 w-8 text-dark-950" />
 							</div>
-							<h3 className="text-xl font-semibold text-white mb-2">
+							<h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
 								Monitoramento 24/7
 							</h3>
-							<p className="text-primary-light">
+							<p className="text-gray-600 dark:text-primary-light">
 								Nossa gatinha monitora os preços na Amazon constantemente
 							</p>
 						</div>
@@ -112,10 +112,10 @@ export function Home() {
 							<div className="bg-primary-yellow rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
 								<Sparkles className="h-8 w-8 text-dark-950" />
 							</div>
-							<h3 className="text-xl font-semibold text-white mb-2">
+							<h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
 								Notificação Instantânea
 							</h3>
-							<p className="text-primary-light">
+							<p className="text-gray-600 dark:text-primary-light">
 								Receba alertas no Telegram quando o preço baixar
 							</p>
 						</div>

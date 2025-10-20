@@ -81,13 +81,13 @@ export function Login() {
 			<div className="max-w-md mx-auto">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="bg-primary-yellow rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+					<div className="bg-primary-purple dark:bg-primary-yellow rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
 						<img src="/images/logo.png" alt="Gibi" className="h-14 w-14 rounded-full" />
 					</div>
-					<h1 className="text-3xl font-display font-bold text-white mb-2">
+					<h1 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2">
 						Bem-vindo de volta!
 					</h1>
-					<p className="text-primary-light">
+					<p className="text-gray-600 dark:text-primary-light">
 						Entre na sua conta para acompanhar suas promoções favoritas
 					</p>
 				</div>
@@ -98,18 +98,18 @@ export function Login() {
 						{/* Erro geral */}
 						{errors.general && (
 							<div className="bg-red-500 bg-opacity-10 border border-red-500 rounded-lg p-3 flex items-start space-x-2">
-								<AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
-								<p className="text-red-400 text-sm">{errors.general}</p>
+								<AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+								<p className="text-red-600 dark:text-red-400 text-sm">{errors.general}</p>
 							</div>
 						)}
 
 						{/* Campo Email */}
 						<div>
-							<label htmlFor="email" className="block text-sm font-medium text-primary-light mb-2">
+							<label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-2">
 								Email
 							</label>
 							<div className="relative">
-								<Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-dark-400" />
+								<Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500 dark:text-dark-400" />
 								<input
 									id="email"
 									name="email"
@@ -123,17 +123,17 @@ export function Login() {
 								/>
 							</div>
 							{errors.email && (
-								<p className="text-red-400 text-sm mt-1">{errors.email}</p>
+								<p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.email}</p>
 							)}
 						</div>
 
 						{/* Campo Senha */}
 						<div>
-							<label htmlFor="password" className="block text-sm font-medium text-primary-light mb-2">
+							<label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-2">
 								Senha
 							</label>
 							<div className="relative">
-								<Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-dark-400" />
+								<Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500 dark:text-dark-400" />
 								<input
 									id="password"
 									name="password"
@@ -147,7 +147,7 @@ export function Login() {
 								/>
 								<button
 									type="button"
-									className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-400 hover:text-primary-light"
+									className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-dark-400 hover:text-gray-700 dark:hover:text-primary-light"
 									onClick={() => setShowPassword(!showPassword)}
 									disabled={isLoading}
 								>
@@ -155,7 +155,7 @@ export function Login() {
 								</button>
 							</div>
 							{errors.password && (
-								<p className="text-red-400 text-sm mt-1">{errors.password}</p>
+								<p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.password}</p>
 							)}
 						</div>
 
@@ -164,13 +164,13 @@ export function Login() {
 							<label className="flex items-center">
 								<input
 									type="checkbox"
-									className="rounded border-dark-600 text-purple-600 focus:ring-purple-500 bg-dark-800"
+									className="rounded border-gray-300 dark:border-dark-600 text-purple-600 focus:ring-purple-500 bg-gray-100 dark:bg-dark-800"
 								/>
-								<span className="ml-2 text-sm text-primary-light">Lembrar de mim</span>
+								<span className="ml-2 text-sm text-gray-700 dark:text-primary-light">Lembrar de mim</span>
 							</label>
 							<Link
 								to="/esqueci-senha"
-								className="text-sm text-primary-yellow hover:text-yellow-400 transition-colors"
+								className="text-sm text-purple-600 dark:text-primary-yellow hover:text-purple-700 dark:hover:text-yellow-400 transition-colors"
 							>
 								Esqueci minha senha
 							</Link>
@@ -184,7 +184,7 @@ export function Login() {
 						>
 							{isLoading ? (
 								<>
-									<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-dark-950"></div>
+									<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
 									<span>Entrando...</span>
 								</>
 							) : (
@@ -198,11 +198,11 @@ export function Login() {
 
 					{/* Link para cadastro */}
 					<div className="mt-6 text-center">
-						<p className="text-primary-light text-sm">
+						<p className="text-gray-600 dark:text-primary-light text-sm">
 							Ainda não tem uma conta?{' '}
 							<Link
 								to="/registro"
-								className="text-primary-yellow hover:text-yellow-400 transition-colors font-medium"
+								className="text-purple-600 dark:text-primary-yellow hover:text-purple-700 dark:hover:text-yellow-400 transition-colors font-medium"
 							>
 								Cadastre-se grátis
 							</Link>

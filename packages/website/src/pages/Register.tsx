@@ -110,13 +110,13 @@ export function Register() {
 			<div className="max-w-md mx-auto">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="bg-primary-yellow rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+					<div className="bg-primary-purple dark:bg-primary-yellow rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
 						<img src="/images/logo.png" alt="Gibi" className="h-14 w-14 rounded-full" />
 					</div>
-					<h1 className="text-3xl font-display font-bold text-white mb-2">
+					<h1 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2">
 						Crie sua conta
 					</h1>
-					<p className="text-primary-light">
+					<p className="text-gray-600 dark:text-primary-light">
 						Junte-se à comunidade de leitores que economizam no GibiPromo
 					</p>
 				</div>
@@ -134,11 +134,11 @@ export function Register() {
 
 						{/* Campo Email */}
 						<div>
-							<label htmlFor="email" className="block text-sm font-medium text-primary-light mb-2">
+							<label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-2">
 								Email
 							</label>
 							<div className="relative">
-								<Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-dark-400" />
+								<Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500 dark:text-dark-400" />
 								<input
 									id="email"
 									name="email"
@@ -158,11 +158,11 @@ export function Register() {
 
 						{/* Campo Senha */}
 						<div>
-							<label htmlFor="password" className="block text-sm font-medium text-primary-light mb-2">
+							<label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-2">
 								Senha
 							</label>
 							<div className="relative">
-								<Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-dark-400" />
+								<Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500 dark:text-dark-400" />
 								<input
 									id="password"
 									name="password"
@@ -190,11 +190,11 @@ export function Register() {
 
 						{/* Campo Confirmar Senha */}
 						<div>
-							<label htmlFor="confirmPassword" className="block text-sm font-medium text-primary-light mb-2">
+							<label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-2">
 								Confirmar senha
 							</label>
 							<div className="relative">
-								<Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-dark-400" />
+								<Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500 dark:text-dark-400" />
 								<input
 									id="confirmPassword"
 									name="confirmPassword"
@@ -228,13 +228,13 @@ export function Register() {
 								required
 								className="mt-1 rounded border-dark-600 text-purple-600 focus:ring-purple-500 bg-dark-800"
 							/>
-							<label htmlFor="terms" className="ml-2 text-sm text-primary-light">
+							<label htmlFor="terms" className="ml-2 text-sm text-gray-600 dark:text-primary-light">
 								Concordo com os{' '}
-								<Link to="/termos" className="text-primary-yellow hover:text-yellow-400">
+								<Link to="/termos" className="text-purple-600 dark:text-primary-yellow hover:text-purple-700 dark:hover:text-yellow-400">
 									Termos de Uso
 								</Link>{' '}
 								e{' '}
-								<Link to="/privacidade" className="text-primary-yellow hover:text-yellow-400">
+								<Link to="/privacidade" className="text-purple-600 dark:text-primary-yellow hover:text-purple-700 dark:hover:text-yellow-400">
 									Política de Privacidade
 								</Link>
 							</label>
@@ -262,11 +262,11 @@ export function Register() {
 
 					{/* Link para login */}
 					<div className="mt-6 text-center">
-						<p className="text-primary-light text-sm">
+						<p className="text-gray-600 dark:text-primary-light text-sm">
 							Já tem uma conta?{' '}
 							<Link
 								to="/login"
-								className="text-primary-yellow hover:text-yellow-400 transition-colors font-medium"
+								className="text-purple-600 dark:text-primary-yellow hover:text-purple-700 dark:hover:text-yellow-400 transition-colors font-medium"
 							>
 								Faça login
 							</Link>

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Heart, Mail, BookOpen } from 'lucide-react'
+import { Heart, Mail, BookOpen, Instagram } from 'lucide-react'
 
 export function Footer() {
 	const currentYear = new Date().getFullYear()
@@ -110,6 +110,13 @@ export function Footer() {
 								title="Email"
 							>
 								<Mail className="h-5 w-5" />
+							</a>
+							<a
+								href="https://www.instagram.com/gibipromo/"
+								className="text-purple-800 dark:text-primary-light hover:text-purple-950 dark:hover:text-primary-yellow transition-colors"
+								title="Instagram"
+							>
+								<Instagram className="h-5 w-5" />
 							</a>
 						</div>
 					</div>

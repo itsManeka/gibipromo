@@ -16,3 +16,7 @@ export type { UserProfile, UpdateProfileRequest } from './profile.service';
 // Notifications Service
 export { notificationsService } from './notifications.service';
 export type { GetNotificationsParams, NotificationsResponse } from './notifications.service';
+
+// Preferences Service
+export { preferencesService } from './preferences.service';
+export type { UserPreferences, UpdatePreferencesRequest } from './preferences.service';

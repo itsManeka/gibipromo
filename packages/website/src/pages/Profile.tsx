@@ -180,7 +180,7 @@ export function Profile() {
 								<button className="w-full btn-secondary text-sm py-2">
 									Vincular Telegram
 								</button>
-								<button className="w-full btn-ghost text-sm py-2 text-red-400 hover:text-red-300">
+								<button className="w-full btn-ghost text-sm py-2 text-red-400 dark:text-red-400 hover:text-red-300 dark:hover:text-red-600">
 									Excluir Conta
 								</button>
 							</div>

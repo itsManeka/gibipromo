@@ -59,16 +59,16 @@ export function NotFound() {
 							Promoções
 						</Link>
 						<Link
+							to="/adicionar-produtos"
+							className="text-purple-600 dark:text-primary-yellow hover:text-purple-700 dark:hover:text-yellow-400 transition-colors"
+						>
+							Adicionar Produtos
+						</Link>
+						<Link
 							to="/perfil"
 							className="text-purple-600 dark:text-primary-yellow hover:text-purple-700 dark:hover:text-yellow-400 transition-colors"
 						>
 							Meu Perfil
-						</Link>
-						<Link
-							to="/configuracoes"
-							className="text-purple-600 dark:text-primary-yellow hover:text-purple-700 dark:hover:text-yellow-400 transition-colors"
-						>
-							Configurações
 						</Link>
 					</div>
 				</div>

@@ -18,13 +18,13 @@ const userPreferencesController = new UserPreferencesController();
  * Get current user's preferences
  * Requires authentication
  */
-router.get('/', authMiddleware, userPreferencesController.getPreferences);
+router.get('/preferences', authMiddleware, userPreferencesController.getPreferences);
 
 /**
  * PUT /users/preferences
  * Update current user's preferences
  * Requires authentication
  */
-router.put('/', authMiddleware, userPreferencesController.updatePreferences);
+router.put('/preferences', authMiddleware, userPreferencesController.updatePreferences);
 
 export default router;

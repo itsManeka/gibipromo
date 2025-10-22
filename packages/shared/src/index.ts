@@ -6,6 +6,7 @@
 export * from './entities/Action';
 export * from './entities/ActionConfig';
 export * from './entities/Entity';
+export * from './entities/LinkToken';
 export * from './entities/Notification';
 export * from './entities/Product';
 export * from './entities/ProductStats';
@@ -36,6 +37,7 @@ export * from './types/PromotionFilters';
 export * from './repositories/Repository';
 export * from './repositories/ActionRepository';
 export * from './repositories/ActionConfigRepository';
+export * from './repositories/LinkTokenRepository';
 export * from './repositories/NotificationRepository';
 export * from './repositories/ProductRepository';
 export * from './repositories/ProductStatsRepository';
@@ -99,12 +101,3 @@ export interface NotificationData {
 	changePercent: number;
 	url: string;
 }
-
-// Enum para tipos de ação
-export const ACTION_TYPES = {
-	ADD_PRODUCT: 'ADD_PRODUCT',
-	CHECK_PRODUCT: 'CHECK_PRODUCT',
-	NOTIFY_PRICE: 'NOTIFY_PRICE',
-} as const;
-
-export type ActionType = typeof ACTION_TYPES[keyof typeof ACTION_TYPES];

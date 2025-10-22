@@ -11,16 +11,17 @@ import { Login } from '../pages/Login'
 import { Register } from '../pages/Register'
 import { NotFound } from '../pages/NotFound'
 import Notifications from '../pages/Notifications'
+import LinkTelegram from '../pages/LinkTelegram'
 
 export function AppRoutes() {
 	return (
 		<Routes>
-		{/* Rotas públicas */}
-		<Route path="/" element={<Home />} />
-		<Route path="/login" element={<Login />} />
-		<Route path="/registro" element={<Register />} />
-		<Route path="/promocoes" element={<Promotions />} />
-		<Route path="/produto/:id" element={<ProductDetails />} />
+			{/* Rotas públicas */}
+			<Route path="/" element={<Home />} />
+			<Route path="/login" element={<Login />} />
+			<Route path="/registro" element={<Register />} />
+			<Route path="/promocoes" element={<Promotions />} />
+			<Route path="/produto/:id" element={<ProductDetails />} />
 
 			{/* Rotas protegidas */}
 			<Route
@@ -52,6 +53,14 @@ export function AppRoutes() {
 				element={
 					<ProtectedRoute>
 						<Notifications />
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/vincular-telegram"
+				element={
+					<ProtectedRoute>
+						<LinkTelegram />
 					</ProtectedRoute>
 				}
 			/>

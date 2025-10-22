@@ -113,14 +113,14 @@ export function CallToActionRegister() {
 						<strong className="text-gray-900 dark:text-white"> e</strong> receber notificações instantâneas no celular.
 					</p>
 					<Link
-						to={isAuthenticated ? "/login" : "/perfil"}
+						to={isAuthenticated ? "/vincular-telegram" : "/perfil"}
 						className="inline-flex items-center gap-2 text-primary-yellow dark:text-primary-light hover:text-purple-700 dark:hover:text-primary-yellow transition-colors text-sm font-semibold"
 					>
-						{isAuthenticated ? <span>Vincular telegram</span> : <span>Fazer login e vincular depois</span>}
+						{isAuthenticated ? <span>Vincular Telegram</span> : <span>Fazer login e vincular depois</span>}
 						<ArrowRight className="h-4 w-4" />
 					</Link>
 				</div>
 			</div>
 		</section>
-	)
+	);
 }

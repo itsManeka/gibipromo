@@ -271,7 +271,7 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 												className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
 													isSelected
 														? 'bg-primary/20 text-primary'
-														: 'hover:bg-dark-800 text-gray-700 hover:text-dark-300'
+														: 'hover:bg-dark-800 text-gray-700 dark:text-dark-300 hover:text-dark-300'
 												}`}
 											>
 												<input
@@ -302,7 +302,7 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 								onChange={e => updateFilter('inStock', e.target.checked)}
 								className="form-checkbox h-5 w-5 text-primary rounded border-dark-600 focus:ring-primary focus:ring-offset-dark-900"
 							/>
-							<span className="text-sm font-medium text-gray-700 group-hover:text-purple-600 transition-colors">
+							<span className="text-sm font-medium text-gray-700 dark:text-dark-300 group-hover:text-dark-600 dark:group-hover:text-primary-light transition-colors">
 								Apenas em Estoque
 							</span>
 						</label>
@@ -314,7 +314,7 @@ export function PromotionFilters({ filters, filterOptions, onFilterChange }: Pro
 								onChange={e => updateFilter('preorder', e.target.checked)}
 								className="form-checkbox h-5 w-5 text-primary rounded border-dark-600 focus:ring-primary focus:ring-offset-dark-900"
 							/>
-							<span className="text-sm font-medium text-gray-700 group-hover:text-purple-600 transition-colors">
+							<span className="text-sm font-medium text-gray-700 dark:text-dark-300 group-hover:text-dark-600 dark:group-hover:text-primary-light transition-colors">
 								Apenas Pré-vendas
 							</span>
 						</label>

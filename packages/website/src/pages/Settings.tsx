@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { Save, Bell, Moon, Sun, Volume2, Smartphone, Mail, CheckCircle, AlertCircle } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
+import { useLinkStatus } from '../hooks/useLinkStatus'
 import { preferencesService } from '../api'
+import LinkTelegramButton from '../components/LinkTelegramButton'
 
 export function Settings() {
 	const { theme, toggleTheme } = useTheme()
+	const { isLinking } = useLinkStatus()
 	const [settings, setSettings] = useState({
 		monitor_coupons: true,
 		monitor_preorders: false,
@@ -95,6 +99,15 @@ export function Settings() {
 				</div>
 
 				{/* Mensagens de Feedback */}
+				{isLinking && (
+					<div className="mb-6 p-4 bg-blue-100 dark:bg-blue-900/20 border border-blue-400 dark:border-blue-700 rounded-lg flex items-center space-x-3">
+						<AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+						<span className="text-blue-800 dark:text-blue-300">
+							⏳ Vínculo em andamento. Aguarde a conclusão para alterar configurações.
+						</span>
+					</div>
+				)}
+
 				{success && (
 					<div className="mb-6 p-4 bg-green-100 dark:bg-green-900/20 border border-green-400 dark:border-green-700 rounded-lg flex items-center space-x-3">
 						<CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
@@ -206,7 +219,7 @@ export function Settings() {
 							<div className="flex justify-end">
 								<button
 									onClick={handleSave}
-									disabled={loading}
+									disabled={loading || isLinking}
 									className="btn-primary inline-flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
 								>
 									{loading ? (
@@ -232,9 +245,7 @@ export function Settings() {
 
 							<div className="space-y-4">
 								<div className="flex items-center justify-between">
-									<button className="w-full btn-secondary text-sm py-2">
-										Vincular Telegram
-									</button>
+									<LinkTelegramButton />
 								</div>
 								<button className="w-full btn-ghost text-sm py-2 text-red-400 dark:text-red-400 hover:text-red-300 dark:hover:text-red-600">
 									Excluir Conta

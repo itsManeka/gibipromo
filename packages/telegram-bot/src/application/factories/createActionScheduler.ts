@@ -2,18 +2,22 @@ import { ActionScheduler } from '../usecases/ActionScheduler';
 import { AddProductActionProcessor } from '../usecases/processors/AddProductActionProcessor';
 import { CheckProductActionProcessor } from '../usecases/processors/CheckProductActionProcessor';
 import { NotifyPriceActionProcessor } from '../usecases/processors/NotifyPriceActionProcessor';
+import { LinkAccountsActionProcessor } from '../usecases/processors/LinkAccountsActionProcessor';
 import { ProductStatsService } from '../usecases/ProductStatsService';
 import { 
 	DynamoDBActionRepository, 
 	DynamoDBProductRepository, 
 	DynamoDBProductUserRepository,
 	DynamoDBUserRepository,
+	DynamoDBUserProfileRepository,
+	DynamoDBUserPreferencesRepository,
 	DynamoDBActionConfigRepository,
 	DynamoDBProductStatsRepository,
 	DynamoDBNotificationRepository
 } from '@gibipromo/shared';
 import { AmazonProductAPI } from '../ports/AmazonProductAPI';
 import { TelegramNotifier } from '../../infrastructure/adapters/telegram';
+import { Telegraf } from 'telegraf';
 
 export function createActionScheduler(
 	amazonApi: AmazonProductAPI
@@ -23,6 +27,8 @@ export function createActionScheduler(
 	const productRepository = new DynamoDBProductRepository();
 	const productUserRepository = new DynamoDBProductUserRepository();
 	const userRepository = new DynamoDBUserRepository();
+	const userProfileRepository = new DynamoDBUserProfileRepository();
+	const userPreferencesRepository = new DynamoDBUserPreferencesRepository();
 	const actionConfigRepository = new DynamoDBActionConfigRepository();
 	const productStatsRepository = new DynamoDBProductStatsRepository();
 	const notificationRepository = new DynamoDBNotificationRepository();
@@ -32,6 +38,10 @@ export function createActionScheduler(
 
 	// Notificador
 	const notifier = new TelegramNotifier();
+
+	// Bot instance para enviar mensagens (LinkAccountsActionProcessor)
+	const botToken = process.env.TELEGRAM_BOT_TOKEN!;
+	const botInstance = new Telegraf(botToken);
 
 	// Processadores
 	const processors = [
@@ -57,6 +67,15 @@ export function createActionScheduler(
 			userRepository,
 			notifier,
 			notificationRepository
+		),
+		new LinkAccountsActionProcessor(
+			actionRepository,
+			userRepository,
+			productUserRepository,
+			userProfileRepository,
+			userPreferencesRepository,
+			notificationRepository,
+			botInstance
 		)
 	];
 

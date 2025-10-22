@@ -5,6 +5,7 @@ import { ProductRepository } from '../../../../src/application/ports/ProductRepo
 import { ProductUserRepository } from '../../../../src/application/ports/ProductUserRepository';
 import { UserPreferencesRepository } from '../../../../src/application/ports/UserPreferencesRepository';
 import { UserProfileRepository } from '../../../../src/application/ports/UserProfileRepository';
+import { LinkTokenRepository } from '@gibipromo/shared/dist/repositories/LinkTokenRepository';
 import { User } from '@gibipromo/shared/dist/entities/User';
 import { Product } from '@gibipromo/shared/dist/entities/Product';
 import { ProductUser } from '@gibipromo/shared/dist/entities/ProductUser';
@@ -49,6 +50,7 @@ describe('TelegramBot', () => {
 	let mockProductUserRepo: jest.Mocked<ProductUserRepository>;
 	let mockUserPreferencesRepo: jest.Mocked<UserPreferencesRepository>;
 	let mockUserProfileRepo: jest.Mocked<UserProfileRepository>;
+	let mockLinkTokenRepo: jest.Mocked<LinkTokenRepository>;
 	let mockBot: any;
 
 	const originalEnv = process.env;
@@ -123,6 +125,13 @@ describe('TelegramBot', () => {
 			findByUserId: jest.fn()
 		};
 
+		mockLinkTokenRepo = {
+			create: jest.fn(),
+			findByToken: jest.fn(),
+			markAsUsed: jest.fn(),
+			deleteExpired: jest.fn()
+		};
+
 		// Get the mocked bot instance
 		mockBot = {
 			command: jest.fn(),
@@ -139,7 +148,8 @@ describe('TelegramBot', () => {
 			mockProductRepo,
 			mockProductUserRepo,
 			mockUserPreferencesRepo,
-			mockUserProfileRepo
+			mockUserProfileRepo,
+			mockLinkTokenRepo
 		);
 	});
 
@@ -169,7 +179,8 @@ describe('TelegramBot', () => {
 					mockProductRepo,
 					mockProductUserRepo,
 					mockUserPreferencesRepo,
-					mockUserProfileRepo
+					mockUserProfileRepo,
+					mockLinkTokenRepo
 				);
 			}).toThrow('TELEGRAM_BOT_TOKEN não configurado');
 		});

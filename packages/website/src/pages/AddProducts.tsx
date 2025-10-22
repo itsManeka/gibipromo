@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link2, Clock, AlertCircle, Loader2, CheckCircle, XCircle, ArrowRight } from 'lucide-react'
 import { productsService, Product } from '../api/products.service'
 import { ProductCard } from '../components'
+import { useLinkStatus } from '../hooks/useLinkStatus'
 import { Link } from 'react-router-dom'
 
 /**
@@ -14,6 +15,7 @@ export function AddProducts() {
 	const [urls, setUrls] = useState('')
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [results, setResults] = useState<Array<{ url: string; success: boolean; message: string }>>([])
+	const { isLinking } = useLinkStatus()
 
 	// Estado dos produtos recentes
 	const [recentProducts, setRecentProducts] = useState<Product[]>([])
@@ -97,6 +99,15 @@ export function AddProducts() {
 					</p>
 				</div>
 
+				{/* Alerta de Vínculo */}
+				{isLinking && (
+					<div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+						<p className="text-sm text-blue-700 dark:text-blue-300">
+							⏳ Vínculo em andamento. Aguarde a conclusão para adicionar produtos.
+						</p>
+					</div>
+				)}
+
 				{/* Formulário Principal */}
 				<div className="card mb-8">
 					<div className="flex items-center gap-3 mb-6">
@@ -139,7 +150,7 @@ export function AddProducts() {
 						{/* Botão Submit */}
 						<button
 							type="submit"
-							disabled={isSubmitting || !urls.trim()}
+							disabled={isSubmitting || !urls.trim() || isLinking}
 							className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 						>
 							{isSubmitting ? (

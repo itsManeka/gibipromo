@@ -3,6 +3,7 @@ export { DynamoDBProductRepository } from './DynamoDBProductRepository';
 export { DynamoDBProductUserRepository } from './DynamoDBProductUserRepository';
 export { DynamoDBActionRepository } from './DynamoDBActionRepository';
 export { DynamoDBActionConfigRepository } from './DynamoDBActionConfigRepository';
+export { DynamoDBLinkTokenRepository } from './DynamoDBLinkTokenRepository';
 export { DynamoDBNotificationRepository } from './DynamoDBNotificationRepository';
 export { DynamoDBProductStatsRepository } from './DynamoDBProductStatsRepository';
 export { DynamoDBSessionRepository } from './DynamoDBSessionRepository';

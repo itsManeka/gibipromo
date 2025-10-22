@@ -17,6 +17,7 @@ export interface User extends Entity {
 	email?: string; // Email for website authentication
 	password_hash?: string; // Password hash for website authentication
 	session_id?: string; // Current active session ID
+	is_linking?: boolean; // Indicates if account is being linked (blocks operations during link)
 	created_at: string; // ISO 8601 timestamp
 	updated_at: string; // ISO 8601 timestamp
 }

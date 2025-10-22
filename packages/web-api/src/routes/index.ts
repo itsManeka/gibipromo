@@ -5,6 +5,7 @@ import productsRouter from './products';
 import { userProfileRouter } from './userProfile';
 import userPreferencesRouter from './userPreferences';
 import notificationsRouter from './notifications';
+import linkAccountsRouter from './linkAccounts';
 
 /**
  * Main router for the GibiPromo Web API
@@ -29,6 +30,9 @@ router.use('/users/', userPreferencesRouter);
 
 // Notifications endpoints
 router.use('/notifications', notificationsRouter);
+
+// Link accounts endpoints
+router.use(linkAccountsRouter);
 
 // Future routes will be added here:
 // router.use('/stats', statsRouter);

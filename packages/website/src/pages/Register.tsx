@@ -93,10 +93,10 @@ export function Register() {
 					<div className="bg-green-500 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
 						<CheckCircle className="h-8 w-8 text-white" />
 					</div>
-					<h1 className="text-3xl font-display font-bold text-white mb-2">
+					<h1 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2">
 						Conta criada com sucesso!
 					</h1>
-					<p className="text-primary-light mb-6">
+					<p className="text-gray-600 dark:text-primary-light mb-6">
 						Redirecionando você para o seu perfil...
 					</p>
 					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-yellow mx-auto"></div>

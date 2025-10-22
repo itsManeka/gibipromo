@@ -8,6 +8,7 @@ export enum ActionType {
 	ADD_PRODUCT = 'ADD_PRODUCT',
 	CHECK_PRODUCT = 'CHECK_PRODUCT',
 	NOTIFY_PRICE = 'NOTIFY_PRICE',
+	LINK_ACCOUNTS = 'LINK_ACCOUNTS',
 }
 
 /**
@@ -51,9 +52,18 @@ export interface NotifyPriceAction extends Action {
 }
 
 /**
+ * Action for linking Telegram and Site accounts
+ */
+export interface LinkAccountsAction extends Action {
+	type: ActionType.LINK_ACCOUNTS;
+	user_id: string; // Site user ID
+	value: string; // Telegram user ID (telegram_id)
+}
+
+/**
  * Union type of all possible actions
  */
-export type ActionUnion = AddProductAction | CheckProductAction | NotifyPriceAction;
+export type ActionUnion = AddProductAction | CheckProductAction | NotifyPriceAction | LinkAccountsAction;
 
 /**
  * Factory function to create an AddProductAction
@@ -110,6 +120,25 @@ export function createNotifyPriceAction(
 		type: ActionType.NOTIFY_PRICE,
 		value: productId,
 		origin,
+		created_at: new Date().toISOString(),
+		is_processed: 0
+	};
+}
+
+/**
+ * Factory function to create a LinkAccountsAction
+ * @param siteUserId User ID from the site
+ * @param telegramUserId User ID from Telegram (telegram_id)
+ */
+export function createLinkAccountsAction(
+	siteUserId: string,
+	telegramUserId: string
+): LinkAccountsAction {
+	return {
+		id: `link-${Date.now()}`,
+		type: ActionType.LINK_ACCOUNTS,
+		user_id: siteUserId,
+		value: telegramUserId,
 		created_at: new Date().toISOString(),
 		is_processed: 0
 	};

@@ -3,11 +3,14 @@ import { Link } from 'react-router-dom'
 import { User, Edit3, Save, X, Bell, Star, TrendingDown, BookOpen, AlertCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useProfile } from '../contexts/ProfileContext'
+import { useLinkStatus } from '../hooks/useLinkStatus'
 import { formatDate } from '../utils/date'
+import LinkTelegramButton from '../components/LinkTelegramButton'
 
 export function Profile() {
 	const { user } = useAuth()
 	const { profile, isLoading, error, updateProfile } = useProfile()
+	const { isLinking } = useLinkStatus()
 	const [isEditing, setIsEditing] = useState(false)
 	const [editedNick, setEditedNick] = useState('')
 	const [updateError, setUpdateError] = useState<string | null>(null)
@@ -58,8 +61,8 @@ export function Profile() {
 					<AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
 					<h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Erro ao carregar perfil</h2>
 					<p className="text-gray-600 dark:text-primary-light mb-4">{error}</p>
-					<button 
-						onClick={() => window.location.reload()} 
+					<button
+						onClick={() => window.location.reload()}
 						className="btn-primary"
 					>
 						Tentar novamente
@@ -86,6 +89,14 @@ export function Profile() {
 					{/* Informações do Perfil */}
 					<div className="lg:col-span-2">
 						<div className="card">
+							{isLinking && (
+								<div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+									<p className="text-sm text-blue-700 dark:text-blue-300">
+										⏳ Vínculo em andamento. Aguarde a conclusão para editar seu perfil.
+									</p>
+								</div>
+							)}
+
 							<div className="flex justify-between items-start mb-6">
 								<h2 className="text-xl font-semibold text-gray-900 dark:text-white">
 									Informações Pessoais
@@ -93,7 +104,8 @@ export function Profile() {
 								{!isEditing ? (
 									<button
 										onClick={() => setIsEditing(true)}
-										className="btn-ghost inline-flex items-center space-x-2"
+										disabled={isLinking}
+										className="btn-ghost inline-flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
 									>
 										<Edit3 className="h-4 w-4" />
 										<span>Editar</span>
@@ -120,11 +132,11 @@ export function Profile() {
 
 							<div className="flex items-start space-x-6 mb-6">
 								{/* Avatar */}
-							<div className="flex-shrink-0">
-								<div className="w-24 h-24 bg-purple-600 rounded-full flex items-center justify-center">
-									<User className="h-12 w-12 text-white dark:text-white" />
+								<div className="flex-shrink-0">
+									<div className="w-24 h-24 bg-purple-600 rounded-full flex items-center justify-center">
+										<User className="h-12 w-12 text-white dark:text-white" />
+									</div>
 								</div>
-							</div>
 
 								{/* Informações */}
 								<div className="flex-1 space-y-4">
@@ -177,12 +189,7 @@ export function Profile() {
 								⚡ Ações Rápidas
 							</h3>
 							<div className="space-y-3">
-								<button className="w-full btn-secondary text-sm py-2">
-									Vincular Telegram
-								</button>
-								<button className="w-full btn-ghost text-sm py-2 text-red-400 dark:text-red-400 hover:text-red-300 dark:hover:text-red-600">
-									Excluir Conta
-								</button>
+								<LinkTelegramButton />
 							</div>
 						</div>
 					</div>

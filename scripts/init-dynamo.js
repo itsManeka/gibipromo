@@ -302,6 +302,19 @@ const tables = [
 		}
 	},
 	{
+		TableName: 'LinkTokens',
+		AttributeDefinitions: [
+			{ AttributeName: 'id', AttributeType: 'S' }
+		],
+		KeySchema: [
+			{ AttributeName: 'id', KeyType: 'HASH' }
+		],
+		ProvisionedThroughput: {
+			ReadCapacityUnits: 5,
+			WriteCapacityUnits: 5
+		}
+	},
+	{
 		TableName: 'Notifications',
 		AttributeDefinitions: [
 			{ AttributeName: 'id', AttributeType: 'S' },
@@ -386,6 +399,12 @@ async function insertDefaultActionConfigs() {
 			id: 'NOTIFY_PRICE',
 			action_type: 'NOTIFY_PRICE',
 			interval_minutes: 1,
+			enabled: true
+		},
+		{
+			id: 'LINK_ACCOUNTS',
+			action_type: 'LINK_ACCOUNTS',
+			interval_minutes: 2,
 			enabled: true
 		}
 	];

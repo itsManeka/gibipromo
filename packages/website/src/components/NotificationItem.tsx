@@ -130,6 +130,9 @@ export default function NotificationItem({ notification, compact = false, onClic
 		// Se tiver produto vinculado, navega para ele
 		if (notification.metadata?.product_id) {
 			navigate(`/produto/${notification.metadata.product_id}`);
+		} else {
+			// Fallback navega para página de notificações
+			navigate('/notificacoes');
 		}
 		
 		// Fecha dropdown (se aplicável)

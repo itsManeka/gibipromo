@@ -171,3 +171,29 @@ export function markNotificationAsRead(notification: Notification): Notification
 		read_at: new Date().toISOString()
 	};
 }
+
+/**
+ * Factory para criar notificação de conta vinculada
+ * 
+ * @param userId ID do usuário que receberá a notificação
+ * @returns Notificação do tipo ACCOUNT_LINKED
+ * 
+ * @example
+ * ```typescript
+ * const notification = createAccountLinkedNotification('user-123');
+ * ```
+ */
+export function createAccountLinkedNotification(userId: string): Notification {
+	const now = new Date().toISOString();
+
+	return {
+		id: uuidv4(),
+		user_id: userId,
+		type: NotificationType.ACCOUNT_LINKED,
+		title: 'Contas vinculadas!',
+		message: 'Sua conta do Telegram foi vinculada com sucesso. Agora você receberá notificações em ambas as plataformas.',
+		status: NotificationStatus.UNREAD,
+		sent_via: ['SITE'],
+		created_at: now
+	};
+}

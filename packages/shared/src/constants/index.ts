@@ -34,7 +34,9 @@ export enum NotificationType {
 	/** Produto foi adicionado com sucesso à lista de monitoramento */
 	PRODUCT_ADDED = 'PRODUCT_ADDED',
 	/** Preço do produto caiu */
-	PRICE_DROP = 'PRICE_DROP'
+	PRICE_DROP = 'PRICE_DROP',
+	/** Conta do Telegram foi vinculada com sucesso */
+	ACCOUNT_LINKED = 'ACCOUNT_LINKED'
 }
 
 /**
@@ -72,7 +74,8 @@ export const TELEGRAM_COMMANDS = {
 export const DEFAULT_INTERVALS = {
 	ADD_PRODUCT: 5, // minutos
 	CHECK_PRODUCT: 30, // minutos
-	NOTIFY_PRICE: 1 // minutos
+	NOTIFY_PRICE: 1, // minutos
+	LINK_ACCOUNTS: 2 // minutos - processa vínculos de contas
 } as const;
 
 export const AMAZON_DOMAINS = [

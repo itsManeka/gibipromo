@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useLinkStatus } from '../hooks/useLinkStatus'
 import { BookOpen, Loader2, AlertCircle, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
 import { PromotionFilters, AddProductForm, ProductCard } from '../components'
 import {
@@ -27,6 +28,7 @@ export function Promotions() {
 	const [showAddForm, setShowAddForm] = useState(false)
 
 	const { isAuthenticated } = useAuth()
+	const { isLinking } = useLinkStatus()
 
 	// Carregar opções de filtros
 	useEffect(() => {
@@ -121,7 +123,8 @@ export function Promotions() {
 						{isAuthenticated && (
 							<button
 								onClick={() => setShowAddForm(!showAddForm)}
-								className={`${showAddForm ? 'btn-ghost' : 'btn-primary'} inline-flex items-center space-x-2`}
+								disabled={isLinking}
+								className={`${showAddForm ? 'btn-ghost' : 'btn-primary'} inline-flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed`}
 							>
 								{showAddForm ? (
 									<>
@@ -147,6 +150,15 @@ export function Promotions() {
 						)}
 					</p>
 				</div>
+
+				{/* Alerta de Vínculo */}
+				{isLinking && (
+					<div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+						<p className="text-sm text-blue-700 dark:text-blue-300">
+							⏳ Vínculo em andamento. Aguarde a conclusão para adicionar produtos.
+						</p>
+					</div>
+				)}
 
 				{/* Add Product Form */}
 				{showAddForm && (

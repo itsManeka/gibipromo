@@ -20,3 +20,7 @@ export type { GetNotificationsParams, NotificationsResponse } from './notificati
 // Preferences Service
 export { preferencesService } from './preferences.service';
 export type { UserPreferences, UpdatePreferencesRequest } from './preferences.service';
+
+// Link Accounts Service
+export { linkAccountsService } from './linkAccounts.service';
+export type { LinkTelegramRequest, LinkTelegramResponse, LinkStatusResponse } from './linkAccounts.service';

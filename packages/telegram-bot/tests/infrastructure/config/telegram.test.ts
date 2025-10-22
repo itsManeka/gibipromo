@@ -8,8 +8,8 @@ jest.mock('@gibipromo/shared', () => ({
 	DynamoDBActionRepository: jest.fn().mockImplementation(() => ({})),
 	DynamoDBProductRepository: jest.fn().mockImplementation(() => ({})),
 	DynamoDBProductUserRepository: jest.fn().mockImplementation(() => ({})),
-	DynamoDBUserPreferencesRepository: jest.fn().mockImplementation(() => ({tableName: 'UserPreferences'})),
-	DynamoDBUserProfileRepository: jest.fn().mockImplementation(() => ({tableName: 'UserProfile'}))
+	DynamoDBUserPreferencesRepository: jest.fn().mockImplementation(() => ({ tableName: 'UserPreferences' })),
+	DynamoDBUserProfileRepository: jest.fn().mockImplementation(() => ({ tableName: 'UserProfile' }))
 }));
 
 // Mock do TelegramBot

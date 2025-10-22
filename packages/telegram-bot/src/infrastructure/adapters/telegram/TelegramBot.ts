@@ -4,10 +4,13 @@ import { UserRepository } from '../../../application/ports/UserRepository';
 import { ActionRepository } from '../../../application/ports/ActionRepository';
 import { ProductRepository } from '../../../application/ports/ProductRepository';
 import { ProductUserRepository } from '../../../application/ports/ProductUserRepository';
-import { createTelegramUser } from '@gibipromo/shared';
+import { UserPreferencesRepository } from '../../../application/ports/UserPreferencesRepository';
+import { UserProfileRepository } from '../../../application/ports/UserProfileRepository';
+import { LinkTokenRepository } from '@gibipromo/shared/dist/repositories/LinkTokenRepository';
+import { UserFactory, createLinkToken, UserOrigin } from '@gibipromo/shared';
 import { createAddProductAction } from '@gibipromo/shared';
+import { ActionOrigin } from '@gibipromo/shared/dist/constants';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../../../.env') });
 
@@ -18,7 +21,10 @@ export class TelegramBot {
 		private readonly userRepository: UserRepository,
 		private readonly actionRepository: ActionRepository,
 		private readonly productRepository: ProductRepository,
-		private readonly productUserRepository: ProductUserRepository
+		private readonly productUserRepository: ProductUserRepository,
+		private readonly userPreferencesRepository: UserPreferencesRepository,
+		private readonly userProfileRepository: UserProfileRepository,
+		private readonly linkTokenRepository: LinkTokenRepository
 	) {
 		const token = process.env.TELEGRAM_BOT_TOKEN;
 		if (!token) {
@@ -40,6 +46,7 @@ export class TelegramBot {
 		this.bot.command('addlink', this.handleAddLink.bind(this));
 		this.bot.command('list', this.handleList.bind(this));
 		this.bot.command('delete', this.handleDelete.bind(this));
+		this.bot.command('link', this.handleLink.bind(this));
 
 		// Handler para ações nos botões inline
 		this.bot.action(/^product:(.+)$/, this.handleProductDetails.bind(this));
@@ -50,13 +57,6 @@ export class TelegramBot {
 
 		// Handler para mensagens normais (links)
 		this.bot.on('text', this.handleText.bind(this));
-	}
-
-	/**
-	* Gera um ID único para o usuário
-	*/
-	private generateUserId(): string {
-		return uuidv4();
 	}
 
 	/**
@@ -88,16 +88,24 @@ export class TelegramBot {
 				return;
 			}
 
-			// Cria novo usuário com telegram_id e ID único
-			const user = createTelegramUser({
-				id: this.generateUserId(), // Gera UUID único
-				telegram_id: telegramId,
-				name: first_name || '',
-				username: username || '',
-				language: language_code || 'pt'
-			});
+			// Cria novo usuário usando UserFactory (UUID v4)
+			const user = UserFactory.createTelegramUser(
+				telegramId,
+				username || '',
+				first_name || '',
+				language_code || 'pt'
+			);
 
 			await this.userRepository.create(user);
+
+			// Cria UserPreferences com valores padrão
+			const userPreferences = UserFactory.createDefaultPreferences(user.id);
+			await this.userPreferencesRepository.create(userPreferences);
+
+			// Cria UserProfile com valores padrão (usa first_name como nick)
+			const userProfile = UserFactory.createDefaultProfile(user.id, first_name || username || 'Usuario');
+			await this.userProfileRepository.create(userProfile);
+
 			await ctx.reply('Bem-vindo ao GibiPromo! 🎉\nAgora use /enable para ativar o monitoramento de preços e depois /help para ver os comandos disponíveis.');
 		} catch (error) {
 			console.error('Erro ao processar comando /start:', error);
@@ -494,7 +502,7 @@ _Clique nos botões abaixo para ver o produto ou gerenciar sua monitoria_
 
 			// Cria ações para cada link
 			for (const link of links) {
-				const action = createAddProductAction(user.id, link);
+				const action = createAddProductAction(user.id, link, ActionOrigin.TELEGRAM);
 				await this.actionRepository.create(action);
 			}
 
@@ -626,6 +634,62 @@ _Clique nos botões abaixo para ver o produto ou gerenciar sua monitoria_
 		} catch (error) {
 			console.error('Erro ao atualizar preço desejado:', error);
 			await ctx.reply('Desculpe, ocorreu um erro ao atualizar o preço desejado. 😕');
+		}
+	}
+
+	/**
+	* Manipula o comando /link
+	* Gera um token para vincular conta Telegram com o site
+	*/
+	private async handleLink(ctx: Context): Promise<void> {
+		try {
+			const telegramId = ctx.from?.id.toString();
+			if (!telegramId) return;
+
+			// Busca usuário
+			const user = await this.userRepository.findByTelegramId(telegramId);
+			if (!user) {
+				await ctx.reply('❌ Você ainda não está cadastrado. Use /start primeiro.');
+				return;
+			}
+
+			// Verifica se já está vinculado
+			if (user.origin === UserOrigin.BOTH) {
+				await ctx.reply('✅ Sua conta já está vinculada ao site!');
+				return;
+			}
+
+			// Verifica se já está em processo de vínculo
+			if (user.is_linking) {
+				await ctx.reply('⏳ Você já tem um processo de vínculo em andamento. Aguarde a conclusão.');
+				return;
+			}
+
+			// Cria token
+			const linkToken = createLinkToken(telegramId);
+			await this.linkTokenRepository.create(linkToken);
+
+			const message = `
+🔗 *Vínculo de Contas*
+
+Para vincular sua conta do Telegram com o site GibiPromo:
+
+1️⃣ Acesse o site e faça login
+2️⃣ Vá em Configurações → Vincular Telegram
+3️⃣ Insira este código:
+
+\`${this.escapeMarkdown(linkToken.token)}\`
+
+⏱️ *Válido por 5 minutos*
+
+Após vincular, você receberá notificações tanto no Telegram quanto no site\\!
+			`.trim();
+
+			await ctx.reply(message, { parse_mode: 'MarkdownV2' });
+
+		} catch (error) {
+			console.error('Erro ao gerar token de vínculo:', error);
+			await ctx.reply('❌ Erro ao gerar código. Tente novamente.');
 		}
 	}
 

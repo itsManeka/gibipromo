@@ -1,4 +1,4 @@
-import { DynamoDBProductRepository } from '../../../../src/infrastructure/adapters/dynamodb/DynamoDBProductRepository';
+import { DynamoDBProductRepository } from '@gibipromo/shared';
 import { MockAmazonPAAPIClient } from '../../../../src/infrastructure/adapters/amazon/MockAmazonPAAPIClient';
 import { User } from '@gibipromo/shared/dist/entities/User';
 import { Product } from '@gibipromo/shared/dist/entities/Product';
@@ -19,7 +19,8 @@ import {
 	createAmazonProduct,
 	createProduct,
 	createTestAction,
-	createTestUser
+	createTestUser,
+	createMockNotificationRepository
 } from '../../../test-helpers/factories';
 import { AmazonProduct } from '../../../../src/application/ports/AmazonProductAPI';
 
@@ -303,6 +304,8 @@ describe('AddProductActionProcessor Integration Tests', () => {
 		productRepository = new ExtendedDynamoDBProductRepository();
 		amazonApi = new ExtendedMockAmazonPAAPIClient();
 
+		const mockNotificationRepository = createMockNotificationRepository();
+
 		// Create processor
 		actionProcessor = new AddProductActionProcessor(
 			actionRepository,
@@ -312,7 +315,8 @@ describe('AddProductActionProcessor Integration Tests', () => {
 			amazonApi,
 			{
 				handlePriceChange: jest.fn()
-			} as any
+			} as any,
+			mockNotificationRepository
 		);
 
 		// Clear all repositories

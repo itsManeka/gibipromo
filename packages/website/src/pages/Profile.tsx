@@ -1,0 +1,200 @@
+import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { User, Edit3, Save, X, Bell, Star, TrendingDown, BookOpen, AlertCircle } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
+import { useProfile } from '../contexts/ProfileContext'
+import { useLinkStatus } from '../hooks/useLinkStatus'
+import { formatDate } from '../utils/date'
+import LinkTelegramButton from '../components/LinkTelegramButton'
+
+export function Profile() {
+	const { user } = useAuth()
+	const { profile, isLoading, error, updateProfile } = useProfile()
+	const { isLinking } = useLinkStatus()
+	const [isEditing, setIsEditing] = useState(false)
+	const [editedNick, setEditedNick] = useState('')
+	const [updateError, setUpdateError] = useState<string | null>(null)
+
+	// Inicializa o nick editável quando o perfil carrega
+	useEffect(() => {
+		if (profile?.nick) {
+			setEditedNick(profile.nick)
+		}
+	}, [profile])
+
+	const handleSave = async () => {
+		if (!editedNick.trim()) {
+			setUpdateError('O nickname não pode estar vazio')
+			return
+		}
+
+		try {
+			setUpdateError(null)
+			await updateProfile(editedNick.trim())
+			setIsEditing(false)
+		} catch (err) {
+			setUpdateError(err instanceof Error ? err.message : 'Erro ao atualizar perfil')
+		}
+	}
+
+	const handleCancel = () => {
+		setEditedNick(profile?.nick || '')
+		setUpdateError(null)
+		setIsEditing(false)
+	}
+
+	if (isLoading && !profile) {
+		return (
+			<div className="min-h-screen flex items-center justify-center">
+				<div className="text-center">
+					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 dark:border-primary-yellow mx-auto mb-4"></div>
+					<p className="text-gray-600 dark:text-primary-light">Carregando perfil...</p>
+				</div>
+			</div>
+		)
+	}
+
+	if (error) {
+		return (
+			<div className="min-h-screen flex items-center justify-center px-4">
+				<div className="card max-w-md w-full text-center">
+					<AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+					<h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Erro ao carregar perfil</h2>
+					<p className="text-gray-600 dark:text-primary-light mb-4">{error}</p>
+					<button
+						onClick={() => window.location.reload()}
+						className="btn-primary"
+					>
+						Tentar novamente
+					</button>
+				</div>
+			</div>
+		)
+	}
+
+	return (
+		<div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+			<div className="max-w-4xl mx-auto">
+				{/* Header */}
+				<div className="mb-8">
+					<h1 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2">
+						👤 Meu Perfil
+					</h1>
+					<p className="text-gray-600 dark:text-primary-light">
+						Gerencie suas informações
+					</p>
+				</div>
+
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+					{/* Informações do Perfil */}
+					<div className="lg:col-span-2">
+						<div className="card">
+							{isLinking && (
+								<div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+									<p className="text-sm text-blue-700 dark:text-blue-300">
+										⏳ Vínculo em andamento. Aguarde a conclusão para editar seu perfil.
+									</p>
+								</div>
+							)}
+
+							<div className="flex justify-between items-start mb-6">
+								<h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+									Informações Pessoais
+								</h2>
+								{!isEditing ? (
+									<button
+										onClick={() => setIsEditing(true)}
+										disabled={isLinking}
+										className="btn-ghost inline-flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+									>
+										<Edit3 className="h-4 w-4" />
+										<span>Editar</span>
+									</button>
+								) : (
+									<div className="flex space-x-2">
+										<button
+											onClick={handleSave}
+											className="btn-secondary inline-flex items-center space-x-2 text-sm py-2 px-4"
+										>
+											<Save className="h-4 w-4" />
+											<span>Salvar</span>
+										</button>
+										<button
+											onClick={handleCancel}
+											className="btn-ghost inline-flex items-center space-x-2 text-sm py-2 px-4"
+										>
+											<X className="h-4 w-4" />
+											<span>Cancelar</span>
+										</button>
+									</div>
+								)}
+							</div>
+
+							<div className="flex items-start space-x-6 mb-6">
+								{/* Avatar */}
+								<div className="flex-shrink-0">
+									<div className="w-24 h-24 bg-purple-600 rounded-full flex items-center justify-center">
+										<User className="h-12 w-12 text-white dark:text-white" />
+									</div>
+								</div>
+
+								{/* Informações */}
+								<div className="flex-1 space-y-4">
+									<div>
+										<label className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-1">
+											Nome
+										</label>
+										{isEditing ? (
+											<div>
+												<input
+													type="text"
+													className="input w-full"
+													value={editedNick}
+													onChange={(e) => setEditedNick(e.target.value)}
+													placeholder="Digite seu nickname"
+												/>
+												{updateError && (
+													<p className="text-red-400 text-sm mt-1">{updateError}</p>
+												)}
+											</div>
+										) : (
+											<p className="text-gray-900 dark:text-white">{profile?.nick || 'Não definido'}</p>
+										)}
+									</div>
+
+									<div>
+										<label className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-1">
+											Email
+										</label>
+										<p className="text-gray-900 dark:text-white">{user?.email}</p>
+									</div>
+
+									<div>
+										<label className="block text-sm font-medium text-gray-700 dark:text-primary-light mb-1">
+											Membro desde
+										</label>
+										<p className="text-sm text-gray-600 dark:text-gray-400">
+											{user?.created_at ? formatDate(user.created_at) : 'Data não disponível'}
+										</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					{/* Quick Actions */}
+					<div className="space-y-6">
+						<div className="card">
+							<h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+								⚡ Ações Rápidas
+							</h3>
+							<div className="space-y-3">
+								<LinkTelegramButton />
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	)
+}

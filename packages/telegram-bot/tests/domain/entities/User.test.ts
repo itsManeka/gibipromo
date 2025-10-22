@@ -1,49 +1,42 @@
-import { createTelegramUser, createWebsiteUser } from '@gibipromo/shared/dist/entities/User';
+import { UserFactory } from '@gibipromo/shared/dist/entities/User';
 
 describe('User Entity', () => {
 	it('should create a telegram user with monitoring disabled by default', () => {
-		const userData = {
-			id: 'uuid-123',
-			telegram_id: '123456789',
-			name: 'John',
-			username: 'johndoe',
-			language: 'pt'
-		};
+		const telegramId = '123456789';
+		const username = 'johndoe';
+		const name = 'John';
+		const language = 'pt';
 
-		const user = createTelegramUser(userData);
+		const user = UserFactory.createTelegramUser(telegramId, username, name, language);
 
-		expect(user).toEqual({
-			...userData,
+		expect(user).toMatchObject({
+			telegram_id: telegramId,
+			name,
+			username,
+			language,
 			enabled: false
 		});
+		expect(user.id).toBeDefined();
 	});
 
-	it('should create a website user with monitoring disabled by default', () => {
-		const userData = {
-			id: 'uuid-123',
-			name: 'John',
-			username: 'johndoe',
-			language: 'pt',
-			email: 'john@example.com',
-			password_hash: 'hashed_password'
-		};
+	it('should create a website user with monitoring enabled by default', () => {
+		const email = 'john@example.com';
+		const passwordHash = 'hashed_password';
+		const username = 'johndoe';
 
-		const user = createWebsiteUser(userData);
+		const user = UserFactory.createWebsiteUser(email, passwordHash, username);
 
-		expect(user).toEqual({
-			...userData,
-			enabled: false
+		expect(user).toMatchObject({
+			email,
+			password_hash: passwordHash,
+			username,
+			enabled: true
 		});
+		expect(user.id).toBeDefined();
 	});
 
 	it('should have all required properties for telegram user', () => {
-		const user = createTelegramUser({
-			id: 'uuid-123',
-			telegram_id: '123456789',
-			name: 'John',
-			username: 'johndoe',
-			language: 'pt'
-		});
+		const user = UserFactory.createTelegramUser('123456789', 'johndoe', 'John', 'pt');
 
 		expect(user).toHaveProperty('id');
 		expect(user).toHaveProperty('telegram_id');

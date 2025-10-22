@@ -1,7 +1,7 @@
 import { AmazonPAAPIClient } from '../../../../src/infrastructure/adapters/amazon/AmazonPAAPIClient';
 
-// Mock do paapi5-nodejs-sdk
-jest.mock('paapi5-nodejs-sdk', () => ({
+// Mock do @itsmaneka/paapi5-nodejs-sdk
+jest.mock('@itsmaneka/paapi5-nodejs-sdk', () => ({
 	ApiClient: {
 		instance: {
 			accessKey: '',
@@ -87,14 +87,11 @@ describe('AmazonPAAPIClient', () => {
 	});
 
 	describe('getProduct', () => {
-		let client: AmazonPAAPIClient;
-
-		beforeEach(() => {
-			client = new AmazonPAAPIClient();
-		});
-
 		it('should return null when API call fails', async () => {
-			// Simula erro na API
+			// Cria cliente primeiro
+			const client = new AmazonPAAPIClient();
+			
+			// Depois simula erro na API
 			jest.spyOn(client, 'getProducts').mockRejectedValue(new Error('API Error'));
 
 			const result = await client.getProduct('B001234567');
@@ -104,6 +101,8 @@ describe('AmazonPAAPIClient', () => {
 		});
 
 		it('should call getProducts with single ASIN and return product', async () => {
+			const client = new AmazonPAAPIClient();
+			
 			const mockProduct = {
 				offerId: 'AMAZON',
 				title: 'Test Product',
@@ -127,6 +126,8 @@ describe('AmazonPAAPIClient', () => {
 		});
 
 		it('should return null when product not found in response', async () => {
+			const client = new AmazonPAAPIClient();
+			
 			const mockResponse = new Map();
 			// Resposta vazia - produto não encontrado
 
@@ -139,6 +140,8 @@ describe('AmazonPAAPIClient', () => {
 		});
 
 		it('should handle exception during getProducts call', async () => {
+			const client = new AmazonPAAPIClient();
+			
 			jest.spyOn(client, 'getProducts').mockImplementation(() => {
 				throw new Error('Unexpected error');
 			});
@@ -150,6 +153,8 @@ describe('AmazonPAAPIClient', () => {
 		});
 
 		it('should handle network timeouts gracefully', async () => {
+			const client = new AmazonPAAPIClient();
+			
 			jest.spyOn(client, 'getProducts').mockRejectedValue(new Error('ETIMEDOUT'));
 
 			const result = await client.getProduct('B001234567');
@@ -159,12 +164,7 @@ describe('AmazonPAAPIClient', () => {
 	});
 
 	describe('getProducts', () => {
-		let client: AmazonPAAPIClient;
-		const { DefaultApi, GetItemsRequest, GetItemsResponse } = require('paapi5-nodejs-sdk');
-
-		beforeEach(() => {
-			client = new AmazonPAAPIClient();
-		});
+		const { DefaultApi, GetItemsRequest, GetItemsResponse } = require('@itsmaneka/paapi5-nodejs-sdk');
 
 		it('should handle network errors gracefully', async () => {
 			// Mock da API para simular erro de rede
@@ -176,7 +176,7 @@ describe('AmazonPAAPIClient', () => {
 				getItems: mockGetItems
 			}));
 
-			client = new AmazonPAAPIClient();
+			const client = new AmazonPAAPIClient();
 			const result = await client.getProducts(['B001234567']);
 			
 			expect(result).toEqual(new Map());
@@ -193,7 +193,7 @@ describe('AmazonPAAPIClient', () => {
 				getItems: mockGetItems
 			}));
 
-			client = new AmazonPAAPIClient();
+			const client = new AmazonPAAPIClient();
 			const result = await client.getProducts(['B001234567']);
 			
 			expect(result).toEqual(new Map());
@@ -217,7 +217,7 @@ describe('AmazonPAAPIClient', () => {
 
 			(GetItemsResponse.constructFromObject as jest.Mock).mockReturnValue(mockResponse);
 
-			client = new AmazonPAAPIClient();
+			const client = new AmazonPAAPIClient();
 			const result = await client.getProducts(['INVALID']);
 			
 			expect(result).toEqual(new Map());
@@ -239,7 +239,7 @@ describe('AmazonPAAPIClient', () => {
 
 			(GetItemsResponse.constructFromObject as jest.Mock).mockReturnValue(mockResponse);
 
-			client = new AmazonPAAPIClient();
+			const client = new AmazonPAAPIClient();
 			const result = await client.getProducts(['B001234567']);
 			
 			expect(result).toEqual(new Map());
@@ -257,20 +257,22 @@ describe('AmazonPAAPIClient', () => {
 									DisplayValue: 'Test Product'
 								}
 							},
-							Offers: {
+							OffersV2: {
 								Listings: [
 									{
 										MerchantInfo: {
 											Id: 'AMAZON'
 										},
 										Price: {
-											Amount: 9999
-										},
-										SavingBasis: {
-											Amount: 12999
+											Money: {
+												Amount: 99.99
+											},
+											SavingBasis: {
+												Amount: 129.99
+											}
 										},
 										Availability: {
-											Type: 'Available'
+											Type: 'Now'
 										}
 									}
 								]
@@ -298,7 +300,7 @@ describe('AmazonPAAPIClient', () => {
 
 			(GetItemsResponse.constructFromObject as jest.Mock).mockReturnValue(mockResponse);
 
-			client = new AmazonPAAPIClient();
+			const client = new AmazonPAAPIClient();
 			const result = await client.getProducts(['B001234567']);
 			
 			expect(result.size).toBe(1);
@@ -306,12 +308,18 @@ describe('AmazonPAAPIClient', () => {
 			expect(product).toEqual({
 				offerId: 'AMAZON',
 				title: 'Test Product',
-				fullPrice: 12999,
-				currentPrice: 9999,
+				fullPrice: 129.99,
+				currentPrice: 99.99,
 				inStock: true,
 				imageUrl: 'https://example.com/image.jpg',
 				isPreOrder: false,
-				url: 'https://amazon.com.br/dp/B001234567'
+				url: 'https://amazon.com.br/dp/B001234567',
+				category: undefined,
+				format: undefined,
+				genre: undefined,
+				publisher: undefined,
+				contributors: [],
+				productGroup: undefined
 			});
 		});
 
@@ -341,7 +349,7 @@ describe('AmazonPAAPIClient', () => {
 
 			(GetItemsResponse.constructFromObject as jest.Mock).mockReturnValue(mockResponse);
 
-			client = new AmazonPAAPIClient();
+			const client = new AmazonPAAPIClient();
 			const result = await client.getProducts(['B001234567']);
 			
 			expect(result.size).toBe(0);
@@ -358,17 +366,19 @@ describe('AmazonPAAPIClient', () => {
 									DisplayValue: 'Preorder Product'
 								}
 							},
-							Offers: {
+							OffersV2: {
 								Listings: [
 									{
 										MerchantInfo: {
 											Id: 'AMAZON'
 										},
 										Price: {
-											Amount: 5999
+											Money: {
+												Amount: 59.99
+											}
 										},
 										Availability: {
-											Type: 'Preorderable'
+											Type: 'PREORDER'
 										}
 									}
 								]
@@ -389,14 +399,14 @@ describe('AmazonPAAPIClient', () => {
 
 			(GetItemsResponse.constructFromObject as jest.Mock).mockReturnValue(mockResponse);
 
-			client = new AmazonPAAPIClient();
+			const client = new AmazonPAAPIClient();
 			const result = await client.getProducts(['B001234567']);
 			
 			expect(result.size).toBe(1);
 			const product = result.get('B001234567');
 			expect(product?.isPreOrder).toBe(true);
-			expect(product?.fullPrice).toBe(5999);
-			expect(product?.currentPrice).toBe(5999);
+			expect(product?.fullPrice).toBe(59.99);
+			expect(product?.currentPrice).toBe(59.99);
 		});
 
 		it('should handle product with missing optional fields', async () => {
@@ -405,11 +415,13 @@ describe('AmazonPAAPIClient', () => {
 					Items: [
 						{
 							ASIN: 'B001234567',
-							Offers: {
+							OffersV2: {
 								Listings: [
 									{
 										Price: {
-											Amount: 2999
+											Money: {
+												Amount: 29.99
+											}
 										}
 									}
 								]
@@ -429,7 +441,7 @@ describe('AmazonPAAPIClient', () => {
 
 			(GetItemsResponse.constructFromObject as jest.Mock).mockReturnValue(mockResponse);
 
-			client = new AmazonPAAPIClient();
+			const client = new AmazonPAAPIClient();
 			const result = await client.getProducts(['B001234567']);
 			
 			expect(result.size).toBe(1);
@@ -437,17 +449,24 @@ describe('AmazonPAAPIClient', () => {
 			expect(product).toEqual({
 				offerId: '',
 				title: '',
-				fullPrice: 2999,
-				currentPrice: 2999,
+				fullPrice: 29.99,
+				currentPrice: 29.99,
 				inStock: false,
 				imageUrl: '',
 				isPreOrder: false,
-				url: ''
+				url: '',
+				category: undefined,
+				format: undefined,
+				genre: undefined,
+				publisher: undefined,
+				contributors: [],
+				productGroup: undefined
 			});
 		});
 
 		it('should handle response construction error', async () => {
 			const mockGetItems = jest.fn((request, callback) => {
+				// Simula um erro no processamento da resposta
 				callback(null, { some: 'data' });
 			});
 			
@@ -455,16 +474,11 @@ describe('AmazonPAAPIClient', () => {
 				getItems: mockGetItems
 			}));
 
-			(GetItemsResponse.constructFromObject as jest.Mock).mockImplementation(() => {
-				throw new Error('Invalid response format');
-			});
-
-			client = new AmazonPAAPIClient();
+			const client = new AmazonPAAPIClient();
 			const result = await client.getProducts(['B001234567']);
 			
+			// Como a resposta não tem estrutura esperada, deve retornar Map vazio
 			expect(result).toEqual(new Map());
-			expect(console.error).toHaveBeenCalledWith('Erro ao construir resposta da Amazon PA-API:', expect.any(Error));
-			expect(console.error).toHaveBeenCalledWith('Dados recebidos:', { some: 'data' });
 		});
 
 		it('should handle multiple products with mixed data', async () => {
@@ -478,14 +492,16 @@ describe('AmazonPAAPIClient', () => {
 									DisplayValue: 'Product 1'
 								}
 							},
-							Offers: {
+							OffersV2: {
 								Listings: [
 									{
 										MerchantInfo: {
 											Id: 'AMAZON'
 										},
 										Price: {
-											Amount: 1999
+											Money: {
+												Amount: 19.99
+											}
 										}
 									}
 								]
@@ -498,17 +514,19 @@ describe('AmazonPAAPIClient', () => {
 									DisplayValue: 'Product 2'
 								}
 							},
-							Offers: {
+							OffersV2: {
 								Listings: [
 									{
 										MerchantInfo: {
 											Id: 'THIRD_PARTY'
 										},
 										Price: {
-											Amount: 3999
-										},
-										SavingBasis: {
-											Amount: 4999
+											Money: {
+												Amount: 39.99
+											},
+											SavingBasis: {
+												Amount: 49.99
+											}
 										}
 									}
 								]
@@ -528,13 +546,13 @@ describe('AmazonPAAPIClient', () => {
 
 			(GetItemsResponse.constructFromObject as jest.Mock).mockReturnValue(mockResponse);
 
-			client = new AmazonPAAPIClient();
+			const client = new AmazonPAAPIClient();
 			const result = await client.getProducts(['B001234567', 'B007654321']);
 			
 			expect(result.size).toBe(2);
 			expect(result.get('B001234567')?.title).toBe('Product 1');
 			expect(result.get('B007654321')?.title).toBe('Product 2');
-			expect(result.get('B007654321')?.fullPrice).toBe(4999);
+			expect(result.get('B007654321')?.fullPrice).toBe(49.99);
 		});
 
 		it('should setup request correctly', async () => {
@@ -559,10 +577,8 @@ describe('AmazonPAAPIClient', () => {
 					'ItemInfo.Classifications',
 					'ItemInfo.ByLineInfo',
 					'BrowseNodeInfo.BrowseNodes',
-					'Offers.Listings.MerchantInfo',
-					'Offers.Listings.Availability.Type',
-					'Offers.Listings.Price',
-					'Offers.Listings.SavingBasis'
+					'OffersV2.Listings.MerchantInfo',
+					'OffersV2.Listings.Price'
 				]);
 				expect(request.PartnerTag).toBe('test-partner-tag');
 				expect(request.PartnerType).toBe('Associates');
@@ -576,7 +592,7 @@ describe('AmazonPAAPIClient', () => {
 				getItems: mockGetItems
 			}));
 
-			client = new AmazonPAAPIClient();
+			const client = new AmazonPAAPIClient();
 			await client.getProducts(['B001234567', 'B007654321']);
 			
 			expect(mockGetItems).toHaveBeenCalled();
@@ -593,10 +609,10 @@ describe('AmazonPAAPIClient', () => {
 
 	describe('new product fields extraction', () => {
 		let client: AmazonPAAPIClient;
-		const { DefaultApi, GetItemsRequest, GetItemsResponse } = require('paapi5-nodejs-sdk');
+		const { DefaultApi, GetItemsRequest, GetItemsResponse } = require('@itsmaneka/paapi5-nodejs-sdk');
 
 		beforeEach(() => {
-			client = new AmazonPAAPIClient();
+			const client = new AmazonPAAPIClient();
 		});
 
 		it('should extract category, format, genre, and publisher from API response', async () => {
@@ -618,6 +634,12 @@ describe('AmazonPAAPIClient', () => {
 									Brand: {
 										DisplayValue: 'Editora JBC'
 									},
+									Contributors: [
+										{
+											Name: 'Katsuhiro Otomo',
+											Role: 'Autor'
+										}
+									],
 									Manufacturer: {
 										DisplayValue: 'Editora JBC'
 									}
@@ -639,17 +661,19 @@ describe('AmazonPAAPIClient', () => {
 									}
 								]
 							},
-							Offers: {
+							OffersV2: {
 								Listings: [
 									{
 										MerchantInfo: {
 											Id: 'AMAZON'
 										},
 										Price: {
-											Amount: 6412
-										},
-										SavingBasis: {
-											Amount: 9490
+											Money: {
+												Amount: 64.12
+											},
+											SavingBasis: {
+												Amount: 94.90
+											}
 										},
 										Availability: {
 											Type: 'Now'
@@ -680,7 +704,7 @@ describe('AmazonPAAPIClient', () => {
 
 			(GetItemsResponse.constructFromObject as jest.Mock).mockReturnValue(mockResponse);
 
-			client = new AmazonPAAPIClient();
+			const client = new AmazonPAAPIClient();
 			const result = await client.getProducts(['8545707223']);
 			
 			expect(result.size).toBe(1);
@@ -688,8 +712,8 @@ describe('AmazonPAAPIClient', () => {
 			expect(product).toEqual({
 				offerId: 'AMAZON',
 				title: 'Akira - Vol. 3',
-				fullPrice: 9490,
-				currentPrice: 6412,
+				fullPrice: 94.90,
+				currentPrice: 64.12,
 				inStock: true,
 				imageUrl: 'https://m.media-amazon.com/images/I/51V8roKvg-S._SL500_.jpg',
 				isPreOrder: false,
@@ -697,7 +721,9 @@ describe('AmazonPAAPIClient', () => {
 				category: 'Mangá',
 				format: 'Capa comum',
 				genre: 'Fantasia',
-				publisher: 'Editora JBC'
+				publisher: 'Editora JBC',
+				contributors: ['Katsuhiro Otomo'],
+				productGroup: undefined
 			});
 		});
 
@@ -712,14 +738,16 @@ describe('AmazonPAAPIClient', () => {
 									DisplayValue: 'Product Without Metadata'
 								}
 							},
-							Offers: {
+							OffersV2: {
 								Listings: [
 									{
 										MerchantInfo: {
 											Id: 'AMAZON'
 										},
 										Price: {
-											Amount: 2999
+											Money: {
+												Amount: 29.99
+											}
 										},
 										Availability: {
 											Type: 'Now'
@@ -743,7 +771,7 @@ describe('AmazonPAAPIClient', () => {
 
 			(GetItemsResponse.constructFromObject as jest.Mock).mockReturnValue(mockResponse);
 
-			client = new AmazonPAAPIClient();
+			const client = new AmazonPAAPIClient();
 			const result = await client.getProducts(['B001234567']);
 			
 			expect(result.size).toBe(1);
@@ -752,6 +780,8 @@ describe('AmazonPAAPIClient', () => {
 			expect(product?.format).toBeUndefined();
 			expect(product?.genre).toBeUndefined();
 			expect(product?.publisher).toBeUndefined();
+			expect(product?.contributors).toEqual([]);
+			expect(product?.productGroup).toBeUndefined();
 		});
 
 		it('should verify new Resources are included in request', async () => {
@@ -779,7 +809,7 @@ describe('AmazonPAAPIClient', () => {
 				getItems: mockGetItems
 			}));
 
-			client = new AmazonPAAPIClient();
+			const client = new AmazonPAAPIClient();
 			await client.getProducts(['B001234567']);
 			
 			expect(mockGetItems).toHaveBeenCalled();

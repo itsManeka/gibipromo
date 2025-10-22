@@ -1,0 +1,568 @@
+/**
+ * Products Controller
+ *
+ * Handles HTTP requests for product-related endpoints.
+ *
+ * @module controllers/ProductsController
+ */
+
+import { Request, Response } from 'express';
+import { BaseController } from './BaseController';
+import {
+	ProductsService,
+	PaginationOptions,
+	ProductSearchFilters,
+	PromotionSortType
+} from '../services/ProductsService';
+import { ApiResponse, PromotionFilters } from '@gibipromo/shared';
+import { DynamoDBProductRepository, DynamoDBProductUserRepository, DynamoDBProductStatsRepository } from '@gibipromo/shared';
+
+/**
+ * Products Controller
+ * Provides REST endpoints for product listing and search
+ */
+export class ProductsController extends BaseController {
+	private readonly productsService: ProductsService;
+
+	constructor() {
+		super();
+		const productRepository = new DynamoDBProductRepository();
+		const productUserRepository = new DynamoDBProductUserRepository();
+		const productStatsRepository = new DynamoDBProductStatsRepository();
+		this.productsService = new ProductsService(productRepository, productUserRepository, productStatsRepository);
+	}
+
+	/**
+	 * GET /products
+	 * List products with pagination
+	 */
+	listProducts = this.asyncHandler(async (req: Request, res: Response) => {
+		// Parse pagination parameters
+		const pageParam = req.query.page as string;
+		const limitParam = req.query.limit as string;
+		
+		const page = pageParam ? parseInt(pageParam, 10) : 1;
+		const limit = limitParam ? parseInt(limitParam, 10) : 20;
+
+		// Validação
+		if (isNaN(page) || page < 1) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Page must be greater than 0'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		if (isNaN(limit) || limit < 1 || limit > 100) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Limit must be between 1 and 100'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		const options: PaginationOptions = { page, limit };
+
+		try {
+			const result = await this.productsService.listProducts(options);
+
+			const response: ApiResponse<typeof result> = {
+				success: true,
+				data: result,
+				message: `Retrieved ${result.data.length} products`
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			throw error;
+		}
+	});
+
+	/**
+	 * GET /products/search
+	 * Search products with filters and pagination
+	 */
+	searchProducts = this.asyncHandler(async (req: Request, res: Response) => {
+		// Parse pagination parameters
+		const pageParam = req.query.page as string;
+		const limitParam = req.query.limit as string;
+		
+		const page = pageParam ? parseInt(pageParam, 10) : 1;
+		const limit = limitParam ? parseInt(limitParam, 10) : 20;
+
+		// Parse filter parameters
+		const filters: ProductSearchFilters = {
+			query: req.query.q as string,
+			minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
+			maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
+			category: req.query.category as string,
+			format: req.query.format as string,
+			genre: req.query.genre as string,
+			publisher: req.query.publisher as string,
+			available: req.query.available ? req.query.available === 'true' : undefined
+		};
+
+		// Validação de paginação
+		if (isNaN(page) || page < 1) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Page must be greater than 0'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		if (isNaN(limit) || limit < 1 || limit > 100) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Limit must be between 1 and 100'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		// Validação de preços
+		if (filters.minPrice !== undefined && filters.minPrice < 0) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Min price must be greater than or equal to 0'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		if (filters.maxPrice !== undefined && filters.maxPrice < 0) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Max price must be greater than or equal to 0'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		if (
+			filters.minPrice !== undefined &&
+			filters.maxPrice !== undefined &&
+			filters.minPrice > filters.maxPrice
+		) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Min price cannot be greater than max price'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		const options: PaginationOptions = { page, limit };
+
+		try {
+			const result = await this.productsService.searchProducts(filters, options);
+
+			const response: ApiResponse<typeof result> = {
+				success: true,
+				data: result,
+				message: `Found ${result.pagination.total} products`
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			throw error;
+		}
+	});
+
+	/**
+	 * GET /products/:id
+	 * Get product by ID
+	 */
+	getProductById = this.asyncHandler(async (req: Request, res: Response) => {
+		const { id } = req.params;
+
+		// Validação
+		if (!id) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Product ID is required'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		try {
+			const product = await this.productsService.getProductById(id);
+
+			if (!product) {
+				const response: ApiResponse<null> = {
+					success: false,
+					error: 'Product not found'
+				};
+				return this.sendNotFound(res, response);
+			}
+
+			const response: ApiResponse<typeof product> = {
+				success: true,
+				data: product,
+				message: 'Product retrieved successfully'
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			throw error;
+		}
+	});
+
+	/**
+	 * DELETE /products/cache (Admin only)
+	 * Clear product cache
+	 */
+	clearCache = this.asyncHandler(async (req: Request, res: Response) => {
+		const { key } = req.query;
+
+		this.productsService.clearCache(key as string | undefined);
+
+		const response: ApiResponse<null> = {
+			success: true,
+			message: key ? `Cache cleared for key: ${key}` : 'All cache cleared'
+		};
+
+		this.sendSuccess(res, response);
+	});
+
+	/**
+	 * GET /products/cache/stats (Admin only)
+	 * Get cache statistics
+	 */
+	getCacheStats = this.asyncHandler(async (req: Request, res: Response) => {
+		const stats = this.productsService.getCacheStats();
+
+		const response: ApiResponse<typeof stats> = {
+			success: true,
+			data: stats,
+			message: 'Cache statistics retrieved'
+		};
+
+		this.sendSuccess(res, response);
+	});
+
+	/**
+	 * GET /products/promotions
+	 * List promotions with advanced filters
+	 * Public endpoint with optional authentication for "Meus Produtos" filter
+	 */
+	getPromotions = this.asyncHandler(async (req: Request, res: Response) => {
+		// Parse pagination parameters
+		const pageParam = req.query.page as string;
+		const limitParam = req.query.limit as string;
+		
+		const page = pageParam ? parseInt(pageParam, 10) : 1;
+		const limit = limitParam ? parseInt(limitParam, 10) : 20;
+
+		// Validação de paginação
+		if (isNaN(page) || page < 1) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Page must be greater than 0'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		if (isNaN(limit) || limit < 1 || limit > 100) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Limit must be between 1 and 100'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		// Parse filter parameters
+		const filters: PromotionFilters = {
+			query: req.query.q as string,
+			category: req.query.category as string,
+			publisher: req.query.publisher as string,
+			genre: req.query.genre as string,
+			format: req.query.format as string,
+			contributors: req.query.contributors 
+				? (req.query.contributors as string).split('|').map(c => c.trim())
+				: undefined,
+			preorder: req.query.preorder === 'true',
+			inStock: req.query.inStock !== 'false', // Padrão: true (apenas em estoque)
+			onlyMyProducts: req.query.onlyMyProducts === 'true'
+		};
+
+		// Parse sort parameter
+		const sortBy = (req.query.sortBy as PromotionSortType) || 'discount';
+
+		// Validar sortBy
+		const validSorts: PromotionSortType[] = ['discount', 'price-low', 'price-high', 'name', 'updated', 'created'];
+		if (!validSorts.includes(sortBy)) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: `Invalid sortBy. Valid values: ${validSorts.join(', ')}`
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		// Get userId from optionalAuth middleware (if authenticated)
+		const userId = req.user?.id;
+
+		// Validar filtro "Meus Produtos" sem autenticação
+		if (filters.onlyMyProducts && !userId) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Você precisa estar autenticado para usar o filtro "Meus Produtos"'
+			};
+			return this.sendUnauthorized(res, response);
+		}
+
+		try {
+			const result = await this.productsService.getPromotions(
+				filters,
+				{ page, limit },
+				sortBy,
+				userId
+			);
+
+			const response: ApiResponse<typeof result> = {
+				success: true,
+				data: result,
+				message: `${result.data.length} promoções encontradas`
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			throw error;
+		}
+	});
+
+	/**
+	 * GET /products/filter-options
+	 * Get unique values for filterable fields
+	 * Public endpoint - no authentication required
+	 */
+	getFilterOptions = this.asyncHandler(async (req: Request, res: Response) => {
+		try {
+			const options = await this.productsService.getFilterOptions();
+
+			const response: ApiResponse<typeof options> = {
+				success: true,
+				data: options,
+				message: 'Filter options retrieved'
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			throw error;
+		}
+	});
+
+	/**
+	 * GET /products/latest-promotions
+	 * Get latest promotions (ordenadas por updated_at DESC)
+	 * Public endpoint para exibir na home page
+	 */
+	getLatestPromotions = this.asyncHandler(async (req: Request, res: Response) => {
+		// Parse limit parameter
+		const limitParam = req.query.limit as string;
+		const limit = limitParam ? parseInt(limitParam, 10) : 3;
+
+		// Validação
+		if (isNaN(limit) || limit < 1 || limit > 10) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Limite deve estar entre 1 e 10'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		try {
+			const products = await this.productsService.getLatestPromotions(limit);
+
+			const response: ApiResponse<typeof products> = {
+				success: true,
+				data: products,
+				message: `${products.length} promoções mais recentes`
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			throw error;
+		}
+	});
+
+	/**
+	 * GET /products/:id/stats
+	 * Get price statistics for a product
+	 * Query params: period (30|90|180|365)
+	 * Public endpoint - no authentication required
+	 */
+	getProductStats = this.asyncHandler(async (req: Request, res: Response) => {
+		const { id } = req.params;
+		const periodParam = req.query.period as string;
+		const period = periodParam ? parseInt(periodParam, 10) : 30;
+
+		// Validação
+		if (!id) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Product ID é obrigatório'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		if (![30, 90, 180, 365].includes(period)) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Período deve ser 30, 90, 180 ou 365 dias'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		try {
+			const stats = await this.productsService.getProductStats(id, period);
+
+			const response: ApiResponse<typeof stats> = {
+				success: true,
+				data: stats,
+				message: `${stats.length} registros de estatísticas`
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			throw error;
+		}
+	});
+
+	/**
+	 * GET /products/:id/monitoring-status
+	 * Check if user is monitoring this product
+	 * Requires authentication
+	 */
+	getMonitoringStatus = this.asyncHandler(async (req: Request, res: Response) => {
+		const { id } = req.params;
+		const userId = req.user?.id;
+
+		// Validação
+		if (!id) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Product ID é obrigatório'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		if (!userId) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Autenticação necessária'
+			};
+			return this.sendUnauthorized(res, response);
+		}
+
+		try {
+			const isMonitoring = await this.productsService.isUserMonitoring(userId, id);
+
+			const response: ApiResponse<{ isMonitoring: boolean; productId: string }> = {
+				success: true,
+				data: { isMonitoring, productId: id }
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			throw error;
+		}
+	});
+
+	/**
+	 * POST /products/:id/monitor
+	 * Start monitoring a product
+	 * Requires authentication
+	 */
+	monitorProduct = this.asyncHandler(async (req: Request, res: Response) => {
+		const { id } = req.params;
+		const userId = req.user?.id;
+		const { desired_price } = req.body;
+
+		// Validação
+		if (!id) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Product ID é obrigatório'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		if (!userId) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Autenticação necessária'
+			};
+			return this.sendUnauthorized(res, response);
+		}
+
+		// Validar desired_price se fornecido
+		if (desired_price !== undefined && desired_price !== null) {
+			const price = parseFloat(desired_price);
+			if (isNaN(price) || price <= 0) {
+				const response: ApiResponse<null> = {
+					success: false,
+					error: 'Preço desejado deve ser um número positivo'
+				};
+				return this.sendBadRequest(res, response);
+			}
+		}
+
+		try {
+			await this.productsService.monitorProduct(userId, id, desired_price);
+
+			const response: ApiResponse<null> = {
+				success: true,
+				message: 'Produto adicionado ao monitoramento'
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			// Se o erro for "já está monitorando", retornar erro 400
+			if (error instanceof Error && error.message.includes('já está monitorando')) {
+				const response: ApiResponse<null> = {
+					success: false,
+					error: error.message
+				};
+				return this.sendBadRequest(res, response);
+			}
+			throw error;
+		}
+	});
+
+	/**
+	 * DELETE /products/:id/monitor
+	 * Stop monitoring a product
+	 * Requires authentication
+	 */
+	unmonitorProduct = this.asyncHandler(async (req: Request, res: Response) => {
+		const { id } = req.params;
+		const userId = req.user?.id;
+
+		// Validação
+		if (!id) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Product ID é obrigatório'
+			};
+			return this.sendBadRequest(res, response);
+		}
+
+		if (!userId) {
+			const response: ApiResponse<null> = {
+				success: false,
+				error: 'Autenticação necessária'
+			};
+			return this.sendUnauthorized(res, response);
+		}
+
+		try {
+			await this.productsService.unmonitorProduct(userId, id);
+
+			const response: ApiResponse<null> = {
+				success: true,
+				message: 'Produto removido do monitoramento'
+			};
+
+			this.sendSuccess(res, response);
+		} catch (error) {
+			throw error;
+		}
+	});
+}

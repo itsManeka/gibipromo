@@ -11,7 +11,8 @@ import {
 	createTestUser,
 	createTestAction,
 	createAmazonProduct,
-	createProduct
+	createProduct,
+	createMockNotificationRepository
 } from '../../../test-helpers/factories';
 
 jest.mock('../../../../src/application/ports/ActionRepository');
@@ -89,6 +90,8 @@ describe('AddProductActionProcessor', () => {
 		amazonProduct = createAmazonProduct(TEST_ASIN);
 		existingProduct = createProduct(TEST_ASIN);
 
+		const mockNotificationRepository = createMockNotificationRepository();
+
 		processor = new AddProductActionProcessor(
 			mockActionRepo,
 			mockProductRepo,
@@ -97,7 +100,8 @@ describe('AddProductActionProcessor', () => {
 			mockAmazonApi,
 			{
 				handlePriceChange: jest.fn()
-			} as any
+			} as any,
+			mockNotificationRepository
 		);
 	});
 

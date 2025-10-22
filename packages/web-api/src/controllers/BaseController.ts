@@ -9,17 +9,47 @@ export abstract class BaseController {
 	/**
 	 * Send successful response
 	 */
-	protected sendSuccess<T>(res: Response, data: T, message?: string): void {
-		const response: ApiResponse<T> = {
-			success: true,
-			data,
-			message
-		};
+	protected sendSuccess<T>(res: Response, response: ApiResponse<T>): void {
 		res.status(200).json(response);
 	}
 
 	/**
-	 * Send error response
+	 * Send created response (201)
+	 */
+	protected sendCreated<T>(res: Response, response: ApiResponse<T>): void {
+		res.status(201).json(response);
+	}
+
+	/**
+	 * Send bad request response (400)
+	 */
+	protected sendBadRequest<T>(res: Response, response: ApiResponse<T>): void {
+		res.status(400).json(response);
+	}
+
+	/**
+	 * Send unauthorized response (401)
+	 */
+	protected sendUnauthorized<T>(res: Response, response: ApiResponse<T>): void {
+		res.status(401).json(response);
+	}
+
+	/**
+	 * Send forbidden response (403)
+	 */
+	protected sendForbidden<T>(res: Response, response: ApiResponse<T>): void {
+		res.status(403).json(response);
+	}
+
+	/**
+	 * Send not found response (404)
+	 */
+	protected sendNotFound<T>(res: Response, response: ApiResponse<T>): void {
+		res.status(404).json(response);
+	}
+
+	/**
+	 * Send error response (generic)
 	 */
 	protected sendError(res: Response, error: string, statusCode: number = 400): void {
 		const response: ApiResponse<null> = {

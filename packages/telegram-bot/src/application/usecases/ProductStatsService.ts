@@ -9,6 +9,24 @@ export class ProductStatsService {
 	constructor(private readonly productStatsRepository: ProductStatsRepository) { }
 
 	/**
+	 * Creates an initial statistics entry for a newly added product
+	 * This ensures every product has at least one baseline data point for graphs
+	 * @param product The newly created product
+	 * @returns The created ProductStats
+	 */
+	async createInitialStats(product: Product): Promise<ProductStats> {
+		// Create baseline statistics with no price change (old_price = price)
+		const productStats = createProductStats({
+			product_id: product.id,
+			price: product.price,
+			old_price: product.price, // Same as current price (no change yet)
+			percentage_change: 0 // No change on initial entry
+		});
+
+		return await this.productStatsRepository.create(productStats);
+	}
+
+	/**
 	 * Evaluates if a price change warrants creating statistics and creates them if needed
 	 * @param product The product with updated pricing information
 	 * @returns The created ProductStats if statistics were generated, null otherwise

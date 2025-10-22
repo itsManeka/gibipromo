@@ -1,10 +1,27 @@
 import { Request, Response } from 'express';
 import { BaseController } from '../../src/controllers/BaseController';
+import { ApiResponse } from '@gibipromo/shared';
 
 // Concrete implementation for testing
 class TestController extends BaseController {
-	public testSendSuccess(res: Response, data: any, message?: string): void {
-		this.sendSuccess(res, data, message);
+	public testSendSuccess<T>(res: Response, response: ApiResponse<T>): void {
+		this.sendSuccess(res, response);
+	}
+
+	public testSendCreated<T>(res: Response, response: ApiResponse<T>): void {
+		this.sendCreated(res, response);
+	}
+
+	public testSendBadRequest<T>(res: Response, response: ApiResponse<T>): void {
+		this.sendBadRequest(res, response);
+	}
+
+	public testSendUnauthorized<T>(res: Response, response: ApiResponse<T>): void {
+		this.sendUnauthorized(res, response);
+	}
+
+	public testSendNotFound<T>(res: Response, response: ApiResponse<T>): void {
+		this.sendNotFound(res, response);
 	}
 
 	public testSendError(res: Response, error: string, statusCode?: number): void {
@@ -48,7 +65,13 @@ describe('BaseController', () => {
 			const testData = { test: 'data' };
 			const testMessage = 'Success message';
 
-			testController.testSendSuccess(mockResponse as Response, testData, testMessage);
+			const response: ApiResponse<typeof testData> = {
+				success: true,
+				data: testData,
+				message: testMessage
+			};
+
+			testController.testSendSuccess(mockResponse as Response, response);
 
 			expect(mockStatus).toHaveBeenCalledWith(200);
 			expect(mockJson).toHaveBeenCalledWith({
@@ -61,13 +84,17 @@ describe('BaseController', () => {
 		it('should send successful response without message', () => {
 			const testData = { test: 'data' };
 
-			testController.testSendSuccess(mockResponse as Response, testData);
+			const response: ApiResponse<typeof testData> = {
+				success: true,
+				data: testData
+			};
+
+			testController.testSendSuccess(mockResponse as Response, response);
 
 			expect(mockStatus).toHaveBeenCalledWith(200);
 			expect(mockJson).toHaveBeenCalledWith({
 				success: true,
-				data: testData,
-				message: undefined
+				data: testData
 			});
 		});
 	});

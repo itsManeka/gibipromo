@@ -300,6 +300,62 @@ const tables = [
 			ReadCapacityUnits: 5,
 			WriteCapacityUnits: 5
 		}
+	},
+	{
+		TableName: 'LinkTokens',
+		AttributeDefinitions: [
+			{ AttributeName: 'id', AttributeType: 'S' }
+		],
+		KeySchema: [
+			{ AttributeName: 'id', KeyType: 'HASH' }
+		],
+		ProvisionedThroughput: {
+			ReadCapacityUnits: 5,
+			WriteCapacityUnits: 5
+		}
+	},
+	{
+		TableName: 'Notifications',
+		AttributeDefinitions: [
+			{ AttributeName: 'id', AttributeType: 'S' },
+			{ AttributeName: 'user_id', AttributeType: 'S' },
+			{ AttributeName: 'status', AttributeType: 'S' },
+			{ AttributeName: 'created_at', AttributeType: 'S' }
+		],
+		KeySchema: [
+			{ AttributeName: 'id', KeyType: 'HASH' }
+		],
+		GlobalSecondaryIndexes: [
+			{
+				IndexName: 'UserIdCreatedIndex',
+				KeySchema: [
+					{ AttributeName: 'user_id', KeyType: 'HASH' },
+					{ AttributeName: 'created_at', KeyType: 'RANGE' }
+				],
+				Projection: { ProjectionType: 'ALL' },
+				ProvisionedThroughput: {
+					ReadCapacityUnits: 5,
+					WriteCapacityUnits: 5
+				}
+			},
+			{
+				IndexName: 'UserIdStatusIndex',
+				KeySchema: [
+					{ AttributeName: 'user_id', KeyType: 'HASH' },
+					{ AttributeName: 'status', KeyType: 'RANGE' }
+				],
+				Projection: { ProjectionType: 'ALL' },
+				ProvisionedThroughput: {
+					ReadCapacityUnits: 5,
+					WriteCapacityUnits: 5
+				}
+			}
+		],
+		BillingMode: 'PROVISIONED',
+		ProvisionedThroughput: {
+			ReadCapacityUnits: 5,
+			WriteCapacityUnits: 5
+		}
 	}
 ];
 
@@ -343,6 +399,12 @@ async function insertDefaultActionConfigs() {
 			id: 'NOTIFY_PRICE',
 			action_type: 'NOTIFY_PRICE',
 			interval_minutes: 1,
+			enabled: true
+		},
+		{
+			id: 'LINK_ACCOUNTS',
+			action_type: 'LINK_ACCOUNTS',
+			interval_minutes: 2,
 			enabled: true
 		}
 	];

@@ -3,6 +3,9 @@ import { UserRepository } from '../../../../src/application/ports/UserRepository
 import { ActionRepository } from '../../../../src/application/ports/ActionRepository';
 import { ProductRepository } from '../../../../src/application/ports/ProductRepository';
 import { ProductUserRepository } from '../../../../src/application/ports/ProductUserRepository';
+import { UserPreferencesRepository } from '../../../../src/application/ports/UserPreferencesRepository';
+import { UserProfileRepository } from '../../../../src/application/ports/UserProfileRepository';
+import { LinkTokenRepository } from '@gibipromo/shared/dist/repositories/LinkTokenRepository';
 import { User } from '@gibipromo/shared/dist/entities/User';
 import { Product } from '@gibipromo/shared/dist/entities/Product';
 import { ProductUser } from '@gibipromo/shared/dist/entities/ProductUser';
@@ -26,12 +29,28 @@ jest.mock('dotenv', () => ({
 	config: jest.fn()
 }));
 
+// Helper function to create test user with timestamps
+const createMockUser = (overrides: Partial<User> = {}): User => ({
+	id: 'user-uuid-123',
+	telegram_id: '123456789',
+	username: 'testuser',
+	name: 'Test',
+	language: 'pt',
+	enabled: true,
+	created_at: new Date().toISOString(),
+	updated_at: new Date().toISOString(),
+	...overrides
+});
+
 describe('TelegramBot', () => {
 	let telegramBot: TelegramBot;
 	let mockUserRepo: jest.Mocked<UserRepository>;
 	let mockActionRepo: jest.Mocked<ActionRepository>;
 	let mockProductRepo: jest.Mocked<ProductRepository>;
 	let mockProductUserRepo: jest.Mocked<ProductUserRepository>;
+	let mockUserPreferencesRepo: jest.Mocked<UserPreferencesRepository>;
+	let mockUserProfileRepo: jest.Mocked<UserProfileRepository>;
+	let mockLinkTokenRepo: jest.Mocked<LinkTokenRepository>;
 	let mockBot: any;
 
 	const originalEnv = process.env;
@@ -46,17 +65,19 @@ describe('TelegramBot', () => {
 		};
 
 		// Mock repositories
-	mockUserRepo = {
-		create: jest.fn(),
-		update: jest.fn(),
-		delete: jest.fn(),
-		findById: jest.fn(),
-		findByUsername: jest.fn(),
-		findByTelegramId: jest.fn(),
-		findByEmail: jest.fn(),
-		updateSessionId: jest.fn(),
-		setEnabled: jest.fn()
-	};		mockActionRepo = {
+		mockUserRepo = {
+			create: jest.fn(),
+			update: jest.fn(),
+			delete: jest.fn(),
+			findById: jest.fn(),
+			findByUsername: jest.fn(),
+			findByTelegramId: jest.fn(),
+			findByEmail: jest.fn(),
+			updateSessionId: jest.fn(),
+			setEnabled: jest.fn()
+		};
+
+		mockActionRepo = {
 			create: jest.fn(),
 			update: jest.fn(),
 			delete: jest.fn(),
@@ -88,6 +109,29 @@ describe('TelegramBot', () => {
 			removeByProductAndUser: jest.fn()
 		};
 
+		mockUserPreferencesRepo = {
+			create: jest.fn(),
+			update: jest.fn(),
+			delete: jest.fn(),
+			findById: jest.fn(),
+			findByUserId: jest.fn()
+		};
+
+		mockUserProfileRepo = {
+			create: jest.fn(),
+			update: jest.fn(),
+			delete: jest.fn(),
+			findById: jest.fn(),
+			findByUserId: jest.fn()
+		};
+
+		mockLinkTokenRepo = {
+			create: jest.fn(),
+			findByToken: jest.fn(),
+			markAsUsed: jest.fn(),
+			deleteExpired: jest.fn()
+		};
+
 		// Get the mocked bot instance
 		mockBot = {
 			command: jest.fn(),
@@ -98,7 +142,15 @@ describe('TelegramBot', () => {
 		};
 		(Telegraf as jest.MockedClass<typeof Telegraf>).mockImplementation(() => mockBot);
 
-		telegramBot = new TelegramBot(mockUserRepo, mockActionRepo, mockProductRepo, mockProductUserRepo);
+		telegramBot = new TelegramBot(
+			mockUserRepo,
+			mockActionRepo,
+			mockProductRepo,
+			mockProductUserRepo,
+			mockUserPreferencesRepo,
+			mockUserProfileRepo,
+			mockLinkTokenRepo
+		);
 	});
 
 	afterEach(() => {
@@ -121,7 +173,15 @@ describe('TelegramBot', () => {
 			delete process.env.TELEGRAM_BOT_TOKEN;
 
 			expect(() => {
-				new TelegramBot(mockUserRepo, mockActionRepo, mockProductRepo, mockProductUserRepo);
+				new TelegramBot(
+					mockUserRepo,
+					mockActionRepo,
+					mockProductRepo,
+					mockProductUserRepo,
+					mockUserPreferencesRepo,
+					mockUserProfileRepo,
+					mockLinkTokenRepo
+				);
 			}).toThrow('TELEGRAM_BOT_TOKEN não configurado');
 		});
 	});
@@ -155,15 +215,15 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: false
+				enabled: false,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 
 			mockUserRepo.findByTelegramId.mockResolvedValue(existingUser);
 
 			// Get the handler function
 			const enableHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'enable')[1];
-
-			// Act
 			await enableHandler(mockCtx);
 
 			// Assert
@@ -213,15 +273,15 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 
 			mockUserRepo.findByTelegramId.mockResolvedValue(existingUser);
 
 			// Get the handler function
-			const disableHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'disable')[1];
-
-			// Act
+			const disableHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'disable')[1];			// Act
 			await disableHandler(mockCtx);
 
 			// Assert
@@ -249,7 +309,24 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: false
+				enabled: false,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
+			});
+			mockUserPreferencesRepo.create.mockResolvedValue({
+				id: 'prefs-uuid-123',
+				user_id: 'user-uuid-123',
+				monitor_preorders: true,
+				monitor_coupons: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
+			});
+			mockUserProfileRepo.create.mockResolvedValue({
+				id: 'profile-uuid-123',
+				user_id: 'user-uuid-123',
+				nick: 'Test',
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			});
 
 			// Get the handler function
@@ -267,6 +344,18 @@ describe('TelegramBot', () => {
 				language: 'pt',
 				enabled: false
 			}));
+
+			// Verify preferences and profile were created with the actual user ID from the created user
+			const createdUser = mockUserRepo.create.mock.calls[0][0];
+			expect(mockUserPreferencesRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+				user_id: createdUser.id,
+				monitor_preorders: true,
+				monitor_coupons: true
+			}));
+			expect(mockUserProfileRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+				user_id: createdUser.id,
+				nick: 'Test'
+			}));
 			expect(mockCtx.reply).toHaveBeenCalledWith('Bem-vindo ao GibiPromo! 🎉\nAgora use /enable para ativar o monitoramento de preços e depois /help para ver os comandos disponíveis.');
 		});
 
@@ -282,21 +371,12 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			const existingUser: User = {
-				id: 'user-uuid-123',
-				telegram_id: '123456789',
-				name: 'Test',
-				username: 'testuser',
-				language: 'pt',
-				enabled: false
-			};
+			const existingUser: User = createMockUser({ enabled: false });
 
 			mockUserRepo.findByTelegramId.mockResolvedValue(existingUser);
 
 			// Get the handler function
-			const startHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'start')[1];
-
-			// Act
+			const startHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'start')[1];			// Act
 			await startHandler(mockCtx);
 
 			// Assert
@@ -328,21 +408,12 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			const existingUser: User = {
-				id: 'user-uuid-123',
-				telegram_id: '123456789',
-				name: 'Test',
-				username: 'testuser',
-				language: 'pt',
-				enabled: true
-			};
+			const existingUser: User = createMockUser();
 
 			mockUserRepo.findByTelegramId.mockResolvedValue(existingUser);
 
 			// Get the handler function
-			const addlinkHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'addlink')[1];
-
-			// Act
+			const addlinkHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'addlink')[1];			// Act
 			await addlinkHandler(mockCtx);
 
 			// Assert
@@ -379,21 +450,12 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			const disabledUser: User = {
-				id: 'user-uuid-123',
-				telegram_id: '123456789',
-				name: 'Test',
-				username: 'testuser',
-				language: 'pt',
-				enabled: false
-			};
+			const disabledUser: User = createMockUser({ enabled: false });
 
 			mockUserRepo.findByTelegramId.mockResolvedValue(disabledUser);
 
 			// Get the handler function
-			const addlinkHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'addlink')[1];
-
-			// Act
+			const addlinkHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'addlink')[1];			// Act
 			await addlinkHandler(mockCtx);
 
 			// Assert
@@ -407,14 +469,7 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			const mockUser: User = {
-				id: 'user-uuid-123',
-				telegram_id: '123456789',
-				name: 'Test',
-				username: 'testuser',
-				language: 'pt',
-				enabled: true
-			};
+			const mockUser: User = createMockUser();
 
 			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 
@@ -501,14 +556,7 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			const mockUser: User = {
-				id: 'user-uuid-123',
-				telegram_id: '123456789',
-				name: 'Test',
-				username: 'testuser',
-				language: 'pt',
-				enabled: true
-			};
+			const mockUser: User = createMockUser();
 
 			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 
@@ -575,23 +623,15 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			const mockUser: User = {
-				id: 'user-uuid-123',
-				telegram_id: '123456789',
-				name: 'Test',
-				username: 'testuser',
-				language: 'pt',
-				enabled: true
-			};
+
+			const mockUser: User = createMockUser();
 
 			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 
 			mockProductUserRepo.findByUserId.mockResolvedValue({ productUsers: [], total: 0 });
 
 			// Get the handler function
-			const listHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'list')[1];
-
-			// Act
+			const listHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'list')[1];			// Act
 			await listHandler(mockCtx);
 
 			// Assert
@@ -638,14 +678,7 @@ describe('TelegramBot', () => {
 				}
 			];
 
-			const mockUser: User = {
-				id: 'user-uuid-123',
-				telegram_id: '123456789',
-				name: 'Test',
-				username: 'testuser',
-				language: 'pt',
-				enabled: true
-			};
+			const mockUser: User = createMockUser();
 
 			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
 			mockProductUserRepo.findByUserId.mockResolvedValue({ productUsers: mockProductUsers, total: 6 }); // Total > 5 para ter múltiplas páginas
@@ -673,21 +706,12 @@ describe('TelegramBot', () => {
 				reply: jest.fn()
 			} as unknown as Context;
 
-			const existingUser: User = {
-				id: 'user-uuid-123',
-				telegram_id: '123456789',
-				name: 'Test',
-				username: 'testuser',
-				language: 'pt',
-				enabled: true
-			};
+			const existingUser: User = createMockUser();
 
 			mockUserRepo.findByTelegramId.mockResolvedValue(existingUser);
 
 			// Get the handler function
-			const deleteHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'delete')[1];
-
-			// Act
+			const deleteHandler = mockBot.command.mock.calls.find((call: any) => call[0] === 'delete')[1];			// Act
 			await deleteHandler(mockCtx);
 
 			// Assert
@@ -818,7 +842,9 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 
 			const mockCtx = {
@@ -888,7 +914,9 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 
 			const mockCtx = {
@@ -939,7 +967,9 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 
 			const mockCtx = {
@@ -992,7 +1022,9 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 
 			const mockCtx = {
@@ -1056,7 +1088,9 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 
 			const mockProductUser = {
@@ -1150,7 +1184,9 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 
 			const mockCtx = {
@@ -1209,7 +1245,9 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 
 			const mockCtx = {
@@ -1256,7 +1294,9 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 
 			const mockCtx = {
@@ -1308,7 +1348,7 @@ describe('TelegramBot', () => {
 					url: 'https://amazon.com.br/produto1'
 				}),
 				createProduct('B02', {
-					title: 'Produto 2', 
+					title: 'Produto 2',
 					price: 200,
 					url: 'https://amazon.com.br/produto2'
 				})
@@ -1341,7 +1381,7 @@ describe('TelegramBot', () => {
 			const productMap = new Map();
 			productMap.set('B01', mockProducts[0]);
 			productMap.set('B02', mockProducts[1]);
-			mockProductRepo.findById.mockImplementation((id: string) => 
+			mockProductRepo.findById.mockImplementation((id: string) =>
 				Promise.resolve(productMap.get(id) || null)
 			);
 
@@ -1642,7 +1682,9 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 
 			const mockProductUser: ProductUser = {
@@ -1720,7 +1762,9 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 
 			mockUserRepo.findByTelegramId.mockResolvedValue(mockUser);
@@ -1752,7 +1796,9 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 
 			const mockCtx = {
@@ -1793,7 +1839,9 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 
 			const mockProductUser: ProductUser = {
@@ -1892,7 +1940,9 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 
 			const mockCtx = {
@@ -1930,7 +1980,9 @@ describe('TelegramBot', () => {
 				name: 'Test',
 				username: 'testuser',
 				language: 'pt',
-				enabled: true
+				enabled: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString()
 			};
 
 			const mockCtx = {
@@ -1960,15 +2012,10 @@ describe('TelegramBot', () => {
 		it('deve escapar caracteres especiais do Markdown corretamente', () => {
 			// Como escapeMarkdown é um método privado, vamos testar indiretamente
 			// através de um método que o usa publicamente (através de formatPrice)
-			
+
 			// Este teste verifica se os métodos utilitários são chamados nos contextos corretos
 			// A funcionalidade real já é testada nos outros cenários
 			expect(telegramBot).toBeDefined();
 		});
 	});
 });
-
-
-
-
-

@@ -2,11 +2,14 @@ import { createTelegramBot } from '../../../src/infrastructure/config/telegram';
 import { TelegramBot } from '../../../src/infrastructure/adapters/telegram';
 
 // Mock dos repositórios DynamoDB
-jest.mock('../../../src/infrastructure/adapters/dynamodb', () => ({
+jest.mock('@gibipromo/shared', () => ({
+	...jest.requireActual('@gibipromo/shared'),
 	DynamoDBUserRepository: jest.fn().mockImplementation(() => ({})),
 	DynamoDBActionRepository: jest.fn().mockImplementation(() => ({})),
 	DynamoDBProductRepository: jest.fn().mockImplementation(() => ({})),
-	DynamoDBProductUserRepository: jest.fn().mockImplementation(() => ({}))
+	DynamoDBProductUserRepository: jest.fn().mockImplementation(() => ({})),
+	DynamoDBUserPreferencesRepository: jest.fn().mockImplementation(() => ({ tableName: 'UserPreferences' })),
+	DynamoDBUserProfileRepository: jest.fn().mockImplementation(() => ({ tableName: 'UserProfile' }))
 }));
 
 // Mock do TelegramBot
@@ -30,7 +33,9 @@ describe('Telegram Config', () => {
 				expect.any(Object), // userRepository
 				expect.any(Object), // actionRepository
 				expect.any(Object), // productRepository
-				expect.any(Object)  // productUserRepository
+				expect.any(Object), // productUserRepository
+				expect.any(Object), // userPreferencesRepository
+				expect.any(Object)  // userProfileRepository
 			);
 			expect(bot).toBeDefined();
 		});

@@ -3,17 +3,23 @@ import {
 	AddProductAction,
 	createNotifyPriceAction
 } from '@gibipromo/shared/dist/entities/Action';
-import { createLogger } from '@gibipromo/shared';
+import { 
+	createLogger, 
+	resolveShortUrl,
+	ActionOrigin,
+	UserOrigin,
+	createProductAddedNotification
+} from '@gibipromo/shared';
 import { ActionRepository } from '../../ports/ActionRepository';
 import { ProductRepository } from '../../ports/ProductRepository';
 import { ProductUserRepository } from '../../ports/ProductUserRepository';
 import { UserRepository } from '../../ports/UserRepository';
+import { NotificationRepository } from '@gibipromo/shared/dist/repositories/NotificationRepository';
 import { AmazonProduct, AmazonProductAPI } from '../../ports/AmazonProductAPI';
 import { createProduct, updateProductPrice } from '@gibipromo/shared/dist/entities/Product';
 import { createProductUser } from '@gibipromo/shared/dist/entities/ProductUser';
 import { ActionProcessor } from '../../ports/ActionProcessor';
 import { ProductStatsService } from '../ProductStatsService';
-import { resolveShortUrl } from '../../../infrastructure/utils/urlResolver';
 
 const logger = createLogger('AddProductActionProcessor');
 
@@ -29,7 +35,8 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 		private readonly productUserRepository: ProductUserRepository,
 		private readonly userRepository: UserRepository,
 		private readonly amazonApi: AmazonProductAPI,
-		private readonly productStatsService: ProductStatsService
+		private readonly productStatsService: ProductStatsService,
+		private readonly notificationRepository: NotificationRepository
 	) { }
 
 	/**
@@ -145,11 +152,28 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 				in_stock: amazonProduct.inStock,
 				url: amazonProduct.url,
 				image: amazonProduct.imageUrl,
-				preorder: amazonProduct.isPreOrder
+				preorder: amazonProduct.isPreOrder,
+				category: amazonProduct.category,
+				format: amazonProduct.format,
+				genre: amazonProduct.genre,
+				publisher: amazonProduct.publisher,
+				contributors: amazonProduct.contributors,
+				product_group: amazonProduct.productGroup,
+				store: 'Amazon'
 			});
 
 			await this.productRepository.create(product);
 			console.log(`Produto criado com sucesso: ${product.title} (R$ ${product.price})`);
+
+			// Cria entrada inicial de estatísticas para o produto
+			// Isso garante que sempre haverá pelo menos um ponto de dados no gráfico
+			try {
+				const initialStats = await this.productStatsService.createInitialStats(product);
+				console.log(`Estatística inicial criada para ${product.title} (baseline: R$ ${initialStats.price})`);
+			} catch (error) {
+				console.error('Erro ao criar estatística inicial do produto:', error);
+				// Não falha o processamento se houver erro nas estatísticas
+			}
 		} else {
 			// Produto existe, verifica se o preço mudou
 			const oldPrice = product.price;
@@ -162,6 +186,7 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 			if (oldPrice === newPrice &&
 				product.in_stock === amazonProduct.inStock &&
 				product.preorder === amazonProduct.isPreOrder &&
+				product.full_price === amazonProduct.fullPrice &&
 				existingProductUser) {
 				console.log(`Nenhuma mudança para o produto ${product.title}, pulando atualização.`);
 				await this.actionRepository.markProcessed(action.id);
@@ -213,6 +238,30 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 			});
 			await this.productUserRepository.upsert(productUser);
 			console.log(`Usuário ${user.id} adicionado ao monitoramento do produto ${product.id}`);
+
+			// Notificar usuários do site sobre produto adicionado
+			if (action.origin === ActionOrigin.SITE &&
+				(user.origin === UserOrigin.SITE || user.origin === UserOrigin.BOTH)) {
+
+				const notification = createProductAddedNotification(
+					user.id,
+					product.title,
+					product.id,
+					product.url
+				);
+
+				try {
+					await this.notificationRepository.create(notification);
+					logger.info('Notificação de produto adicionado criada', {
+						userId: user.id,
+						productId: product.id,
+						notificationId: notification.id
+					});
+				} catch (error) {
+					logger.error('Erro ao criar notificação de produto adicionado', error);
+					// Não falha o processo por erro de notificação
+				}
+			}
 		}
 		await this.actionRepository.markProcessed(action.id);
 		return true;

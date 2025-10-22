@@ -6,6 +6,8 @@
 export * from './entities/Action';
 export * from './entities/ActionConfig';
 export * from './entities/Entity';
+export * from './entities/LinkToken';
+export * from './entities/Notification';
 export * from './entities/Product';
 export * from './entities/ProductStats';
 export * from './entities/ProductUser';
@@ -16,6 +18,38 @@ export * from './entities/UserProfile';
 
 // Re-exporta utilitários
 export * from './utils/Logger';
+export * from './utils/urlResolver';
+
+// Re-exporta constantes
+export * from './constants';
+export {
+	UserOrigin,
+	ActionOrigin,
+	NotificationType,
+	NotificationStatus,
+	TELEGRAM_COMMANDS
+} from './constants/index';
+
+// Re-exporta tipos
+export * from './types/PromotionFilters';
+
+// Re-exporta interfaces de repositórios
+export * from './repositories/Repository';
+export * from './repositories/ActionRepository';
+export * from './repositories/ActionConfigRepository';
+export * from './repositories/LinkTokenRepository';
+export * from './repositories/NotificationRepository';
+export * from './repositories/ProductRepository';
+export * from './repositories/ProductStatsRepository';
+export * from './repositories/ProductUserRepository';
+export * from './repositories/SessionRepository';
+export * from './repositories/UserRepository';
+export * from './repositories/UserPreferencesRepository';
+export * from './repositories/UserProfileRepository';
+
+// Re-exporta implementações DynamoDB
+export * from './infrastructure/dynamodb';
+export * from './infrastructure/config/dynamodb';
 
 // Tipos específicos da API
 export interface ApiResponse<T> {
@@ -67,13 +101,3 @@ export interface NotificationData {
 	changePercent: number;
 	url: string;
 }
-
-// Enum para tipos de ação
-export const ACTION_TYPES = {
-	ADD_PRODUCT: 'ADD_PRODUCT',
-	CHECK_PRODUCT: 'CHECK_PRODUCT',
-	NOTIFY_PRICE: 'NOTIFY_PRICE',
-	TELEGRAM_LINKED: 'TELEGRAM_LINKED'
-} as const;
-
-export type ActionType = typeof ACTION_TYPES[keyof typeof ACTION_TYPES];

@@ -19,6 +19,8 @@ export interface Product extends Entity {
 	genre?: string; // Genre (e.g., Fantasia, Aventura)
 	publisher?: string; // Publisher (e.g., Panini, Pipoca & Nanquim)
 	store: string; // Store where product is sold (initially "Amazon")
+	contributors?: string[]; // Authors, illustrators, etc.
+	product_group?: string; // e.g., "Book", "Drugstore", etc.
 	created_at: string;
 	updated_at: string;
 }

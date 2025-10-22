@@ -16,7 +16,8 @@ import {
 	createTestUser,
 	createTestAction,
 	createAmazonProduct,
-	createProduct
+	createProduct,
+	createMockNotificationRepository
 } from '../../../test-helpers/factories';
 
 /**
@@ -320,13 +321,16 @@ describe('ProductStats Integration Tests', () => {
 		productStatsService = new ProductStatsService(productStatsRepository);
 		amazonApi = new MockAmazonPAAPIClient();
 
+		const mockNotificationRepository = createMockNotificationRepository();
+
 		addProductProcessor = new AddProductActionProcessor(
 			actionRepository,
 			productRepository,
 			productUserRepository,
 			userRepository,
 			amazonApi,
-			productStatsService
+			productStatsService,
+			mockNotificationRepository
 		);
 
 		checkProductProcessor = new CheckProductActionProcessor(

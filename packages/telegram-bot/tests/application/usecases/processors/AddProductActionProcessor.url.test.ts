@@ -1,4 +1,5 @@
 import { AddProductActionProcessor } from '../../../../src/application/usecases/processors/AddProductActionProcessor';
+import { createMockNotificationRepository } from '../../../test-helpers/factories';
 
 describe('AddProductActionProcessor URL Validation', () => {
 	const mockDeps = {
@@ -10,13 +11,16 @@ describe('AddProductActionProcessor URL Validation', () => {
 		productStatsService: {} as any,
 	};
 
+	const mockNotificationRepository = createMockNotificationRepository();
+
 	const processor = new AddProductActionProcessor(
 		mockDeps.actionRepository,
 		mockDeps.productRepository,
 		mockDeps.userRepository,
 		mockDeps.amazonApi,
 		mockDeps.productUserRepository,
-		mockDeps.productStatsService
+		mockDeps.productStatsService,
+		mockNotificationRepository
 	);
 
 	const testCases = [

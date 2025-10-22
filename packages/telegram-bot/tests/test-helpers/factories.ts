@@ -3,6 +3,7 @@ import { Product } from '@gibipromo/shared/dist/entities/Product';
 import { ActionType, AddProductAction } from '@gibipromo/shared/dist/entities/Action';
 import { AmazonProduct } from '../../src/application/ports/AmazonProductAPI';
 import { ProductStats } from '@gibipromo/shared/dist/entities/ProductStats';
+import { NotificationRepository } from '@gibipromo/shared';
 
 export const createTestUser = (overrides?: Partial<User>): User => ({
 	id: 'user-1',
@@ -10,6 +11,8 @@ export const createTestUser = (overrides?: Partial<User>): User => ({
 	name: 'Test User',
 	enabled: true,
 	language: 'pt-BR',
+	created_at: new Date().toISOString(),
+	updated_at: new Date().toISOString(),
 	...overrides
 });
 
@@ -60,4 +63,18 @@ export const createProductStats = (overrides?: Partial<ProductStats>): ProductSt
 	percentage_change: 15,
 	created_at: new Date().toISOString(),
 	...overrides
+});
+
+export const createMockNotificationRepository = (): jest.Mocked<NotificationRepository> => ({
+	create: jest.fn(),
+	findById: jest.fn(),
+	findByUserId: jest.fn(),
+	findUnreadByUserId: jest.fn(),
+	markAsRead: jest.fn(),
+	markAllAsRead: jest.fn(),
+	countUnreadByUserId: jest.fn(),
+	deleteOldNotifications: jest.fn(),
+	enforceUserLimit: jest.fn(),
+	update: jest.fn(),
+	delete: jest.fn()
 });

@@ -58,8 +58,9 @@ interface CacheEntry<T> {
  */
 export class ProductsService extends BaseService {
 	private cache: Map<string, CacheEntry<any>>;
-	private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutos em ms
-	private readonly PROMOTIONS_CACHE_TTL = 3 * 60 * 1000; // 3 minutos para promoções (mais dinâmico)
+	// Cache unificado de 3 minutos para evitar inconsistências entre listagem e detalhes
+	private readonly CACHE_TTL = 3 * 60 * 1000; // 3 minutos em ms
+	private readonly PROMOTIONS_CACHE_TTL = 3 * 60 * 1000; // 3 minutos (mesmo TTL)
 
 	constructor(
 		private readonly productRepository: ProductRepository,
@@ -158,20 +159,23 @@ export class ProductsService extends BaseService {
 	async getProductById(productId: string): Promise<Product | null> {
 		const cacheKey = `product:${productId}`;
 
-		// Verificar cache
-		const cached = this.getFromCache<Product | null>(cacheKey);
-		if (cached !== undefined) {
+		// Verificar cache (apenas se o produto existir - não cacheia null)
+		const cached = this.getFromCache<Product>(cacheKey);
+		if (cached) {
 			this.logAction('Cache hit for product', { productId });
 			return cached;
 		}
 
-		this.logAction('Getting product by ID', { productId });
+		this.logAction('Getting product by ID from database', { productId });
 
 		try {
 			const product = await this.productRepository.findById(productId);
 
-			// Armazenar no cache
-			this.setCache(cacheKey, product);
+			// Armazenar no cache APENAS se o produto existir
+			// Não cacheia null para permitir que produtos recém-criados sejam encontrados
+			if (product) {
+				this.setCache(cacheKey, product);
+			}
 
 			return product;
 		} catch (error) {

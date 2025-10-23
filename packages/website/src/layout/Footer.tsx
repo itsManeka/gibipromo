@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Heart, Mail, BookOpen, Instagram } from 'lucide-react'
+import { Heart } from 'lucide-react'
+import SocialLinks from '@/components/SocialLinks'
 
 export function Footer() {
 	const currentYear = new Date().getFullYear()
@@ -43,8 +44,8 @@ export function Footer() {
 								</Link>
 							</li>
 							<li>
-								<Link to="/perfil" className="text-purple-800 dark:text-primary-light hover:text-purple-950 dark:hover:text-primary-yellow transition-colors">
-									Perfil
+								<Link to="/adicionar-produtos" className="text-purple-800 dark:text-primary-light hover:text-purple-950 dark:hover:text-primary-yellow transition-colors">
+									Adicionar Produtos
 								</Link>
 							</li>
 							<li>
@@ -102,23 +103,7 @@ export function Footer() {
 							© {currentYear} GibiPromo. Todos os direitos reservados.
 						</div>
 
-						{/* Links Sociais */}
-						<div className="flex items-center space-x-4">
-							<a
-								href="mailto:contato.gibipromo@gmail.com"
-								className="text-purple-800 dark:text-primary-light hover:text-purple-950 dark:hover:text-primary-yellow transition-colors"
-								title="Email"
-							>
-								<Mail className="h-5 w-5" />
-							</a>
-							<a
-								href="https://www.instagram.com/gibipromo/"
-								className="text-purple-800 dark:text-primary-light hover:text-purple-950 dark:hover:text-primary-yellow transition-colors"
-								title="Instagram"
-							>
-								<Instagram className="h-5 w-5" />
-							</a>
-						</div>
+						<SocialLinks />
 					</div>
 				</div>
 			</div>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>GibiPromo - Monitor de Preços</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="../styles/popup.css">
+</head>
+<body>
+	<div id="popup-container">
+		<!-- Header -->
+		<div class="popup-header">
+			<div class="popup-logo">
+				<img src="../icons/icon16.png" alt="GibiPromo" class="popup-icon">
+				<span class="popup-title">GibiPromo</span>
+			</div>
+		</div>
+
+		<!-- Loading State -->
+		<div id="loading-state" class="popup-state">
+			<div class="popup-loading">
+				<div class="spinner"></div>
+				<p>Carregando...</p>
+			</div>
+		</div>
+
+		<!-- Logged Out State -->
+		<div id="logged-out-state" class="popup-state" style="display: none;">
+			<div class="popup-content">
+				<p class="popup-description">
+					Faça login para monitorar preços de produtos da Amazon e receber alertas de promoções!
+				</p>
+
+				<form id="login-form" class="popup-form">
+					<div class="form-group">
+						<label for="email">E-mail</label>
+						<input 
+							type="email" 
+							id="email" 
+							name="email" 
+							required 
+							placeholder="seu@email.com"
+							autocomplete="email"
+						>
+					</div>
+
+					<div class="form-group">
+						<label for="password">Senha</label>
+						<input 
+							type="password" 
+							id="password" 
+							name="password" 
+							required 
+							placeholder="••••••••"
+							autocomplete="current-password"
+						>
+					</div>
+
+					<div id="error-message" class="error-message" style="display: none;"></div>
+
+					<button type="submit" class="popup-btn popup-btn-primary">
+						Entrar
+					</button>
+				</form>
+
+				<div class="popup-footer">
+					<p>Não tem conta?</p>
+					<a href="https://gibipromo.com/register" target="_blank" class="popup-link">
+						Criar conta no site
+					</a>
+				</div>
+			</div>
+		</div>
+
+		<!-- Logged In State -->
+		<div id="logged-in-state" class="popup-state" style="display: none;">
+			<div class="popup-content">
+				<div class="user-info">
+					<div class="user-details">
+						<p class="user-nick" id="user-nick">Carregando...</p>
+						<p class="user-status">Conectado</p>
+					</div>
+				</div>
+
+				<div class="popup-actions">
+					<a href="https://gibipromo.com/promotions" target="_blank" class="popup-btn popup-btn-secondary">
+						Meus Produtos
+					</a>
+
+					<button id="logout-btn" class="popup-btn popup-btn-ghost">
+						Sair
+					</button>
+				</div>
+
+				<div class="popup-footer">
+					<a href="https://gibipromo.com" target="_blank" class="popup-link">
+						Visitar GibiPromo
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="popup.js"></script>
+</body>
+</html>
+

@@ -23,7 +23,10 @@
 		"test:api": "npm run test --workspace=packages/web-api -- --maxWorkers=1",
 		"dev:web": "npm run dev --workspace=packages/website",
 		"test:web": "npm run test --workspace=packages/website -- --maxWorkers=1",
-		"build:web": "npm run build --workspace=packages/website"
+		"build:web": "npm run build --workspace=packages/website",
+		"dev:ext": "npm run dev --workspace=packages/chrome-extension",
+		"build:ext": "npm run build --workspace=packages/chrome-extension",
+		"test:ext": "npm run test --workspace=packages/chrome-extension -- --maxWorkers=1"
 	},
 	"dependencies": {
 		"@itsmaneka/paapi5-nodejs-sdk": "^1.2.7",

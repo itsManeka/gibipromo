@@ -1,4 +1,4 @@
-import { ApiClient, DefaultApi, GetItemsRequest, GetItemsResponse } from '@itsmaneka/paapi5-nodejs-sdk';
+import { ApiClient, DefaultApi, GetItemsRequest, GetItemsResponse, Item } from '@itsmaneka/paapi5-nodejs-sdk';
 import dotenv from 'dotenv';
 import { AmazonProduct, AmazonProductAPI } from '../../../application/ports/AmazonProductAPI';
 import path from 'path';
@@ -54,7 +54,6 @@ export class AmazonPAAPIClient implements AmazonProductAPI {
 				'ItemInfo.Title',
 				'ItemInfo.Classifications',
 				'ItemInfo.ByLineInfo',
-				'BrowseNodeInfo.BrowseNodes',
 				'OffersV2.Listings.Availability',
 				'OffersV2.Listings.MerchantInfo',
 				'OffersV2.Listings.Price',
@@ -120,10 +119,8 @@ export class AmazonPAAPIClient implements AmazonProductAPI {
 				const isPreOrder = listing.Availability?.Type === 'PREORDER';
 				
 				// Extract new fields
-				const category = this.extractCategory(item);
 				const format = item.ItemInfo?.Classifications?.Binding?.DisplayValue || undefined;
 				const productGroup = item.ItemInfo?.Classifications?.ProductGroup?.DisplayValue || undefined;
-				const genre = this.extractGenre(item);
 				const publisher = item.ItemInfo?.ByLineInfo?.Brand?.DisplayValue || 
 					item.ItemInfo?.ByLineInfo?.Manufacturer?.DisplayValue || undefined;
 
@@ -140,9 +137,7 @@ export class AmazonPAAPIClient implements AmazonProductAPI {
 					imageUrl: item.Images?.Primary?.Large?.URL || '',
 					isPreOrder,
 					url: item.DetailPageURL || '',
-					category,
 					format,
-					genre,
 					publisher,
 					contributors,
 					productGroup
@@ -156,69 +151,5 @@ export class AmazonPAAPIClient implements AmazonProductAPI {
 			console.error('Erro ao buscar produtos na Amazon:', error);
 			return new Map();
 		}
-	}
-
-	/**
-	 * Extract category from BrowseNodeInfo
-	 * Looks for category like "Mangá", "HQ", etc.
-	 */
-	private extractCategory(item: any): string | undefined {
-		const browseNodes = item.BrowseNodeInfo?.BrowseNodes;
-		if (!browseNodes || !Array.isArray(browseNodes)) return undefined;
-
-		// Look for category nodes that contain common book/manga categories
-		const categoryKeywords = ['Mangá', 'HQs', 'Livros', 'Graphic Novels'];
-		
-		for (const node of browseNodes) {
-			const displayName = node.DisplayName;
-			if (displayName && categoryKeywords.some(keyword => displayName.includes(keyword))) {
-				return displayName;
-			}
-			
-			// Check ancestors for category
-			let ancestor = node.Ancestor;
-			while (ancestor) {
-				const ancestorName = ancestor.DisplayName;
-				if (ancestorName && categoryKeywords.some(keyword => ancestorName.includes(keyword))) {
-					return ancestorName;
-				}
-				ancestor = ancestor.Ancestor;
-			}
-		}
-
-		// Se não encontrar escreve um log para análise futura
-		console.warn(`Categoria não encontrada para ASIN ${item.ASIN}`);
-
-		return undefined;
-	}
-
-	/**
-	 * Extract genre from BrowseNodeInfo
-	 * Looks for genre like "Fantasia", "Aventura", etc.
-	 */
-	private extractGenre(item: any): string | undefined {
-		const browseNodes = item.BrowseNodeInfo?.BrowseNodes;
-		if (!browseNodes || !Array.isArray(browseNodes)) return undefined;
-
-		// Look for genre nodes (usually deeper in the hierarchy)
-		const genreKeywords = [
-			'Fantasia', 'Aventura', 'Ação', 'Romance', 'Drama', 'Comédia', 
-			'Terror', 'Suspense', 'Ficção', 'Biografia', 'História', 'Ficção Científica',
-			'Mistério', 'Crime', 'Fantasia Sombria', 'Horror', 'Ficção Histórica',
-			'Literatura Histórica', 'Ficção de Gênero', 'Não-Ficção', 'Super-heróis',
-			'Paranormal'
-		];
-		
-		for (const node of browseNodes) {
-			const displayName = node.DisplayName;
-			if (displayName && genreKeywords.some(keyword => displayName.includes(keyword))) {
-				return displayName;
-			}
-		}
-
-		// Se não encontrar escreve um log para análise futura
-		console.warn(`Genero não encontrado para ASIN ${item.ASIN}`);
-
-		return undefined;
 	}
 }

@@ -776,9 +776,7 @@ describe('AmazonPAAPIClient', () => {
 			
 			expect(result.size).toBe(1);
 			const product = result.get('B001234567');
-			expect(product?.category).toBeUndefined();
 			expect(product?.format).toBeUndefined();
-			expect(product?.genre).toBeUndefined();
 			expect(product?.publisher).toBeUndefined();
 			expect(product?.contributors).toEqual([]);
 			expect(product?.productGroup).toBeUndefined();

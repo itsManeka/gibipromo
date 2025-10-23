@@ -3,8 +3,8 @@ import {
 	AddProductAction,
 	createNotifyPriceAction
 } from '@gibipromo/shared/dist/entities/Action';
-import { 
-	createLogger, 
+import {
+	createLogger,
 	resolveShortUrl,
 	ActionOrigin,
 	UserOrigin,
@@ -20,6 +20,7 @@ import { createProduct, updateProductPrice } from '@gibipromo/shared/dist/entiti
 import { createProductUser } from '@gibipromo/shared/dist/entities/ProductUser';
 import { ActionProcessor } from '../../ports/ActionProcessor';
 import { ProductStatsService } from '../ProductStatsService';
+import { ProductClassifier } from '../../ports/ProductClassifier';
 
 const logger = createLogger('AddProductActionProcessor');
 
@@ -36,7 +37,8 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 		private readonly userRepository: UserRepository,
 		private readonly amazonApi: AmazonProductAPI,
 		private readonly productStatsService: ProductStatsService,
-		private readonly notificationRepository: NotificationRepository
+		private readonly notificationRepository: NotificationRepository,
+		private readonly productClassifier?: ProductClassifier
 	) { }
 
 	/**
@@ -141,6 +143,30 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 
 		if (!product) {
 			console.log(`Criando novo produto: ${amazonProduct.title}`);
+
+			// Classifica o produto usando IA (se disponível)
+			// Apenas classifica com IA produtos do grupo de Livros (Book)
+			let category = undefined;
+			let genre = undefined;
+
+			if (this.productClassifier && amazonProduct.productGroup === 'Book') {
+				try {
+					const classification = await this.productClassifier.classify(amazonProduct.title);
+					if (classification) {
+						category = classification.category;
+						genre = classification.genre;
+						logger.info('Produto classificado pela IA', {
+							title: amazonProduct.title,
+							category,
+							genre
+						});
+					}
+				} catch (error) {
+					logger.warn('Erro ao classificar produto com IA', { error });
+					// Os campos category e genre serão indefinidos
+				}
+			}
+
 			// Cria novo produto
 			product = createProduct({
 				id: asin,
@@ -153,9 +179,9 @@ export class AddProductActionProcessor implements ActionProcessor<AddProductActi
 				url: amazonProduct.url,
 				image: amazonProduct.imageUrl,
 				preorder: amazonProduct.isPreOrder,
-				category: amazonProduct.category,
+				category: category,
 				format: amazonProduct.format,
-				genre: amazonProduct.genre,
+				genre: genre,
 				publisher: amazonProduct.publisher,
 				contributors: amazonProduct.contributors,
 				product_group: amazonProduct.productGroup,

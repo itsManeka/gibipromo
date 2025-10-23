@@ -10,9 +10,7 @@ export interface AmazonProduct {
 	imageUrl: string;
 	isPreOrder: boolean;
 	url: string;
-	category?: string; // Product category (e.g., Mangá, HQ, Livro)
 	format?: string; // Format (e.g., Capa comum, Capa dura)
-	genre?: string; // Genre (e.g., Fantasia, Aventura)
 	publisher?: string; // Publisher (e.g., Editora JBC, Panini)
 	contributors?: string[]; // List of authors, illustrators, etc.
 	productGroup?: string; // e.g., "Book", "Drugstore", etc.

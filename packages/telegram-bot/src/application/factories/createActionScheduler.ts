@@ -18,6 +18,7 @@ import {
 import { AmazonProductAPI } from '../ports/AmazonProductAPI';
 import { TelegramNotifier } from '../../infrastructure/adapters/telegram';
 import { Telegraf } from 'telegraf';
+import { createProductClassifier } from '../../infrastructure/config/productClassifier';
 
 export function createActionScheduler(
 	amazonApi: AmazonProductAPI
@@ -35,6 +36,9 @@ export function createActionScheduler(
 
 	// Serviços
 	const productStatsService = new ProductStatsService(productStatsRepository);
+	
+	// Classificador de produtos (opcional)
+	const productClassifier = createProductClassifier();
 
 	// Notificador
 	const notifier = new TelegramNotifier();
@@ -52,7 +56,8 @@ export function createActionScheduler(
 			userRepository,
 			amazonApi,
 			productStatsService,
-			notificationRepository
+			notificationRepository,
+			productClassifier
 		),
 		new CheckProductActionProcessor(
 			actionRepository,
